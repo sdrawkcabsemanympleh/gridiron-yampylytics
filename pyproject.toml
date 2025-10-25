@@ -1,0 +1,71 @@
+[project]
+name = "gridiron-yampylytics"
+version = "0.1.0"
+description = "NFL and college football data analysis, scraping, and visualization toolkit"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ruff>=0.13.2",
+    "mypy>=1.18.2",
+    "black>=25.9.0",
+    "pydantic>=2.11.9",
+    "pytest>=8.0.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+# Enable core quality rules
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes (catch bugs)
+    "I",      # isort (import sorting)
+    "N",      # pep8-naming
+    "UP",     # pyupgrade (use modern Python syntax)
+    "ANN",    # flake8-annotations (type hints everywhere)
+    "B",      # flake8-bugbear (common bugs)
+    "C4",     # flake8-comprehensions (comprehension quality)
+    "SIM",    # flake8-simplify (code simplification)
+    "RET",    # flake8-return (return statement quality)
+    "ARG",    # flake8-unused-arguments
+    "PTH",    # flake8-use-pathlib (prefer pathlib)
+    "TID",    # flake8-tidy-imports (catch sys.path hacks)
+    "RUF",    # ruff-specific rules
+]
+
+ignore = [
+    # Type annotation noise reduction
+    "ANN101",  # Missing type annotation for self (removed in newer ruff)
+    "ANN102",  # Missing type annotation for cls (removed in newer ruff)
+
+    # Practical code allowances
+    "S101",    # Use of assert (fine in tests)
+    "B905",    # zip without explicit strict (Python 3.10+, we know what we're doing)
+
+    # Return style - allow implicit None returns
+    "RET504",  # Unnecessary assignment before return (sometimes clearer to assign)
+    "RET505",  # Unnecessary else after return (sometimes more readable)
+
+    # Allow print statements in scripts
+    "T201",    # print statements (useful for scripts and debugging)
+]
+
+# Docstring settings - we want reST style
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"  # Closest to reST style with param documentation
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
