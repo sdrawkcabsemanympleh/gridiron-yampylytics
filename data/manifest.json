@@ -1,0 +1,237 @@
+{
+  "metadata": {
+    "created": "2025-10-31",
+    "last_updated": "2025-10-31",
+    "version": "1.0.0",
+    "description": "Data inventory for gridiron-yampylytics NFL analytics project"
+  },
+  "acquisition_categories": {
+    "python_package": {
+      "description": "Data loaded on-demand via Python package functions",
+      "access_pattern": "import nflreadpy as nfl; data = nfl.load_**()",
+      "update_method": "Automatic (package handles downloads)",
+      "datasets": ["nflreadpy"]
+    },
+    "git_repository": {
+      "description": "Data in git repos, updated via git pull",
+      "access_pattern": "cd repo && git pull; then read CSVs",
+      "update_method": "Manual git pull (or scheduled)",
+      "datasets": [],
+      "status": "DELETED - All git repos removed, using nflreadpy instead"
+    },
+    "active_scrape": {
+      "description": "Data acquired by running scraper scripts (slow, respectful delays)",
+      "access_pattern": "uv run python -m scripts.download_*",
+      "update_method": "Manual script execution",
+      "datasets": ["gm_executives"]
+    },
+    "cached_static": {
+      "description": "Pre-scraped data snapshots, read directly from disk",
+      "access_pattern": "pd.read_csv('src/cached_data/...')",
+      "update_method": "Static (update by re-scraping if needed)",
+      "datasets": ["cached_nfl_stats", "cached_nfl_scraper", "cached_historical_stats"]
+    },
+    "reference_data": {
+      "description": "Static reference data (value charts, lookup tables)",
+      "access_pattern": "pd.read_csv('data/reference/...')",
+      "update_method": "Static (manually updated as needed)",
+      "datasets": ["draft_value_charts"]
+    }
+  },
+  "datasets": {
+    "gm_executives": {
+      "source": "Pro Football Reference",
+      "source_url": "https://www.pro-football-reference.com/teams/{team}/executives.htm",
+      "acquisition_category": "active_scrape",
+      "acquisition_method": "Selenium scraper",
+      "access_pattern": "uv run python -m scripts.download_gm_data",
+      "script": "scripts/download_gm_data.py",
+      "last_updated": "2025-10-31",
+      "location": "data/raw/executives/",
+      "format": "CSV",
+      "files": 32,
+      "coverage": {
+        "years": "1960-2025",
+        "teams": 32,
+        "verified": true
+      },
+      "fields": ["Person", "Teams", "From", "To", "Titles", "Notes"],
+      "notes": "General Manager and executive tenure data for all 32 NFL teams. Script runs ~3 min with Selenium."
+    },
+    "nflreadpy": {
+      "source": "nflreadpy Python package",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "acquisition_method": "Python package (uv add nflreadpy)",
+      "access_pattern": "import nflreadpy as nfl; data = nfl.load_*()",
+      "format": "Polars DataFrame",
+      "last_updated": "daily (automated)",
+      "coverage": {
+        "verified": true
+      },
+      "functions": {
+        "load_pbp": {
+          "description": "Play-by-play data",
+          "coverage": "1999-2025"
+        },
+        "load_player_stats": {
+          "description": "Weekly/seasonal player statistics",
+          "coverage": "2012-2025"
+        },
+        "load_rosters": {
+          "description": "Weekly rosters",
+          "coverage": "2006-2025"
+        },
+        "load_draft_picks": {
+          "description": "Draft history",
+          "coverage": "1967-2025"
+        },
+        "load_combine": {
+          "description": "NFL Combine results",
+          "coverage": "2000-2024"
+        },
+        "load_contracts": {
+          "description": "Player contracts (48K contracts)",
+          "coverage": "2000s-2025"
+        },
+        "load_ids": {
+          "description": "Player ID mappings (gsis_id, pfr_id, espn_id)",
+          "coverage": "all"
+        },
+        "load_schedules": {
+          "description": "Game schedules",
+          "coverage": "1999-2025"
+        },
+        "load_injuries": {
+          "description": "Injury reports",
+          "coverage": "recent"
+        },
+        "load_depth_charts": {
+          "description": "Team depth charts",
+          "coverage": "2017-2025"
+        }
+      },
+      "notes": "Primary data source - professionally maintained with daily automated updates"
+    },
+    "cached_nfl_stats": {
+      "source": "Unknown (cached dataset)",
+      "acquisition_method": "Pre-existing cache",
+      "location": "src/cached_data/NFL Stats 2012-2024/",
+      "format": "CSV",
+      "size": "209 MB",
+      "last_updated": null,
+      "coverage": {
+        "years": "2012 Week 1 - 2024 Super Bowl (Week 22)",
+        "verified": true,
+        "notes": "Player stats incomplete for 2012 Weeks 1-11 and 2024 Weeks 16-22. Team stats are most complete."
+      },
+      "files": 8,
+      "best_for": "Team-level weekly and season stats 2012-2024",
+      "recommendation": "Keep - most complete team stats dataset",
+      "notes": "Comprehensive player/team statistics - 468+ fields. Team stats complete through 2024 Super Bowl."
+    },
+    "cached_nfl_scraper": {
+      "source": "NFL_Scraper (cached dataset)",
+      "acquisition_method": "Pre-existing cache",
+      "location": "src/cached_data/NFL_Scraper/",
+      "format": "CSV",
+      "size": "256 MB",
+      "last_updated": "2025-10-20",
+      "coverage": {
+        "years": "2017 Hall of Fame Game (8/3/2017) - 2025 Week 7 (10/20/2025)",
+        "verified": true,
+        "latest_game": "2025 Week 7, Monday 10/20/2025 - Texans @ Seahawks"
+      },
+      "files": 449,
+      "best_for": "Play-by-play analysis 2017-2025",
+      "recommendation": "Keep - essential for play-level and drive analysis",
+      "notes": "Individual play-level data. Most detailed dataset available. Includes preseason."
+    },
+    "cached_historical_stats": {
+      "source": "NFL-Statistics-Scrape",
+      "acquisition_method": "Pre-existing cache",
+      "location": "src/cached_data/NFL-Statistics-Scrape/",
+      "format": "CSV",
+      "size": "94 MB",
+      "last_updated": "2016",
+      "coverage": {
+        "years": "1970-2016",
+        "verified": true
+      },
+      "files": 19,
+      "best_for": "Historical game logs and career stats 1970-2016",
+      "recommendation": "Keep - fills historical gap between 1970-2011",
+      "notes": "Career stats and game logs by position. Complements modern datasets."
+    },
+    "draft_value_charts": {
+      "source": "Rich Hill's Draft Value Chart",
+      "source_url": "https://platform.patspulpit.com/wp-content/uploads/sites/121/chorus/uploads/chorus_asset/file/8422367/Capture.PNG",
+      "acquisition_category": "reference_data",
+      "acquisition_method": "Manual extraction from published chart",
+      "access_pattern": "pd.read_csv('data/reference/draft_value_charts/rich_hill_draft_values.csv')",
+      "last_updated": "2025-10-31",
+      "location": "data/reference/draft_value_charts/",
+      "format": "CSV",
+      "files": 4,
+      "coverage": {
+        "picks": "1-256 (all draft picks)",
+        "verified": true
+      },
+      "fields": ["pick", "value"],
+      "notes": "Four draft value charts available for comparison/analysis: (1) Jimmy Johnson (classic, most widely used), (2) Rich Hill (modern update), (3) Fitzgerald-Spielberger (highest valuations), (4) Harvard (empirically derived). Different methodologies and scales allow for robust trade analysis.",
+      "charts": {
+        "jimmy_johnson": {
+          "file": "jimmy_johnson_draft_values.csv",
+          "pick_1_value": 3000,
+          "coverage_picks": 256,
+          "description": "Classic Jimmy Johnson chart (created by Mike McCoy) - most widely used by NFL teams historically"
+        },
+        "rich_hill": {
+          "file": "rich_hill_draft_values.csv",
+          "pick_1_value": 1000.00,
+          "coverage_picks": 256,
+          "description": "Rich Hill's updated draft value chart - modern recalibration"
+        },
+        "fitzgerald_spielberger": {
+          "file": "fitzgerald_spielberger_draft_values.csv",
+          "pick_1_value": 3000,
+          "coverage_picks": 256,
+          "description": "Fitzgerald-Spielberger draft value chart - similar scale to Jimmy Johnson but different curve"
+        },
+        "harvard": {
+          "file": "harvard_draft_values.csv",
+          "pick_1_value": 494.6,
+          "coverage_picks": 224,
+          "description": "Harvard Sports Analytics Collective draft value chart - empirically derived from actual player performance"
+        }
+      }
+    }
+  },
+  "data_quality": {
+    "primary_player_id": "gsis_id",
+    "secondary_player_id": "pfr_player_id",
+    "id_mapping_source": "nflreadpy.load_ids()",
+    "gaps": [
+      "GM tenure data now complete (32/32 teams)",
+      "Coach tenure: needs extraction from games.csv",
+      "RAS scores: need to calculate from combine data"
+    ]
+  },
+  "cleanup_completed": {
+    "date": "2025-10-31",
+    "deleted": [
+      "nfldata repo (7.2 GB)",
+      "NFL_Scraper repo (349 MB)",
+      "historical-nfl-draft-data repo (6.5 MB)",
+      "cached nfl-draft-data (21 MB)"
+    ],
+    "total_saved": "7.6 GB",
+    "final_size": "~562 MB (down from 8.1 GB)"
+  },
+  "next_steps": [
+    "Build 4 simple CSV loaders (team stats, historical stats, PBP, GM combiner)",
+    "Extract coach tenure from nflreadpy.load_schedules()",
+    "Calculate RAS scores from combine data",
+    "Begin data transformation phase"
+  ]
+}
