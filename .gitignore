@@ -55,3 +55,8 @@ Thumbs.db
 *.log
 .env
 .env.local
+
+# Data directories (exclude large datasets, keep reference data)
+data/cached/
+data/raw/
+src/cached_data/
