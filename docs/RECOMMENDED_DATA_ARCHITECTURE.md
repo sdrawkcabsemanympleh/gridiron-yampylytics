@@ -351,6 +351,7 @@ import nflreadpy as nfl
 from datetime import datetime
 from pathlib import Path
 
+
 def update_current_season(cache_dir: Path):
     """Update current season data weekly."""
 
@@ -374,8 +375,9 @@ def update_current_season(cache_dir: Path):
 
     print(f"Update complete: {datetime.now()}")
 
+
 if __name__ == "__main__":
-    cache_dir = Path("src/cached_data")
+    cache_dir = Path("../src/cached_data")
     update_current_season(cache_dir)
 ```
 

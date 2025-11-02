@@ -132,23 +132,27 @@ def cache_combine(cache_dir: Path) -> None:
 def cache_contracts(cache_dir: Path) -> None:
     """Cache player contracts (no season filter - loads all).
 
+    Saved as Parquet because contracts contain nested year-by-year data.
+
     :param cache_dir: Directory to save cached files
     """
     print("Loading player contracts (all years)...")
     df = nfl.load_contracts()
 
-    output_file = cache_dir / "contracts_all.csv"
-    df.write_csv(output_file)
-    print(f"  ✓ Saved {len(df):,} rows to {output_file}")
+    output_file = cache_dir / "contracts_all.parquet"
+    df.write_parquet(output_file)
+    print(f"  ✓ Saved {len(df):,} rows to {output_file} (Parquet format - includes nested year-by-year contract details)")
 
 
 def cache_ids(cache_dir: Path) -> None:
     """Cache player ID mappings (no season filter - loads all).
 
+    Uses load_ff_playerids (fantasy football player IDs) for cross-platform ID mapping.
+
     :param cache_dir: Directory to save cached files
     """
     print("Loading player ID mappings...")
-    df = nfl.load_ids()
+    df = nfl.load_ff_playerids()
 
     output_file = cache_dir / "player_ids_all.csv"
     df.write_csv(output_file)
@@ -172,13 +176,39 @@ def cache_schedules(seasons: int | list[int] | bool, cache_dir: Path) -> None:
 def cache_injuries(seasons: int | list[int] | bool, cache_dir: Path) -> None:
     """Cache injury reports.
 
-    :param seasons: Season(s) to load
+    Walks forward from 2009 until hitting a 404, loading all available years.
+
+    :param seasons: Season(s) to load (if True, auto-detects available years)
     :param cache_dir: Directory to save cached files
     """
-    print(f"Loading injuries (seasons={seasons})...")
-    df = nfl.load_injuries(seasons=seasons)
+    if seasons is True:
+        # Walk forward from 2009 until we hit a year that doesn't exist
+        print("Loading injuries (auto-detecting available years)...")
+        from datetime import datetime
+        current_year = datetime.now().year
+        start_year = 2009  # injuries data starts in 2009
 
-    output_file = cache_dir / "injuries_all.csv" if seasons is True else cache_dir / f"injuries_{seasons}.csv"
+        available_seasons = []
+        for year in range(start_year, current_year + 1):
+            try:
+                # Test if this year exists
+                test_df = nfl.load_injuries(seasons=year)
+                available_seasons.append(year)
+            except Exception:
+                # Year doesn't exist, we've reached the end
+                break
+
+        if not available_seasons:
+            raise Exception("No injury data available")
+
+        print(f"  Found injury data for {len(available_seasons)} seasons ({min(available_seasons)}-{max(available_seasons)})")
+        df = nfl.load_injuries(seasons=available_seasons)
+        output_file = cache_dir / "injuries_all.csv"
+    else:
+        print(f"Loading injuries (seasons={seasons})...")
+        df = nfl.load_injuries(seasons=seasons)
+        output_file = cache_dir / f"injuries_{seasons}.csv"
+
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
 
@@ -264,38 +294,75 @@ def main() -> None:
     print("="*80)
     print()
 
-    try:
-        if args.dataset == "all":
-            # Cache all datasets
-            print("Caching all datasets...\n")
+    # Track successes and failures
+    successful = []
+    failed = []
 
-            # Cache season-based datasets
-            for name, func in SEASON_DATASETS.items():
+    if args.dataset == "all":
+        # Cache all datasets
+        print("Caching all datasets...\n")
+
+        # Cache season-based datasets
+        for name, func in SEASON_DATASETS.items():
+            try:
                 func(seasons, cache_dirs[name])
+                successful.append(name)
+            except Exception as e:
+                print(f"  ⚠️  Failed: {e}")
+                failed.append((name, str(e)))
 
-            # Cache non-season datasets
-            for name, func in NO_SEASON_DATASETS.items():
+        # Cache non-season datasets
+        for name, func in NO_SEASON_DATASETS.items():
+            try:
                 func(cache_dirs[name])
+                successful.append(name)
+            except Exception as e:
+                print(f"  ⚠️  Failed: {e}")
+                failed.append((name, str(e)))
 
-        elif args.dataset in SEASON_DATASETS:
-            # Cache specific season-based dataset
+    elif args.dataset in SEASON_DATASETS:
+        # Cache specific season-based dataset
+        try:
             SEASON_DATASETS[args.dataset](seasons, cache_dirs[args.dataset])
+            successful.append(args.dataset)
+        except Exception as e:
+            print(f"\n❌ Error: {e}")
+            failed.append((args.dataset, str(e)))
 
-        elif args.dataset in NO_SEASON_DATASETS:
-            # Cache specific non-season dataset
-            if args.seasons:
-                print(f"Warning: {args.dataset} doesn't support season filtering. Ignoring --seasons.")
+    elif args.dataset in NO_SEASON_DATASETS:
+        # Cache specific non-season dataset
+        if args.seasons:
+            print(f"Warning: {args.dataset} doesn't support season filtering. Ignoring --seasons.")
+        try:
             NO_SEASON_DATASETS[args.dataset](cache_dirs[args.dataset])
+            successful.append(args.dataset)
+        except Exception as e:
+            print(f"\n❌ Error: {e}")
+            failed.append((args.dataset, str(e)))
 
-        print("\n" + "="*80)
-        print("✓ Caching complete!")
-        print("="*80)
-        print(f"\nData cached in: data/cached/nflreadpy/")
-        print("You can now import these CSVs into your SQL tool of choice.")
+    # Print summary
+    print("\n" + "="*80)
+    print("CACHING SUMMARY")
+    print("="*80)
 
-    except Exception as e:
-        print(f"\n❌ Error during caching: {e}")
-        sys.exit(1)
+    if successful:
+        print(f"\n✅ Successfully cached {len(successful)} dataset(s):")
+        for name in successful:
+            print(f"   • {name}")
+
+    if failed:
+        print(f"\n⚠️  Failed to cache {len(failed)} dataset(s):")
+        for name, error in failed:
+            print(f"   • {name}: {error[:80]}...")
+
+    print("\n" + "="*80)
+    print(f"Data cached in: data/cached/nflreadpy/")
+    print("You can now import these CSVs into your SQL tool of choice.")
+
+    if failed and not successful:
+        sys.exit(1)  # Exit with error if everything failed
+    elif failed:
+        sys.exit(0)  # Exit successfully if some succeeded (warnings only)
 
 
 if __name__ == "__main__":

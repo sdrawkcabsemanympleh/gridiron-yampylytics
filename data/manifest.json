@@ -228,10 +228,32 @@
     "total_saved": "7.6 GB",
     "final_size": "~562 MB (down from 8.1 GB)"
   },
-  "next_steps": [
-    "Build 4 simple CSV loaders (team stats, historical stats, PBP, GM combiner)",
-    "Extract coach tenure from nflreadpy.load_schedules()",
-    "Calculate RAS scores from combine data",
-    "Begin data transformation phase"
+  "data_acquisition_status": {
+    "phase": "COMPLETE",
+    "date_completed": "2025-10-31",
+    "total_rows": "3.1M+",
+    "scripts_created": [
+      "scripts/cache_nflreadpy_data.py (10 datasets, auto-detects available years)",
+      "scripts/download_gm_data.py (32 teams, Selenium scraper)",
+      "scripts/retry_failed_gm_data.py (retry utility with --all flag)"
+    ],
+    "reproducible_sources": {
+      "nflreadpy": "Run cache_nflreadpy_data.py to download all 10 datasets",
+      "gm_executives": "Run download_gm_data.py to scrape all 32 teams from PFR"
+    },
+    "static_sources": {
+      "cached_nfl_stats": "Keep - unique team-level aggregations (468+ fields), source unknown",
+      "cached_nfl_scraper": "Keep - NFL.com PBP may have unique schema vs nflreadpy",
+      "cached_historical_stats": "Keep - irreplaceable 1970-2011 historical data"
+    },
+    "ready_for_next_phase": true
+  },
+  "next_phase": "data_transformation",
+  "transformation_tasks": [
+    "Build combiners (merge 32 GM CSVs into single table)",
+    "Calculate derived metrics (RAS scores from combine data)",
+    "Extract coach tenure from schedules",
+    "Load into SQL database for exploration",
+    "Begin GM performance analysis"
   ]
 }
