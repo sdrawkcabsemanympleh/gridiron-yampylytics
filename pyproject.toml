@@ -16,7 +16,15 @@ dependencies = [
     "lxml>=6.0.2",
     "selenium>=4.38.0",
     "webdriver-manager>=4.0.2",
+    "harlequin>=2.4.1",
+    "duckdb>=1.4.2",
 ]
+
+default_profile = "my_duckdb_profile"
+
+[profiles.my_duckdb_profile]
+adapter = "duckdb"
+conn_str = ["my_database.duckdb"]
 
 [tool.ruff]
 line-length = 120
