@@ -59,4 +59,5 @@ Thumbs.db
 # Data directories (exclude large datasets, keep reference data)
 data/cached/
 data/raw/
+data/processed/
 src/cached_data/
