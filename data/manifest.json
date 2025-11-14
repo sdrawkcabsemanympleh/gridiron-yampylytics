@@ -12,24 +12,11 @@
       "update_method": "Automatic (package handles downloads)",
       "datasets": ["nflreadpy"]
     },
-    "git_repository": {
-      "description": "Data in git repos, updated via git pull",
-      "access_pattern": "cd repo && git pull; then read CSVs",
-      "update_method": "Manual git pull (or scheduled)",
-      "datasets": [],
-      "status": "DELETED - All git repos removed, using nflreadpy instead"
-    },
     "active_scrape": {
       "description": "Data acquired by running scraper scripts (slow, respectful delays)",
       "access_pattern": "uv run python -m scripts.download_*",
       "update_method": "Manual script execution",
       "datasets": ["gm_executives"]
-    },
-    "cached_static": {
-      "description": "Pre-scraped data snapshots, read directly from disk",
-      "access_pattern": "pd.read_csv('src/cached_data/...')",
-      "update_method": "Static (update by re-scraping if needed)",
-      "datasets": ["cached_nfl_stats", "cached_nfl_scraper", "cached_historical_stats"]
     },
     "reference_data": {
       "description": "Static reference data (value charts, lookup tables)",
@@ -113,56 +100,6 @@
       },
       "notes": "Primary data source - professionally maintained with daily automated updates"
     },
-    "cached_nfl_stats": {
-      "source": "Unknown (cached dataset)",
-      "acquisition_method": "Pre-existing cache",
-      "location": "src/cached_data/NFL Stats 2012-2024/",
-      "format": "CSV",
-      "size": "209 MB",
-      "last_updated": null,
-      "coverage": {
-        "years": "2012 Week 1 - 2024 Super Bowl (Week 22)",
-        "verified": true,
-        "notes": "Player stats incomplete for 2012 Weeks 1-11 and 2024 Weeks 16-22. Team stats are most complete."
-      },
-      "files": 8,
-      "best_for": "Team-level weekly and season stats 2012-2024",
-      "recommendation": "Keep - most complete team stats dataset",
-      "notes": "Comprehensive player/team statistics - 468+ fields. Team stats complete through 2024 Super Bowl."
-    },
-    "cached_nfl_scraper": {
-      "source": "NFL_Scraper (cached dataset)",
-      "acquisition_method": "Pre-existing cache",
-      "location": "src/cached_data/NFL_Scraper/",
-      "format": "CSV",
-      "size": "256 MB",
-      "last_updated": "2025-10-20",
-      "coverage": {
-        "years": "2017 Hall of Fame Game (8/3/2017) - 2025 Week 7 (10/20/2025)",
-        "verified": true,
-        "latest_game": "2025 Week 7, Monday 10/20/2025 - Texans @ Seahawks"
-      },
-      "files": 449,
-      "best_for": "Play-by-play analysis 2017-2025",
-      "recommendation": "Keep - essential for play-level and drive analysis",
-      "notes": "Individual play-level data. Most detailed dataset available. Includes preseason."
-    },
-    "cached_historical_stats": {
-      "source": "NFL-Statistics-Scrape",
-      "acquisition_method": "Pre-existing cache",
-      "location": "src/cached_data/NFL-Statistics-Scrape/",
-      "format": "CSV",
-      "size": "94 MB",
-      "last_updated": "2016",
-      "coverage": {
-        "years": "1970-2016",
-        "verified": true
-      },
-      "files": 19,
-      "best_for": "Historical game logs and career stats 1970-2016",
-      "recommendation": "Keep - fills historical gap between 1970-2011",
-      "notes": "Career stats and game logs by position. Complements modern datasets."
-    },
     "draft_value_charts": {
       "source": "Rich Hill's Draft Value Chart",
       "source_url": "https://platform.patspulpit.com/wp-content/uploads/sites/121/chorus/uploads/chorus_asset/file/8422367/Capture.PNG",
@@ -218,33 +155,40 @@
     ]
   },
   "cleanup_completed": {
-    "date": "2025-10-31",
+    "date": "2025-11-14",
     "deleted": [
       "nfldata repo (7.2 GB)",
       "NFL_Scraper repo (349 MB)",
       "historical-nfl-draft-data repo (6.5 MB)",
-      "cached nfl-draft-data (21 MB)"
+      "cached nfl-draft-data (21 MB)",
+      "cached_nfl_stats (209 MB) - redundant with nflreadpy",
+      "cached_nfl_scraper (256 MB) - redundant with nflreadpy",
+      "cached_historical_stats (94 MB) - modern-era focus"
     ],
-    "total_saved": "7.6 GB",
-    "final_size": "~562 MB (down from 8.1 GB)"
+    "total_saved": "8.2 GB",
+    "final_size": "~3 MB reference data (down from 8.2 GB)",
+    "notes": "All data now reproducible via 2 loaders: nflreadpy + GM scraper"
   },
   "data_acquisition_status": {
-    "phase": "COMPLETE",
-    "date_completed": "2025-10-31",
+    "phase": "COMPLETE - FULLY REPRODUCIBLE",
+    "date_completed": "2025-11-14",
     "total_rows": "3.1M+",
     "scripts_created": [
       "scripts/cache_nflreadpy_data.py (10 datasets, auto-detects available years)",
       "scripts/download_gm_data.py (32 teams, Selenium scraper)",
-      "scripts/retry_failed_gm_data.py (retry utility with --all flag)"
+      "scripts/retry_failed_gm_data.py (retry utility with --all flag)",
+      "scripts/load_all_data.py (unified loader - runs all data acquisition)"
     ],
     "reproducible_sources": {
-      "nflreadpy": "Run cache_nflreadpy_data.py to download all 10 datasets",
-      "gm_executives": "Run download_gm_data.py to scrape all 32 teams from PFR"
+      "nflreadpy": "uv run python -m scripts.cache_nflreadpy_data --all",
+      "gm_executives": "uv run python -m scripts.download_gm_data",
+      "all_data": "uv run python -m scripts.load_all_data"
     },
-    "static_sources": {
-      "cached_nfl_stats": "Keep - unique team-level aggregations (468+ fields), source unknown",
-      "cached_nfl_scraper": "Keep - NFL.com PBP may have unique schema vs nflreadpy",
-      "cached_historical_stats": "Keep - irreplaceable 1970-2011 historical data"
+    "historical_data_note": {
+      "repo": "https://github.com/kendallgillies/NFL-Statistics-Scrape",
+      "coverage": "1970-2016 historical stats",
+      "status": "Available if needed for historical GM analysis (pre-2000)",
+      "loader": "Not implemented - repo exists but untested, would need to build loader if historical analysis required"
     },
     "ready_for_next_phase": true
   },

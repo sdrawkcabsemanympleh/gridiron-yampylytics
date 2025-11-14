@@ -1,5 +1,7 @@
 # NFL Data Sources - Quick Reference
 
+This doc was created during the exploration stage to see what sources are around, what's in them, and document that.  It's a good reference to see what's there, but also contains some about the status at the time.
+
 ## Summary Table
 
 | Source | Type | Size | Last Updated | Coverage | Quality | Recommendation | Priority |

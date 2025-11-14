@@ -377,7 +377,7 @@ def update_current_season(cache_dir: Path):
 
 
 if __name__ == "__main__":
-    cache_dir = Path("../src/cached_data")
+    cache_dir = Path("../../src/cached_data")
     update_current_season(cache_dir)
 ```
 

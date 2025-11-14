@@ -1,0 +1,33 @@
+pfr_code,nflverse_code,team_name,franchise,city,conference,division,founded,notes
+crd,ARI,Arizona Cardinals,Cardinals,Arizona,NFC,West,1898,Relocated from St. Louis 1988
+atl,ATL,Atlanta Falcons,Falcons,Atlanta,NFC,South,1966,
+rav,BAL,Baltimore Ravens,Ravens,Baltimore,AFC,North,1996,Relocated from Cleveland 1996
+buf,BUF,Buffalo Bills,Bills,Buffalo,AFC,East,1960,
+car,CAR,Carolina Panthers,Panthers,Carolina,NFC,South,1995,
+chi,CHI,Chicago Bears,Bears,Chicago,NFC,North,1920,
+cin,CIN,Cincinnati Bengals,Bengals,Cincinnati,AFC,North,1968,
+cle,CLE,Cleveland Browns,Browns,Cleveland,AFC,North,1999,Expansion 1999 (original Browns became Ravens)
+dal,DAL,Dallas Cowboys,Cowboys,Dallas,NFC,East,1960,
+den,DEN,Denver Broncos,Broncos,Denver,AFC,West,1960,
+det,DET,Detroit Lions,Lions,Detroit,NFC,North,1930,
+gnb,GB,Green Bay Packers,Packers,Green Bay,NFC,North,1921,
+htx,HOU,Houston Texans,Texans,Houston,AFC,South,2002,Expansion 2002
+clt,IND,Indianapolis Colts,Colts,Indianapolis,AFC,South,1953,Relocated from Baltimore 1984
+jax,JAX,Jacksonville Jaguars,Jaguars,Jacksonville,AFC,South,1995,
+kan,KC,Kansas City Chiefs,Chiefs,Kansas City,AFC,West,1960,Relocated from Dallas 1963
+sdg,LAC,Los Angeles Chargers,Chargers,Los Angeles,AFC,West,1960,Relocated from San Diego 2017
+ram,LA,Los Angeles Rams,Rams,Los Angeles,NFC,West,1936,Relocated from St. Louis 2016
+rai,LV,Las Vegas Raiders,Raiders,Las Vegas,AFC,West,1960,Relocated from Oakland 2020
+mia,MIA,Miami Dolphins,Dolphins,Miami,AFC,East,1966,
+min,MIN,Minnesota Vikings,Vikings,Minnesota,NFC,North,1961,
+nwe,NE,New England Patriots,Patriots,New England,AFC,East,1960,
+nor,NO,New Orleans Saints,Saints,New Orleans,NFC,South,1967,
+nyg,NYG,New York Giants,Giants,New York,NFC,East,1925,
+nyj,NYJ,New York Jets,Jets,New York,AFC,East,1960,
+phi,PHI,Philadelphia Eagles,Eagles,Philadelphia,NFC,East,1933,
+pit,PIT,Pittsburgh Steelers,Steelers,Pittsburgh,AFC,North,1933,
+sfo,SF,San Francisco 49ers,49ers,San Francisco,NFC,West,1946,
+sea,SEA,Seattle Seahawks,Seahawks,Seattle,NFC,West,1976,
+tam,TB,Tampa Bay Buccaneers,Buccaneers,Tampa Bay,NFC,South,1976,
+oti,TEN,Tennessee Titans,Titans,Tennessee,AFC,South,1960,Relocated from Houston 1997
+was,WAS,Washington Commanders,Commanders,Washington,NFC,East,1932,Rebranded from Football Team 2022
