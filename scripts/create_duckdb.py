@@ -1,3 +1,5 @@
+"""Creates a duckdb database with all present data with auto-generated schemas."""
+
 import duckdb
 import os
 from pathlib import Path
