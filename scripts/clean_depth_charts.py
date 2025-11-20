@@ -98,7 +98,7 @@ def clean_depth_charts() -> tuple[int, int]:
                         row[10],  # jersey_number
                         row[11],  # position
                         row[12],  # elias_id
-                        row[13].strip() if row[13] else '',  # depth_position (CLEAN NEWLINES)
+                        row[13].replace('\n', ' ').replace('\r', ' ').strip() if row[13] else '',  # depth_position (CLEAN NEWLINES)
                         row[14]   # full_name
                     ]
                     legacy_writer.writerow(legacy_row)
