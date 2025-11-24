@@ -381,11 +381,13 @@ def calculate_yas_prior_years() -> pd.DataFrame:
         # Filter to only include current year and earlier
         df_subset = df_all[df_all['season'] <= year].copy()
 
-        # Calculate scores using only data up to this year
-        df_year = calculate_metric_scores(df_subset[df_subset['season'] == year])
-        df_year = calculate_raw_yas(df_year)
-        df_year = normalize_yas(df_year)
+        # Calculate scores using ALL data up to this year
+        df_subset_scored = calculate_metric_scores(df_subset)
+        df_subset_scored = calculate_raw_yas(df_subset_scored)
+        df_subset_scored = normalize_yas(df_subset_scored)
 
+        # Extract only current year's results
+        df_year = df_subset_scored[df_subset_scored['season'] == year].copy()
         all_years.append(df_year)
 
     df = pd.concat(all_years, ignore_index=True)
