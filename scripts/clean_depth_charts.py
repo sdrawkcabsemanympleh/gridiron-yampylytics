@@ -26,8 +26,8 @@ def clean_depth_charts() -> tuple[int, int]:
     :return: Tuple of (legacy_rows, modern_rows) written
     """
     # File paths
-    input_file = Path(__file__).parent.parent / "data" / "cached" / "nflreadpy" / "depth_charts" / "depth_charts_all.csv"
-    output_dir = Path(__file__).parent.parent / "data" / "processed"
+    input_file = Path(__file__).parent.parent / "data" / "nflverse" / "depth_charts.csv"
+    output_dir = Path(__file__).parent.parent / "data" / "nflverse"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     legacy_file = output_dir / "depth_charts_legacy.csv"
@@ -146,11 +146,11 @@ def main() -> None:
         print("=" * 80)
         print()
         print("Output files:")
-        print(f"  Legacy (2001-2023): data/processed/depth_charts_legacy.csv")
+        print(f"  Legacy (2001-2023): data/nflverse/depth_charts_legacy.csv")
         print(f"    Rows: {legacy_count:,}")
         print(f"    Columns: 15 (season, team, week, player, position, etc.)")
         print()
-        print(f"  Modern (2024-2025): data/processed/depth_charts_modern.csv")
+        print(f"  Modern (2024-2025): data/nflverse/depth_charts_modern.csv")
         print(f"    Rows: {modern_count:,}")
         print(f"    Columns: 12 (gsis_id, timestamp, team, position groups, rank)")
         print()
@@ -162,11 +162,11 @@ def main() -> None:
         print()
         print("  -- Load legacy data")
         print("  CREATE TABLE depth_legacy AS")
-        print("  SELECT * FROM 'data/processed/depth_charts_legacy.csv';")
+        print("  SELECT * FROM 'data/nflverse/depth_charts_legacy.csv';")
         print()
         print("  -- Load modern data")
         print("  CREATE TABLE depth_modern AS")
-        print("  SELECT * FROM 'data/processed/depth_charts_modern.csv';")
+        print("  SELECT * FROM 'data/nflverse/depth_charts_modern.csv';")
         print()
         print("  -- Query all depth charts (UNION)")
         print("  SELECT season, club_code as team, position, gsis_id")

@@ -40,23 +40,22 @@ def setup_cache_dirs() -> dict[str, Path]:
 
     :return: Dictionary mapping dataset names to their cache directories
     """
-    base_dir = Path(__file__).parent.parent / "data" / "cached" / "nflreadpy"
+    base_dir = Path(__file__).parent.parent / "data" / "nflverse"
+    base_dir.mkdir(parents=True, exist_ok=True)
 
+    # All files go directly in data/nflverse/ (no subdirectories)
     dirs = {
-        "pbp": base_dir / "play_by_play",
-        "player_stats": base_dir / "player_stats",
-        "rosters": base_dir / "rosters",
-        "draft_picks": base_dir / "draft_picks",
-        "combine": base_dir / "combine",
-        "contracts": base_dir / "contracts",
-        "ids": base_dir / "player_ids",
-        "schedules": base_dir / "schedules",
-        "injuries": base_dir / "injuries",
-        "depth_charts": base_dir / "depth_charts",
+        "pbp": base_dir,
+        "player_stats": base_dir,
+        "rosters": base_dir,
+        "draft_picks": base_dir,
+        "combine": base_dir,
+        "contracts": base_dir,
+        "ids": base_dir,
+        "schedules": base_dir,
+        "injuries": base_dir,
+        "depth_charts": base_dir,
     }
-
-    for dir_path in dirs.values():
-        dir_path.mkdir(parents=True, exist_ok=True)
 
     return dirs
 
@@ -70,7 +69,7 @@ def cache_pbp(seasons: int | list[int] | bool, cache_dir: Path) -> None:
     print(f"Loading play-by-play data (seasons={seasons})...")
     df = nfl.load_pbp(seasons=seasons)
 
-    output_file = cache_dir / "pbp_all.csv" if seasons is True else cache_dir / f"pbp_{seasons}.csv"
+    output_file = cache_dir / "pbp.csv" if seasons is True else cache_dir / f"pbp_{seasons}.csv"
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
 
@@ -84,7 +83,7 @@ def cache_player_stats(seasons: int | list[int] | bool, cache_dir: Path) -> None
     print(f"Loading player stats (seasons={seasons})...")
     df = nfl.load_player_stats(seasons=seasons)
 
-    output_file = cache_dir / "player_stats_all.csv" if seasons is True else cache_dir / f"player_stats_{seasons}.csv"
+    output_file = cache_dir / "player_stats.csv" if seasons is True else cache_dir / f"player_stats_{seasons}.csv"
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
 
@@ -98,7 +97,7 @@ def cache_rosters(seasons: int | list[int] | bool, cache_dir: Path) -> None:
     print(f"Loading rosters (seasons={seasons})...")
     df = nfl.load_rosters(seasons=seasons)
 
-    output_file = cache_dir / "rosters_all.csv" if seasons is True else cache_dir / f"rosters_{seasons}.csv"
+    output_file = cache_dir / "rosters.csv" if seasons is True else cache_dir / f"rosters_{seasons}.csv"
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
 
@@ -111,7 +110,7 @@ def cache_draft_picks(cache_dir: Path) -> None:
     print("Loading draft picks (all years)...")
     df = nfl.load_draft_picks()
 
-    output_file = cache_dir / "draft_picks_all.csv"
+    output_file = cache_dir / "draft_picks.csv"
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
 
@@ -124,7 +123,7 @@ def cache_combine(cache_dir: Path) -> None:
     print("Loading combine results (all years)...")
     df = nfl.load_combine()
 
-    output_file = cache_dir / "combine_all.csv"
+    output_file = cache_dir / "combine.csv"
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
 
@@ -139,7 +138,7 @@ def cache_contracts(cache_dir: Path) -> None:
     print("Loading player contracts (all years)...")
     df = nfl.load_contracts()
 
-    output_file = cache_dir / "contracts_all.parquet"
+    output_file = cache_dir / "contracts.parquet"
     df.write_parquet(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file} (Parquet format - includes nested year-by-year contract details)")
 
@@ -154,7 +153,7 @@ def cache_ids(cache_dir: Path) -> None:
     print("Loading player ID mappings...")
     df = nfl.load_ff_playerids()
 
-    output_file = cache_dir / "player_ids_all.csv"
+    output_file = cache_dir / "player_ids.csv"
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
 
@@ -168,7 +167,7 @@ def cache_schedules(seasons: int | list[int] | bool, cache_dir: Path) -> None:
     print(f"Loading schedules (seasons={seasons})...")
     df = nfl.load_schedules(seasons=seasons)
 
-    output_file = cache_dir / "schedules_all.csv" if seasons is True else cache_dir / f"schedules_{seasons}.csv"
+    output_file = cache_dir / "schedules.csv" if seasons is True else cache_dir / f"schedules_{seasons}.csv"
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
 
@@ -203,7 +202,7 @@ def cache_injuries(seasons: int | list[int] | bool, cache_dir: Path) -> None:
 
         print(f"  Found injury data for {len(available_seasons)} seasons ({min(available_seasons)}-{max(available_seasons)})")
         df = nfl.load_injuries(seasons=available_seasons)
-        output_file = cache_dir / "injuries_all.csv"
+        output_file = cache_dir / "injuries.csv"
     else:
         print(f"Loading injuries (seasons={seasons})...")
         df = nfl.load_injuries(seasons=seasons)
@@ -222,7 +221,7 @@ def cache_depth_charts(seasons: int | list[int] | bool, cache_dir: Path) -> None
     print(f"Loading depth charts (seasons={seasons})...")
     df = nfl.load_depth_charts(seasons=seasons)
 
-    output_file = cache_dir / "depth_charts_all.csv" if seasons is True else cache_dir / f"depth_charts_{seasons}.csv"
+    output_file = cache_dir / "depth_charts.csv" if seasons is True else cache_dir / f"depth_charts_{seasons}.csv"
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
 
@@ -290,7 +289,7 @@ def main() -> None:
     print("="*80)
     print(f"Dataset: {args.dataset}")
     print(f"Seasons: {seasons if seasons is not None else 'current season'}")
-    print(f"Cache location: data/cached/nflreadpy/")
+    print(f"Cache location: data/nflverse/")
     print("="*80)
     print()
 
@@ -356,7 +355,7 @@ def main() -> None:
             print(f"   • {name}: {error[:80]}...")
 
     print("\n" + "="*80)
-    print(f"Data cached in: data/cached/nflreadpy/")
+    print(f"Data cached in: data/nflverse/")
     print("You can now import these CSVs into your SQL tool of choice.")
 
     if failed and not successful:

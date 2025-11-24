@@ -1,8 +1,8 @@
 {
   "metadata": {
     "created": "2025-10-31",
-    "last_updated": "2025-10-31",
-    "version": "1.0.0",
+    "last_updated": "2025-11-19",
+    "version": "2.0.0",
     "description": "Data inventory for gridiron-yampylytics NFL analytics project"
   },
   "acquisition_categories": {
@@ -35,6 +35,8 @@
       "script": "scripts/download_gm_data.py",
       "last_updated": "2025-10-31",
       "location": "data/raw/executives/",
+      "processed_location": "data/reference/gm_tenures.csv",
+      "processing_script": "scripts/combine_gm_data.py",
       "format": "CSV",
       "files": 32,
       "coverage": {
@@ -52,6 +54,8 @@
       "acquisition_method": "Python package (uv add nflreadpy)",
       "access_pattern": "import nflreadpy as nfl; data = nfl.load_*()",
       "format": "Polars DataFrame",
+      "cached_location": "data/nflverse/",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
       "last_updated": "daily (automated)",
       "coverage": {
         "verified": true
@@ -105,9 +109,9 @@
       "source_url": "https://platform.patspulpit.com/wp-content/uploads/sites/121/chorus/uploads/chorus_asset/file/8422367/Capture.PNG",
       "acquisition_category": "reference_data",
       "acquisition_method": "Manual extraction from published chart",
-      "access_pattern": "pd.read_csv('data/reference/draft_value_charts/rich_hill_draft_values.csv')",
+      "access_pattern": "pd.read_csv('data/reference/draft_values_*.csv')",
       "last_updated": "2025-10-31",
-      "location": "data/reference/draft_value_charts/",
+      "location": "data/reference/",
       "format": "CSV",
       "files": 4,
       "coverage": {
@@ -118,25 +122,25 @@
       "notes": "Four draft value charts available for comparison/analysis: (1) Jimmy Johnson (classic, most widely used), (2) Rich Hill (modern update), (3) Fitzgerald-Spielberger (highest valuations), (4) Harvard (empirically derived). Different methodologies and scales allow for robust trade analysis.",
       "charts": {
         "jimmy_johnson": {
-          "file": "jimmy_johnson_draft_values.csv",
+          "file": "draft_values_jimmy_johnson.csv",
           "pick_1_value": 3000,
           "coverage_picks": 256,
           "description": "Classic Jimmy Johnson chart (created by Mike McCoy) - most widely used by NFL teams historically"
         },
         "rich_hill": {
-          "file": "rich_hill_draft_values.csv",
+          "file": "draft_values_rich_hill.csv",
           "pick_1_value": 1000.00,
           "coverage_picks": 256,
           "description": "Rich Hill's updated draft value chart - modern recalibration"
         },
         "fitzgerald_spielberger": {
-          "file": "fitzgerald_spielberger_draft_values.csv",
+          "file": "draft_values_fitzgerald_spielberger.csv",
           "pick_1_value": 3000,
           "coverage_picks": 256,
           "description": "Fitzgerald-Spielberger draft value chart - similar scale to Jimmy Johnson but different curve"
         },
         "harvard": {
-          "file": "harvard_draft_values.csv",
+          "file": "draft_values_harvard.csv",
           "pick_1_value": 494.6,
           "coverage_picks": 224,
           "description": "Harvard Sports Analytics Collective draft value chart - empirically derived from actual player performance"
@@ -192,12 +196,57 @@
     },
     "ready_for_next_phase": true
   },
-  "next_phase": "data_transformation",
-  "transformation_tasks": [
-    "Build combiners (merge 32 GM CSVs into single table)",
-    "Calculate derived metrics (RAS scores from combine data)",
+  "data_reorganization": {
+    "date": "2025-11-19",
+    "version": "2.0.0",
+    "changes": [
+      "Migrated from data/cached/nflreadpy/* to data/nflverse/",
+      "Removed _all suffix from filenames (pbp_all.csv → pbp.csv)",
+      "Flattened draft_value_charts subdirectory into data/reference/",
+      "Moved processed files to appropriate schemas (gm_tenures.csv → data/reference/)",
+      "Created clean DuckDB schemas: nflverse, reference, yas, raw"
+    ],
+    "directory_structure": {
+      "nflverse": "Cached nflreadpy datasets (12 files)",
+      "reference": "Reference data and lookup tables (6 files)",
+      "yas": "Calculated athletic scores (RAS variants)",
+      "raw": "Raw scraped data (32 team executive files)"
+    },
+    "duckdb_schemas": {
+      "nflverse": ["pbp", "player_stats", "rosters", "schedules", "injuries", "depth_charts", "depth_charts_legacy", "depth_charts_modern", "draft_picks", "combine", "contracts", "player_ids"],
+      "reference": ["gm_tenures", "team_code_mapping", "draft_values_jimmy_johnson", "draft_values_rich_hill", "draft_values_fitzgerald_spielberger", "draft_values_harvard"],
+      "yas": ["ras_2025", "ras_historical"],
+      "raw_executives": ["32 team files (atl_executives, buf_executives, etc.)"]
+    }
+  },
+  "transformation_scripts": {
+    "combine_gm_data": {
+      "script": "scripts/combine_gm_data.py",
+      "input": "data/raw/executives/*.csv (32 files)",
+      "output": "data/reference/gm_tenures.csv",
+      "status": "complete",
+      "records": 369
+    },
+    "clean_depth_charts": {
+      "script": "scripts/clean_depth_charts.py",
+      "input": "data/nflverse/depth_charts.csv",
+      "output": ["data/nflverse/depth_charts_legacy.csv", "data/nflverse/depth_charts_modern.csv"],
+      "status": "complete",
+      "records": "869,185 legacy + 223,875 modern"
+    },
+    "calculate_ras": {
+      "script": "scripts/calculate_ras.py",
+      "input": "data/nflverse/combine.csv",
+      "output": ["data/yas/ras_2025.csv", "data/yas/ras_historical.csv"],
+      "status": "planned",
+      "description": "Calculate Relative Athletic Scores from combine data"
+    }
+  },
+  "next_phase": "athletic_score_calculation",
+  "pending_tasks": [
+    "Implement RAS calculator (8 of 10 metrics available)",
     "Extract coach tenure from schedules",
-    "Load into SQL database for exploration",
-    "Begin GM performance analysis"
+    "Begin GM performance analysis",
+    "Position mapping normalization for depth charts"
   ]
 }

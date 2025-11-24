@@ -7,7 +7,7 @@ Usage:
     uv run python -m scripts.combine_gm_data
 
 Output:
-    data/processed/gm_tenures.csv - Combined GM data with team codes
+    data/reference/gm_tenures.csv - Combined GM data with team codes
 """
 import sys
 from pathlib import Path
@@ -172,7 +172,7 @@ def main() -> None:
     print()
 
     # Create output directory
-    output_dir = Path(__file__).parent.parent / "data" / "processed"
+    output_dir = Path(__file__).parent.parent / "data" / "reference"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Save combined file

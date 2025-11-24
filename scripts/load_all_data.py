@@ -63,7 +63,7 @@ def main() -> None:
     print("=" * 80)
     print()
     print("Data locations:")
-    print("  - nflreadpy: data/cached/nflreadpy/")
+    print("  - nflreadpy: data/nflverse/")
     print("  - GM executives: data/raw/executives/")
     print()
     print("Next steps:")
