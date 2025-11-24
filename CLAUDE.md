@@ -50,7 +50,7 @@ Follow the Python style guidelines:
 - Minimal whitespace (PEP8 required only)
 - No multi-line or nested list comprehensions
 - Descriptive variable names
-- No lazy imports without good reason
+- No lazy imports without good reason... a _really_ good reason
 
 ## Architecture Notes
 
