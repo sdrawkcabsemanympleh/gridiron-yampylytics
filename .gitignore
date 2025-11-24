@@ -57,7 +57,7 @@ Thumbs.db
 .env.local
 
 # Data directories (exclude large datasets, keep reference data)
-data/cached/
+data/nflverse/
+data/yas/
 data/raw/
-data/processed/
 src/cached_data/

@@ -49,33 +49,33 @@ def parse_height(ht_str: str) -> float | None:
         return None
 
 
-def create_position_mapping() -> dict[str, list[str]]:
+def create_position_mapping() -> dict[str, set[str]]:
     """Create mapping of position codes to normalized groups.
 
-    :return: Dict mapping normalized position to list of variant codes
+    :return: Dict mapping normalized position to set of variant codes
     """
     # TODO: Expand this as we discover more position variants in depth charts
     mapping = {
-        'QB': ['QB'],
-        'RB': ['RB', 'HB', 'FB'],
-        'WR': ['WR', 'FL', 'SE'],
-        'TE': ['TE'],
-        'OT': ['OT', 'LT', 'RT'],
-        'OG': ['OG', 'LG', 'RG'],
-        'C': ['C'],
-        'DT': ['DT', 'NT', 'LDT', 'RDT'],
-        'DE': ['DE', 'LDE', 'RDE'],
-        'LB': ['LB', 'OLB', 'ILB', 'MLB', 'WLB', 'SLB'],
-        'CB': ['CB', 'LCB', 'RCB'],
-        'S': ['S', 'SS', 'FS'],
-        'K': ['K', 'PK'],
-        'P': ['P'],
-        'LS': ['LS']
+        'QB': {'QB'},
+        'RB': {'RB', 'HB', 'FB'},
+        'WR': {'WR', 'FL', 'SE'},
+        'TE': {'TE'},
+        'OT': {'OT', 'LT', 'RT'},
+        'OG': {'OG', 'LG', 'RG'},
+        'C': {'C'},
+        'DT': {'DT', 'NT', 'LDT', 'RDT'},
+        'DE': {'DE', 'LDE', 'RDE'},
+        'LB': {'LB', 'OLB', 'ILB', 'MLB', 'WLB', 'SLB'},
+        'CB': {'CB', 'LCB', 'RCB'},
+        'S': {'S', 'SS', 'FS'},
+        'K': {'K', 'PK'},
+        'P': {'P'},
+        'LS': {'LS'}
     }
     return mapping
 
 
-def normalize_position(pos: str, mapping: dict[str, list[str]]) -> str:
+def normalize_position(pos: str, mapping: dict[str, set[str]]) -> str:
     """Normalize a position code to standard group.
 
     :param pos: Position code to normalize
@@ -93,7 +93,7 @@ def normalize_position(pos: str, mapping: dict[str, list[str]]) -> str:
 
     # Find which group this position belongs to
     for normalized, variants in mapping.items():
-        if pos in [v.upper() for v in variants]:
+        if pos in {v.upper() for v in variants}:
             return normalized
 
     # Return original if no mapping found
