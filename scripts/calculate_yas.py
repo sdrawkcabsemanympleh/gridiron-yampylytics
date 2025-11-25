@@ -188,37 +188,52 @@ def expand_for_positions(
     print("Expanding rows for multi-position players...")
 
     pos_mapping = create_position_mapping()
-    expanded_rows = []
 
-    for idx, row in combine_df.iterrows():
+    # Normalize combine positions for all rows at once
+    combine_df['combine_position'] = combine_df['pos'].apply(
+        lambda x: normalize_position(x, pos_mapping)
+    )
+
+    # Build expansion data structure
+    expanded_data = []
+
+    for idx in range(len(combine_df)):
+        row = combine_df.iloc[idx]
         gsis_id = row.get('gsis_id')
-        combine_pos = normalize_position(row.get('pos'), pos_mapping)
+        combine_pos = row['combine_position']
 
         # Get positions this player played in NFL
         positions_played = positions_dict.get(gsis_id, []) if pd.notna(gsis_id) else []
 
         # If we have NFL positions, create row for each position
-        # Also include combine position if not already in the list
         if positions_played:
             all_positions = set(positions_played)
             if combine_pos:
                 all_positions.add(combine_pos)
+            positions_str = ','.join(sorted(all_positions))
 
             for calc_pos in all_positions:
-                new_row = row.copy()
-                new_row['combine_position'] = combine_pos
-                new_row['calculated_position'] = calc_pos
-                new_row['positions_played'] = ','.join(sorted(all_positions))
-                expanded_rows.append(new_row)
+                expanded_data.append({
+                    'idx': idx,
+                    'calculated_position': calc_pos,
+                    'positions_played': positions_str
+                })
         else:
             # No NFL data - just use combine position
-            new_row = row.copy()
-            new_row['combine_position'] = combine_pos
-            new_row['calculated_position'] = combine_pos
-            new_row['positions_played'] = combine_pos if combine_pos else ''
-            expanded_rows.append(new_row)
+            expanded_data.append({
+                'idx': idx,
+                'calculated_position': combine_pos,
+                'positions_played': combine_pos if combine_pos else ''
+            })
 
-    df_expanded = pd.DataFrame(expanded_rows)
+    # Create expansion DataFrame
+    df_expansion = pd.DataFrame(expanded_data)
+
+    # Merge back with original data using iloc indexing
+    df_expanded = combine_df.iloc[df_expansion['idx'].values].reset_index(drop=True)
+    df_expanded['calculated_position'] = df_expansion['calculated_position'].values
+    df_expanded['positions_played'] = df_expansion['positions_played'].values
+
     print(f"  ✓ Expanded to {len(df_expanded):,} rows ({len(combine_df):,} → {len(df_expanded):,})")
 
     return df_expanded
@@ -377,7 +392,11 @@ def calculate_yas_prior_years() -> pd.DataFrame:
     all_years = []
 
     seasons = sorted(df_all['season'].dropna().unique())
-    for year in seasons:
+    total_seasons = len(seasons)
+
+    for i, year in enumerate(seasons, 1):
+        print(f"  Processing {year} ({i}/{total_seasons})...", end='', flush=True)
+
         # Filter to only include current year and earlier
         df_subset = df_all[df_all['season'] <= year].copy()
 
@@ -390,8 +409,10 @@ def calculate_yas_prior_years() -> pd.DataFrame:
         df_year = df_subset_scored[df_subset_scored['season'] == year].copy()
         all_years.append(df_year)
 
+        print(f" ✓ ({len(df_year)} rows, cumulative dataset: {len(df_subset)} rows)")
+
     df = pd.concat(all_years, ignore_index=True)
-    print(f"  ✓ Processed {len(seasons)} seasons")
+    print(f"  ✓ Processed {total_seasons} seasons total")
     print()
 
     # Add normalization method
