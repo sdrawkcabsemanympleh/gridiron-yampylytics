@@ -9,6 +9,8 @@
 
 This document catalogs all identifier mismatches across NFL datasets and provides mapping strategies for joins. **Ignoring these mappings will result in failed joins and missing data.**
 
+This ideally will only be a reference and sanity check.  While adding another ID into the mix risks just adding more to the mess, `yamplayer_id` and other universal ID's are being generated and can be inserted into all of the datasets to abstract all of this.  Ideally, this will all be abstracted and this document can just collect dust. 
+
 ---
 
 ## Player ID Systems
