@@ -2,6 +2,17 @@
 
 NFL analytics toolkit with GM performance analysis, athletic scoring (YAS), and comprehensive NFL data from 1999-2025.
 
+The goal of this repository is to make this as easy as possible to get started.  The idea is to make a simple tool that will pull the data you want and save them locally for you to explore with whatever tooling you want.  It provides a nice SQL exploration tool to help.  It has some useful quries stored.  Maybe some visualization, too.  Want to use Pandas?  Cool, we've got `nflreadpy` here.  Love SQL?  Got you some CSV's.  
+
+With it, there's effort to try to take off sharp edges, like the wide array of various ID's that may or may not exist for any given player.  On that, I decided to add another ID (yamplayer_id)--though I was reticent to throw another into the ring.  However, the goal is to utilize the others, hash them, and create a unique ID which you can reliably join on without having to worry about it.  It is injected into every data table.
+
+For datasets of reasonable size, which take a long time to gather, or are static, I've tried to include here without having to gather them yourself.  I can't guarantee they're up to date, though, so please make sure to check them for the most recent data if they're included and not static.
+
+Also, a note on YAS data.  Originally, I'd planned to include RAS data, but the links to download it directly are broken, and I didn't want to scrape it when most of the combine data used is available through `nflreadpy`.  It does mean that it misses two of the drills of the ten.  Rather than try to find less reliable data sources or scraping RAS, I decided to compute it without those two.  That's also because there's a quirk about RAS data; it isn't recomputed every year.  The idea is that it ranks players by their percentile for their position, but if it isn't refreshed yearly with every new class, the meaning of the metric changes.  It is not a measure of a player's athletic score given all known players in draft classes before _and_ after, but only with respect to the players who have come before them.  So, I have two versions.  One is calculated like RAS, named historical, which calculates based on the players who have gone through the combine at the time that player does their testing.  The other calculates their score based on every player, regardless of whether they came before.  So, all of that is to say that YAS should ideally follow RAS and is heavily inspired by it, but is not exactly the same.
+
+On depth charts, you'll notice there's a legacy and modern.  The schema in `nflreadpy` changed after the 2024 year for some reason, and is now completely different.  I have them as different datasets.  I may attempt to reconcilethem at some point, but at time of writing, have not.  It might be worth double checking whether I did since writing this, since it's easy to forget updating a readme.
+
+
 ## Quick Start
 
 **1. Install dependencies:**
@@ -39,6 +50,10 @@ uv run python -m scripts.create_duckdb
 
 # Launch interactive SQL explorer (Harlequin)
 uv run harlequin gridiron_yampylytics.db
+```
+If you are using Windows, you may run into a time zone formatting issue.  If you do, you will need to add `--no-download-tzdata` onto the end of the command.  This shouldn't cause issues given the data included.  Full command:
+```bash
+uv run harlequin gridiron_yampylytics.db --no-download-tzdata
 ```
 
 ## Development
