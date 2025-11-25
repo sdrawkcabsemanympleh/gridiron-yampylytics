@@ -16,7 +16,7 @@ Usage:
     # Cache current season only
     uv run python -m scripts.cache_nflreadpy_data
 
-Available datasets:
+Available datasets (currently implemented):
     - pbp: Play-by-play data (1999-2025)
     - player_stats: Weekly/seasonal player statistics (2012-2025)
     - rosters: Weekly rosters (2006-2025)
@@ -27,6 +27,25 @@ Available datasets:
     - schedules: Game schedules (1999-2025)
     - injuries: Injury reports (recent)
     - depth_charts: Team depth charts (2017-2025)
+
+Additional datasets available from nflreadr (not yet implemented):
+    - qbr: ESPN Quarterback Ratings
+    - nextgen_stats: Next Gen Stats (player tracking, speed, separation, etc.)
+    - snap_counts: Player snap count statistics
+    - participation: Player game participation records
+    - ftn_charting: Film charting analysis data
+    - trades: Player trade transactions
+    - players: Player profile information
+    - team_stats: Aggregate team performance data
+    - pfr_passing: Pro Football Reference passing statistics
+    - roster_status: Practice squad, IR, active roster designations
+    - ff_opportunity: Fantasy football opportunity metrics
+    - ff_rankings: Fantasy football player rankings
+
+To add these datasets:
+    1. Add caching function (e.g., cache_nextgen_stats)
+    2. Add to SEASON_DATASETS or NO_SEASON_DATASETS dict
+    3. Test with: uv run python -m scripts.cache_nflreadpy_data --dataset nextgen_stats --all
 """
 import sys
 import argparse
@@ -224,6 +243,35 @@ def cache_depth_charts(seasons: int | list[int] | bool, cache_dir: Path) -> None
     output_file = cache_dir / "depth_charts.csv" if seasons is True else cache_dir / f"depth_charts_{seasons}.csv"
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
+
+
+# ============================================================================
+# ADDITIONAL DATASETS (not yet implemented)
+# ============================================================================
+# To add new datasets, follow this pattern:
+#
+# def cache_nextgen_stats(seasons: int | list[int] | bool, cache_dir: Path) -> None:
+#     """Cache Next Gen Stats (player tracking data)."""
+#     print(f"Loading Next Gen Stats (seasons={seasons})...")
+#     df = nfl.load_nextgen_stats(seasons=seasons)
+#     output_file = cache_dir / "nextgen_stats.csv" if seasons is True else cache_dir / f"nextgen_stats_{seasons}.csv"
+#     df.write_csv(output_file)
+#     print(f"  ✓ Saved {len(df):,} rows to {output_file}")
+#
+# Then add to SEASON_DATASETS dict below:
+#     "nextgen_stats": cache_nextgen_stats,
+#
+# Available functions from nflreadpy:
+#     - nfl.load_nextgen_stats() - Next Gen tracking data
+#     - nfl.load_snap_counts() - Player snap counts
+#     - nfl.load_qbr() - ESPN QB ratings
+#     - nfl.load_trades() - Trade transactions
+#     - nfl.load_participation() - Game participation
+#     - nfl.load_team_stats() - Team-level stats
+#     - nfl.load_pfr_passing() - PFR passing stats
+#     - nfl.load_ftn_charting() - Film charting data
+#     - And more! See: https://nflreadr.nflverse.com/articles/index.html
+# ============================================================================
 
 
 # Dataset configuration: which datasets support season filtering
