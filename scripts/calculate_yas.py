@@ -24,10 +24,183 @@ Output:
     data/yas/yas_historical.csv
 """
 import sys
+import heapq
 from pathlib import Path
 from typing import Any
+from dataclasses import dataclass, field
 import pandas as pd
 import numpy as np
+
+
+@dataclass
+class PlayerMetric:
+    """Single player's metric value for heap sorting.
+
+    :param value: Metric value (e.g., 40-yard dash time)
+    :param player_id: Unique identifier for the player
+    :param season: Year of combine
+    :param row_data: Full row data for later retrieval
+    """
+    value: float
+    player_id: str
+    season: int
+    row_data: dict[str, Any] = field(repr=False)
+
+    def __lt__(self, other: 'PlayerMetric') -> bool:
+        """Compare by value for heap sorting."""
+        return self.value < other.value
+
+
+class PercentileCalculator:
+    """Manages incremental percentile calculation using heaps.
+
+    Tracks metrics across years, calculating percentiles based on all prior data.
+    Uses blue-green heap swapping to avoid re-sorting.
+
+    :param metric_name: Name of the metric (e.g., 'forty', 'vertical')
+    :param lower_is_better: If True, use max heap (negate values)
+    """
+
+    def __init__(self, metric_name: str, lower_is_better: bool = False):
+        self.metric_name = metric_name
+        self.lower_is_better = lower_is_better
+        self.heaps_by_position: dict[str, list[PlayerMetric]] = {}
+
+    def add_players(self, players: list[PlayerMetric], position: str) -> None:
+        """Add players to position-specific heap.
+
+        :param players: List of PlayerMetric objects
+        :param position: Position group (e.g., 'QB', 'WR')
+        """
+        if position not in self.heaps_by_position:
+            self.heaps_by_position[position] = []
+
+        heap = self.heaps_by_position[position]
+        for player in players:
+            # For lower_is_better metrics, negate for max heap behavior
+            if self.lower_is_better:
+                player.value = -player.value
+            heapq.heappush(heap, player)
+
+    def calculate_percentiles(self, position: str, season: int) -> dict[str, float]:
+        """Calculate percentiles for all players in position heap.
+
+        Pops all players, calculates percentiles, pushes to new heap.
+
+        :param position: Position group
+        :param season: Current season being processed
+        :return: Dict mapping player_id to percentile score (0-10)
+        """
+        if position not in self.heaps_by_position:
+            return {}
+
+        old_heap = self.heaps_by_position[position]
+        heap_length = len(old_heap)
+
+        if heap_length == 0:
+            return {}
+
+        # Pop all players in sorted order
+        sorted_players = []
+        while old_heap:
+            sorted_players.append(heapq.heappop(old_heap))
+
+        # Calculate percentiles (position / total)
+        percentiles = {}
+        for rank, player in enumerate(sorted_players):
+            percentile = (rank / heap_length) * 10  # Convert to 0-10 scale
+            percentiles[player.player_id] = percentile
+
+        # Push back to heap (blue-green swap)
+        for player in sorted_players:
+            heapq.heappush(old_heap, player)
+
+        return percentiles
+
+
+class IncrementalYASCalculator:
+    """Calculates YAS scores incrementally year-by-year.
+
+    Maintains separate PercentileCalculator for each metric.
+    """
+
+    def __init__(self):
+        self.metrics = [
+            ('ht_inches', True, 'ht'),
+            ('wt', True, 'wt'),
+            ('forty', False, 'forty'),
+            ('bench', True, 'bench'),
+            ('vertical', True, 'vertical'),
+            ('broad_jump', True, 'broad_jump'),
+            ('cone', False, 'cone'),
+            ('shuttle', False, 'shuttle')
+        ]
+
+        # Create calculator for each metric
+        self.calculators = {}
+        for metric_col, higher_is_better, name in self.metrics:
+            lower_is_better = not higher_is_better
+            self.calculators[metric_col] = PercentileCalculator(name, lower_is_better)
+
+    def add_year_data(self, df_year: pd.DataFrame) -> None:
+        """Add one year's worth of combine data to all heaps.
+
+        :param df_year: DataFrame for single season
+        """
+        for metric_col, _, _ in self.metrics:
+            calculator = self.calculators[metric_col]
+
+            # Group by position
+            for position, group in df_year.groupby('calculated_position'):
+                players = []
+
+                # Extract values using vectorized operations
+                values = group[metric_col]
+                pfr_ids = group['pfr_id']
+                seasons = group['season']
+
+                for idx in range(len(group)):
+                    value = values.iloc[idx]
+                    if pd.notna(value):
+                        player = PlayerMetric(
+                            value=float(value),
+                            player_id=f"{pfr_ids.iloc[idx]}_{position}",
+                            season=int(seasons.iloc[idx]),
+                            row_data=group.iloc[idx].to_dict()
+                        )
+                        players.append(player)
+
+                if players:
+                    calculator.add_players(players, position)
+
+    def calculate_year_scores(self, df_year: pd.DataFrame) -> pd.DataFrame:
+        """Calculate scores for current year based on accumulated data.
+
+        :param df_year: DataFrame for single season
+        :return: DataFrame with score columns added
+        """
+        df_result = df_year.copy()
+
+        # Calculate percentiles for each metric
+        for metric_col, _, _ in self.metrics:
+            calculator = self.calculators[metric_col]
+            score_col = metric_col.replace('_inches', '') + '_score'
+
+            # Calculate percentiles for each position
+            df_result[score_col] = np.nan
+            for position in df_result['calculated_position'].unique():
+                percentiles = calculator.calculate_percentiles(position, df_year['season'].iloc[0])
+
+                # Map percentiles to DataFrame using vectorized mask
+                mask = df_result['calculated_position'] == position
+                position_rows = df_result[mask]
+
+                for idx in position_rows.index:
+                    player_id = f"{df_result.at[idx, 'pfr_id']}_{position}"
+                    if player_id in percentiles:
+                        df_result.at[idx, score_col] = percentiles[player_id]
+
+        return df_result
 
 
 def parse_height(ht_str: str) -> float | None:
@@ -161,16 +334,29 @@ def map_combine_to_gsis() -> pd.DataFrame:
     ids_file = base_dir / "player_ids.csv"
     df_ids = pd.read_csv(ids_file)
 
-    # Map pfr_id to gsis_id
+    # Filter to only non-null pfr_ids (avoid empty string matches)
+    df_ids_filtered = df_ids[df_ids['pfr_id'].notna() & (df_ids['pfr_id'] != '')]
+
+    # Deduplicate player IDs (one row per player, not per season)
+    df_ids_unique = df_ids_filtered[['pfr_id', 'gsis_id']].drop_duplicates(subset=['pfr_id'])
+
+    # Map pfr_id to gsis_id (only for non-null pfr_ids)
     print("  Mapping pfr_id to gsis_id...")
-    df = df.merge(
-        df_ids[['pfr_id', 'gsis_id']],
+    df_with_pfr = df[df['pfr_id'].notna() & (df['pfr_id'] != '')].copy()
+    df_without_pfr = df[~(df['pfr_id'].notna() & (df['pfr_id'] != ''))].copy()
+
+    df_with_pfr = df_with_pfr.merge(
+        df_ids_unique,
         on='pfr_id',
         how='left'
     )
 
+    # Concatenate back together
+    df = pd.concat([df_with_pfr, df_without_pfr], ignore_index=True)
+
     mapped_count = df['gsis_id'].notna().sum()
     print(f"  ✓ Mapped {mapped_count:,} of {len(df):,} records to gsis_id ({mapped_count/len(df)*100:.1f}%)")
+    print(f"  ✓ {len(df_without_pfr):,} records have no pfr_id (cannot be mapped)")
 
     return df
 
@@ -339,19 +525,18 @@ def calculate_yas_all_years() -> pd.DataFrame:
     print("=" * 80)
     print()
 
-    # Step 1: Extract positions played
-    positions_dict = extract_positions_played()
-    print()
-
-    # Step 2: Map combine to gsis_id
+    # Load combine data
     df = map_combine_to_gsis()
     print()
 
-    # Step 3: Expand for multi-position players
-    df = expand_for_positions(df, positions_dict)
+    # Normalize combine positions
+    print("Normalizing combine positions...")
+    pos_mapping = create_position_mapping()
+    df['calculated_position'] = df['pos'].apply(lambda x: normalize_position(x, pos_mapping))
+    print(f"  ✓ Using combine position only (no multi-position expansion)")
     print()
 
-    # Step 4-6: Calculate scores
+    # Calculate scores
     df = calculate_metric_scores(df)
     print()
     df = calculate_raw_yas(df)
@@ -368,51 +553,70 @@ def calculate_yas_all_years() -> pd.DataFrame:
 def calculate_yas_prior_years() -> pd.DataFrame:
     """Generate YAS normalized against only prior years (historical perspective).
 
+    Uses incremental heap-based calculation for performance.
+
     :return: DataFrame with YAS scores
     """
     print("\n" + "=" * 80)
-    print("CALCULATING YAS - PRIOR YEARS ONLY NORMALIZATION")
+    print("CALCULATING YAS - PRIOR YEARS ONLY NORMALIZATION (HEAP-BASED)")
     print("=" * 80)
     print()
 
-    # Step 1: Extract positions played
-    positions_dict = extract_positions_played()
-    print()
-
-    # Step 2: Map combine to gsis_id
+    # Load combine data
     df_all = map_combine_to_gsis()
     print()
 
-    # Step 3: Expand for multi-position players
-    df_all = expand_for_positions(df_all, positions_dict)
+    # Normalize combine positions
+    print("Normalizing combine positions...")
+    pos_mapping = create_position_mapping()
+    df_all['calculated_position'] = df_all['pos'].apply(lambda x: normalize_position(x, pos_mapping))
+    print(f"  ✓ Using combine position only (no multi-position expansion)")
+    print(f"  ✓ Total players: {len(df_all):,}")
     print()
 
-    # Process year by year
-    print("Processing by year (prior-years-only normalization)...")
+    # Initialize incremental calculator
+    print("Initializing heap-based calculator...")
+    calculator = IncrementalYASCalculator()
+    print("  ✓ Created 8 metric calculators (ht, wt, forty, bench, vertical, broad_jump, cone, shuttle)")
+    print()
+
+    # Process year by year using heaps
+    print("Processing year-by-year (incremental heap approach)...")
     all_years = []
 
     seasons = sorted(df_all['season'].dropna().unique())
     total_seasons = len(seasons)
 
     for i, year in enumerate(seasons, 1):
-        print(f"  Processing {year} ({i}/{total_seasons})...", end='', flush=True)
+        print(f"  [{i}/{total_seasons}] Processing {year}...", flush=True)
 
-        # Filter to only include current year and earlier
-        df_subset = df_all[df_all['season'] <= year].copy()
+        # Get current year's data
+        df_year = df_all[df_all['season'] == year].copy()
+        year_players = len(df_year)
 
-        # Calculate scores using ALL data up to this year
-        df_subset_scored = calculate_metric_scores(df_subset)
-        df_subset_scored = calculate_raw_yas(df_subset_scored)
-        df_subset_scored = normalize_yas(df_subset_scored)
+        # Add this year's players to heaps
+        print(f"    Adding {year_players} players to heaps...", end='', flush=True)
+        calculator.add_year_data(df_year)
+        print(" ✓")
 
-        # Extract only current year's results
-        df_year = df_subset_scored[df_subset_scored['season'] == year].copy()
-        all_years.append(df_year)
+        # Calculate percentiles for this year (based on accumulated data)
+        print(f"    Calculating percentiles (using all data up to {year})...", end='', flush=True)
+        df_year_scored = calculator.calculate_year_scores(df_year)
+        print(" ✓")
 
-        print(f" ✓ ({len(df_year)} rows, cumulative dataset: {len(df_subset)} rows)")
+        # Calculate raw YAS and normalize
+        print(f"    Computing raw YAS and final normalization...", end='', flush=True)
+        df_year_scored = calculate_raw_yas(df_year_scored)
+        df_year_scored = normalize_yas(df_year_scored)
+        print(" ✓")
+
+        all_years.append(df_year_scored)
+        print(f"    ✓ Year {year} complete: {len(df_year_scored)} rows saved")
+        print()
 
     df = pd.concat(all_years, ignore_index=True)
-    print(f"  ✓ Processed {total_seasons} seasons total")
+    print(f"✅ Processed {total_seasons} seasons successfully")
+    print(f"   Total output rows: {len(df):,}")
     print()
 
     # Add normalization method
@@ -436,8 +640,8 @@ def save_output(df: pd.DataFrame, filename: str) -> None:
     columns = [
         # Identifiers
         'gsis_id', 'pfr_id', 'player_name', 'season',
-        # Positions
-        'combine_position', 'calculated_position', 'positions_played',
+        # Position
+        'pos', 'calculated_position',
         # Metric scores
         'ht_score', 'wt_score', 'forty_score', 'bench_score',
         'vertical_score', 'broad_jump_score', 'cone_score', 'shuttle_score',
