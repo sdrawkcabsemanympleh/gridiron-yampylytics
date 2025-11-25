@@ -18,6 +18,7 @@ from typing import Any
 from dataclasses import dataclass, field
 import argparse
 import pandas as pd
+import duckdb
 
 
 @dataclass
@@ -248,11 +249,13 @@ def extract_player_identity(row: pd.Series, dataset_name: str) -> PlayerIdentity
 def collect_all_player_identities(data_dirs: list[Path]) -> dict[str, PlayerIdentity]:
     """PHASE 1: Collect all unique player identities from all datasets.
 
+    Uses DuckDB for efficient scanning of large CSV files without loading into memory.
+
     :param data_dirs: List of directories to scan
     :return: Dict mapping identity key to PlayerIdentity
     """
     print("=" * 80)
-    print("PHASE 1: COLLECTING PLAYER IDENTITIES FROM ALL DATASETS")
+    print("PHASE 1: COLLECTING PLAYER IDENTITIES FROM ALL DATASETS (DuckDB)")
     print("=" * 80)
     print()
 
@@ -265,6 +268,9 @@ def collect_all_player_identities(data_dirs: list[Path]) -> dict[str, PlayerIden
     print(f"Found {len(files_to_scan)} CSV files to scan")
     print()
 
+    # Connect to DuckDB (in-memory)
+    con = duckdb.connect(':memory:')
+
     # Dictionary to store unique identities (keyed by hash)
     identities: dict[int, PlayerIdentity] = {}
     total_rows = 0
@@ -274,11 +280,13 @@ def collect_all_player_identities(data_dirs: list[Path]) -> dict[str, PlayerIden
         print(f"Scanning {file_path.name}...", end=' ', flush=True)
 
         try:
-            df = pd.read_csv(file_path)
-            rows_in_file = 0
+            # First, peek at columns to see what we have
+            # Use strict_mode=false to handle non-RFC-compliant CSVs
+            peek_query = f"SELECT * FROM read_csv_auto('{file_path}', strict_mode=false) LIMIT 0"
+            columns = [col[0] for col in con.execute(peek_query).description]
 
             # Check if file has player data
-            has_player_data = any(col in df.columns for col in [
+            has_player_data = any(col in columns for col in [
                 'gsis_id', 'pfr_id', 'mfl_id', 'player_id', 'player_name', 'name',
                 'passer_id', 'rusher_id', 'receiver_id'
             ])
@@ -287,9 +295,68 @@ def collect_all_player_identities(data_dirs: list[Path]) -> dict[str, PlayerIden
                 print("SKIP (no player data)")
                 continue
 
-            # Extract identity from each row
-            for idx in range(len(df)):
-                row = df.iloc[idx]
+            # Build SELECT clause based on available columns
+            select_cols = []
+
+            # ID columns
+            for id_col in ['gsis_id', 'pfr_id', 'mfl_id', 'espn_id', 'stats_global_id',
+                          'passer_id', 'rusher_id', 'receiver_id', 'kicker_id', 'punter_id',
+                          'tackler_1_id', 'tackler_2_id', 'player_id']:
+                if id_col in columns:
+                    select_cols.append(id_col)
+
+            # Name columns
+            for name_col in ['player_name', 'name', 'full_name']:
+                if name_col in columns:
+                    select_cols.append(name_col)
+                    break
+
+            # Metadata columns
+            if 'birthdate' in columns:
+                select_cols.append('birthdate')
+
+            for season_col in ['season', 'year', 'game_year', 'draft_year']:
+                if season_col in columns:
+                    select_cols.append(season_col)
+                    break
+
+            for team_col in ['team', 'team_abbr', 'posteam', 'defteam']:
+                if team_col in columns:
+                    select_cols.append(team_col)
+                    break
+
+            for pos_col in ['position', 'pos', 'calculated_position']:
+                if pos_col in columns:
+                    select_cols.append(pos_col)
+                    break
+
+            if not select_cols:
+                print("SKIP (no usable columns)")
+                continue
+
+            # Query to get all player rows
+            # Use DISTINCT to reduce data volume before processing
+            # Use strict_mode=false to handle non-RFC-compliant CSVs
+            select_clause = ', '.join(select_cols)
+            query = f"""
+                SELECT DISTINCT {select_clause}
+                FROM read_csv_auto('{file_path}', strict_mode=false)
+            """
+
+            # Execute query and fetch results
+            results = con.execute(query).fetchall()
+            col_names = [col[0] for col in con.execute(query).description]
+
+            rows_in_file = 0
+
+            # Process each row
+            for row_tuple in results:
+                # Convert to dict for extract_player_identity
+                row_dict = dict(zip(col_names, row_tuple))
+
+                # Convert to pandas Series (extract_player_identity expects this)
+                row = pd.Series(row_dict)
+
                 identity = extract_player_identity(row, file_path.name)
 
                 if identity:
@@ -305,14 +372,16 @@ def collect_all_player_identities(data_dirs: list[Path]) -> dict[str, PlayerIden
                         identities[identity_hash] = identity
 
             total_rows += rows_in_file
-            print(f"OK ({rows_in_file:,} player rows, {len(identities):,} unique so far)")
+            print(f"OK ({rows_in_file:,} distinct rows, {len(identities):,} unique players so far)")
 
         except Exception as e:
             print(f"ERROR: {e}")
 
+    con.close()
+
     print()
     print(f"PHASE 1 COMPLETE:")
-    print(f"  Total rows scanned: {total_rows:,}")
+    print(f"  Total distinct rows scanned: {total_rows:,}")
     print(f"  Unique players found: {len(identities):,}")
     print()
 
