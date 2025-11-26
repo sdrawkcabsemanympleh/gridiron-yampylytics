@@ -78,6 +78,15 @@ def generate_yamplayer_id(row: pd.Series) -> str:
 def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) -> None:
     """Build unified_players table from all datasets using SQL.
 
+    Uses UPDATE-then-INSERT approach with tiered OR matching:
+    1. UPDATE existing rows to enrich with new data
+    2. INSERT only truly new players (not matched by ANY criteria)
+
+    Matching tiers:
+    - TIER 1: ANY official ID match (gsis_id, pfr_id, mfl_id, espn_id, stats_global_id)
+    - TIER 2: merge_name + birthdate
+    - TIER 3: Dataset-specific composite keys
+
     :param con: DuckDB connection
     :param base_dir: Base directory of project
     """
@@ -93,29 +102,29 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
     draft_file = base_dir / "data" / "nflverse" / "draft_picks.csv"
     yas_file = base_dir / "data" / "yas" / "yas_2025.csv"
 
-    # Step 1a: Load player_ids.csv as foundation (ignoring buggy yamplayer_id column)
+    # Step 1a: Load player_ids.csv as foundation (cast all to VARCHAR for consistency)
     print("Loading player_ids.csv as foundation...")
     query = f"""
         CREATE TABLE unified_players AS
         SELECT
-            gsis_id,
-            pfr_id,
-            mfl_id,
-            espn_id,
-            stats_global_id,
-            name,
-            merge_name,
-            birthdate,
-            position,
-            team,
-            draft_year,
-            draft_round,
-            draft_pick,
-            college,
-            height,
-            weight,
-            age,
-            db_season as season
+            CAST(gsis_id AS VARCHAR) as gsis_id,
+            CAST(pfr_id AS VARCHAR) as pfr_id,
+            CAST(mfl_id AS VARCHAR) as mfl_id,
+            CAST(espn_id AS VARCHAR) as espn_id,
+            CAST(stats_global_id AS VARCHAR) as stats_global_id,
+            CAST(name AS VARCHAR) as name,
+            CAST(merge_name AS VARCHAR) as merge_name,
+            CAST(birthdate AS VARCHAR) as birthdate,
+            CAST(position AS VARCHAR) as position,
+            CAST(team AS VARCHAR) as team,
+            CAST(draft_year AS VARCHAR) as draft_year,
+            CAST(draft_round AS VARCHAR) as draft_round,
+            CAST(draft_pick AS VARCHAR) as draft_pick,
+            CAST(college AS VARCHAR) as college,
+            CAST(height AS VARCHAR) as height,
+            CAST(weight AS VARCHAR) as weight,
+            CAST(age AS VARCHAR) as age,
+            CAST(db_season AS VARCHAR) as season
         FROM read_csv_auto('{player_ids_file}', strict_mode=false)
     """
     con.execute(query)
@@ -124,9 +133,41 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
     print(f"  ✓ Loaded {count:,} players from player_ids.csv")
     print()
 
-    # Step 1b: Add players from combine.csv who aren't in player_ids
-    print("Adding players from combine.csv...")
-    query = f"""
+    # Step 1b: Process combine.csv (UPDATE existing, then INSERT new)
+    print("Processing combine.csv...")
+
+    # First, UPDATE existing players with new data from combine
+    print("  Enriching existing players with combine data...")
+    update_query = f"""
+        UPDATE unified_players
+        SET
+            pfr_id = COALESCE(unified_players.pfr_id, c.pfr_id),
+            college = COALESCE(unified_players.college, c.school),
+            draft_year = COALESCE(unified_players.draft_year, c.draft_year),
+            draft_round = COALESCE(unified_players.draft_round, c.draft_round),
+            draft_pick = COALESCE(unified_players.draft_pick, c.draft_ovr),
+            team = COALESCE(unified_players.team, c.draft_team),
+            height = COALESCE(unified_players.height, CAST(c.ht AS VARCHAR)),
+            weight = COALESCE(unified_players.weight, CAST(c.wt AS VARCHAR))
+        FROM read_csv_auto('{combine_file}', strict_mode=false) c
+        WHERE c.player_name IS NOT NULL
+          AND (
+              -- TIER 1: ANY ID match
+              (c.pfr_id IS NOT NULL AND unified_players.pfr_id = c.pfr_id)
+              -- TIER 2: No birthdate in combine, skip this tier
+              -- TIER 3: Composite key (name + draft_year + school + position)
+           OR (unified_players.merge_name = LOWER(REGEXP_REPLACE(c.player_name, ' (jr|sr|ii|iii|iv|v)\\.?$', '', 'i'))
+               AND unified_players.draft_year = c.draft_year
+               AND unified_players.college = c.school
+               AND unified_players.position = c.pos)
+          )
+    """
+    con.execute(update_query)
+    print(f"    ✓ Updated existing players")
+
+    # Then, INSERT truly new players from combine
+    print("  Adding new players from combine...")
+    insert_query = f"""
         INSERT INTO unified_players
         SELECT DISTINCT
             NULL as gsis_id,
@@ -143,32 +184,65 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
             c.draft_round,
             c.draft_ovr as draft_pick,
             c.school as college,
-            c.ht as height,
-            c.wt as weight,
+            CAST(c.ht AS VARCHAR) as height,
+            CAST(c.wt AS VARCHAR) as weight,
             NULL as age,
             c.season
         FROM read_csv_auto('{combine_file}', strict_mode=false) c
         WHERE c.player_name IS NOT NULL
           AND NOT EXISTS (
               SELECT 1 FROM unified_players u
-              WHERE (c.pfr_id IS NOT NULL AND u.pfr_id = c.pfr_id)
-                 OR (u.merge_name = LOWER(REGEXP_REPLACE(c.player_name, ' (jr|sr|ii|iii|iv|v)\\.?$', '', 'i'))
-                     AND u.draft_year = c.draft_year
-                     AND u.college = c.school
-                     AND u.position = c.pos)
+              WHERE
+                  -- TIER 1: ANY ID match
+                  (c.pfr_id IS NOT NULL AND u.pfr_id = c.pfr_id)
+                  -- TIER 3: Composite key
+               OR (u.merge_name = LOWER(REGEXP_REPLACE(c.player_name, ' (jr|sr|ii|iii|iv|v)\\.?$', '', 'i'))
+                   AND u.draft_year = c.draft_year
+                   AND u.college = c.school
+                   AND u.position = c.pos)
           )
     """
-    con.execute(query)
+    con.execute(insert_query)
 
     new_count = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
     added = new_count - count
     count = new_count
-    print(f"  ✓ Added {added:,} combine-only players (total: {count:,})")
+    print(f"    ✓ Added {added:,} new players")
+    print(f"  ✓ Total after combine: {count:,}")
     print()
 
-    # Step 1c: Add players from rosters.csv who aren't in unified_players
-    print("Adding players from rosters.csv...")
-    query = f"""
+    # Step 1c: Process rosters.csv (UPDATE existing, then INSERT new)
+    print("Processing rosters.csv...")
+
+    # UPDATE existing players
+    print("  Enriching existing players with roster data...")
+    update_query = f"""
+        UPDATE unified_players
+        SET
+            gsis_id = COALESCE(unified_players.gsis_id, CAST(r.gsis_id AS VARCHAR)),
+            pfr_id = COALESCE(unified_players.pfr_id, CAST(r.pfr_id AS VARCHAR)),
+            espn_id = COALESCE(unified_players.espn_id, CAST(r.espn_id AS VARCHAR)),
+            birthdate = COALESCE(unified_players.birthdate, CAST(r.birth_date AS VARCHAR)),
+            college = COALESCE(unified_players.college, CAST(r.college AS VARCHAR))
+        FROM read_csv_auto('{rosters_file}', strict_mode=false) r
+        WHERE r.full_name IS NOT NULL
+          AND (
+              -- TIER 1: ANY ID match
+              (r.gsis_id IS NOT NULL AND CAST(unified_players.gsis_id AS VARCHAR) = CAST(r.gsis_id AS VARCHAR))
+           OR (r.pfr_id IS NOT NULL AND CAST(unified_players.pfr_id AS VARCHAR) = CAST(r.pfr_id AS VARCHAR))
+           OR (r.espn_id IS NOT NULL AND CAST(unified_players.espn_id AS VARCHAR) = CAST(r.espn_id AS VARCHAR))
+              -- TIER 2: merge_name + birthdate
+           OR (r.birth_date IS NOT NULL
+               AND CAST(unified_players.birthdate AS VARCHAR) = CAST(r.birth_date AS VARCHAR)
+               AND unified_players.merge_name = LOWER(REGEXP_REPLACE(r.full_name, ' (jr|sr|ii|iii|iv|v)\\.?$', '', 'i')))
+          )
+    """
+    con.execute(update_query)
+    print(f"    ✓ Updated existing players")
+
+    # INSERT new players
+    print("  Adding new players from rosters...")
+    insert_query = f"""
         INSERT INTO unified_players
         SELECT DISTINCT
             r.gsis_id,
@@ -176,41 +250,75 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
             NULL as mfl_id,
             r.espn_id,
             NULL as stats_global_id,
-            r.player_name as name,
-            LOWER(REGEXP_REPLACE(r.player_name, ' (jr|sr|ii|iii|iv|v)\\.?$', '', 'i')) as merge_name,
+            r.full_name as name,
+            LOWER(REGEXP_REPLACE(r.full_name, ' (jr|sr|ii|iii|iv|v)\\.?$', '', 'i')) as merge_name,
             r.birth_date as birthdate,
             r.position,
             r.team,
             r.entry_year as draft_year,
-            r.draft_number as draft_pick,
             NULL as draft_round,
+            r.draft_number as draft_pick,
             r.college,
-            r.height,
-            r.weight,
-            r.years_exp as age,
+            CAST(r.height AS VARCHAR) as height,
+            CAST(r.weight AS VARCHAR) as weight,
+            CAST(r.years_exp AS VARCHAR) as age,
             r.season
         FROM read_csv_auto('{rosters_file}', strict_mode=false) r
-        WHERE r.player_name IS NOT NULL
+        WHERE r.full_name IS NOT NULL
           AND NOT EXISTS (
               SELECT 1 FROM unified_players u
-              WHERE (r.gsis_id IS NOT NULL AND u.gsis_id = r.gsis_id)
-                 OR (r.pfr_id IS NOT NULL AND u.pfr_id = r.pfr_id)
-                 OR (r.espn_id IS NOT NULL AND u.espn_id = r.espn_id)
-                 OR (u.merge_name = LOWER(REGEXP_REPLACE(r.player_name, ' (jr|sr|ii|iii|iv|v)\\.?$', '', 'i'))
-                     AND u.birthdate = r.birth_date)
+              WHERE
+                  -- TIER 1: ANY ID match
+                  (r.gsis_id IS NOT NULL AND u.gsis_id = r.gsis_id)
+               OR (r.pfr_id IS NOT NULL AND u.pfr_id = r.pfr_id)
+               OR (r.espn_id IS NOT NULL AND u.espn_id = r.espn_id)
+                  -- TIER 2: merge_name + birthdate
+               OR (r.birth_date IS NOT NULL
+                   AND u.birthdate = r.birth_date
+                   AND u.merge_name = LOWER(REGEXP_REPLACE(r.full_name, ' (jr|sr|ii|iii|iv|v)\\.?$', '', 'i')))
           )
     """
-    con.execute(query)
+    con.execute(insert_query)
 
     new_count = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
     added = new_count - count
     count = new_count
-    print(f"  ✓ Added {added:,} roster-only players (total: {count:,})")
+    print(f"    ✓ Added {added:,} new players")
+    print(f"  ✓ Total after rosters: {count:,}")
     print()
 
-    # Step 1d: Add players from draft_picks.csv who aren't in unified_players
-    print("Adding players from draft_picks.csv...")
-    query = f"""
+    # Step 1d: Process draft_picks.csv (UPDATE existing, then INSERT new)
+    print("Processing draft_picks.csv...")
+
+    # UPDATE existing players
+    print("  Enriching existing players with draft data...")
+    update_query = f"""
+        UPDATE unified_players
+        SET
+            pfr_id = COALESCE(unified_players.pfr_id, d.pfr_player_id),
+            college = COALESCE(unified_players.college, d.college),
+            draft_year = COALESCE(unified_players.draft_year, d.season),
+            draft_round = COALESCE(unified_players.draft_round, d.round),
+            draft_pick = COALESCE(unified_players.draft_pick, d.pick),
+            team = COALESCE(unified_players.team, d.team),
+            age = COALESCE(unified_players.age, CAST(d.age AS VARCHAR))
+        FROM read_csv_auto('{draft_file}', strict_mode=false) d
+        WHERE d.pfr_player_name IS NOT NULL
+          AND (
+              -- TIER 1: ANY ID match
+              (d.pfr_player_id IS NOT NULL AND unified_players.pfr_id = d.pfr_player_id)
+              -- TIER 3: Natural key (draft slot is unique per year)
+           OR (unified_players.draft_year = d.season
+               AND unified_players.draft_round = d.round
+               AND unified_players.draft_pick = d.pick)
+          )
+    """
+    con.execute(update_query)
+    print(f"    ✓ Updated existing players")
+
+    # INSERT new players
+    print("  Adding new players from draft_picks...")
+    insert_query = f"""
         INSERT INTO unified_players
         SELECT DISTINCT
             NULL as gsis_id,
@@ -229,30 +337,58 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
             d.college,
             NULL as height,
             NULL as weight,
-            d.age,
+            CAST(d.age AS VARCHAR) as age,
             d.season
         FROM read_csv_auto('{draft_file}', strict_mode=false) d
         WHERE d.pfr_player_name IS NOT NULL
           AND NOT EXISTS (
               SELECT 1 FROM unified_players u
-              WHERE (d.pfr_player_id IS NOT NULL AND u.pfr_id = d.pfr_player_id)
-                 OR (u.draft_year = d.season
-                     AND u.draft_round = d.round
-                     AND u.draft_pick = d.pick)
+              WHERE
+                  -- TIER 1: ANY ID match
+                  (d.pfr_player_id IS NOT NULL AND u.pfr_id = d.pfr_player_id)
+                  -- TIER 3: Natural key
+               OR (u.draft_year = d.season
+                   AND u.draft_round = d.round
+                   AND u.draft_pick = d.pick)
           )
     """
-    con.execute(query)
+    con.execute(insert_query)
 
     new_count = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
     added = new_count - count
     count = new_count
-    print(f"  ✓ Added {added:,} draft-only players (total: {count:,})")
+    print(f"    ✓ Added {added:,} new players")
+    print(f"  ✓ Total after draft_picks: {count:,}")
     print()
 
-    # Step 1e: Add players from YAS who aren't in unified_players (very rare)
+    # Step 1e: Process YAS data (UPDATE existing, then INSERT new)
     if yas_file.exists():
-        print("Adding players from YAS data...")
-        query = f"""
+        print("Processing YAS data...")
+
+        # UPDATE existing players
+        print("  Enriching existing players with YAS data...")
+        update_query = f"""
+            UPDATE unified_players
+            SET
+                gsis_id = COALESCE(unified_players.gsis_id, y.gsis_id),
+                pfr_id = COALESCE(unified_players.pfr_id, y.pfr_id),
+                height = COALESCE(unified_players.height, CAST(y.ht_inches AS VARCHAR)),
+                weight = COALESCE(unified_players.weight, CAST(y.wt AS VARCHAR))
+            FROM read_csv_auto('{yas_file}', strict_mode=false) y
+            WHERE y.player_name IS NOT NULL
+              AND (
+                  -- TIER 1: ANY ID match
+                  (y.gsis_id IS NOT NULL AND unified_players.gsis_id = y.gsis_id)
+               OR (y.pfr_id IS NOT NULL AND unified_players.pfr_id = y.pfr_id)
+              )
+        """
+        con.execute(update_query)
+        updated = con.execute("SELECT changes()").fetchone()[0]
+        print(f"    ✓ Updated {updated:,} existing players")
+
+        # INSERT new players (should be very rare)
+        print("  Adding new players from YAS...")
+        insert_query = f"""
             INSERT INTO unified_players
             SELECT DISTINCT
                 y.gsis_id,
@@ -269,66 +405,31 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
                 NULL as draft_round,
                 NULL as draft_pick,
                 NULL as college,
-                y.ht_inches as height,
-                y.wt as weight,
+                CAST(y.ht_inches AS VARCHAR) as height,
+                CAST(y.wt AS VARCHAR) as weight,
                 NULL as age,
                 y.season
             FROM read_csv_auto('{yas_file}', strict_mode=false) y
             WHERE y.player_name IS NOT NULL
               AND NOT EXISTS (
                   SELECT 1 FROM unified_players u
-                  WHERE (y.pfr_id IS NOT NULL AND u.pfr_id = y.pfr_id)
-                     OR (y.gsis_id IS NOT NULL AND u.gsis_id = y.gsis_id)
+                  WHERE
+                      -- TIER 1: ANY ID match
+                      (y.gsis_id IS NOT NULL AND u.gsis_id = y.gsis_id)
+                   OR (y.pfr_id IS NOT NULL AND u.pfr_id = y.pfr_id)
               )
         """
-        con.execute(query)
+        con.execute(insert_query)
 
         new_count = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
         added = new_count - count
         count = new_count
-        print(f"  ✓ Added {added:,} YAS-only players (total: {count:,})")
+        print(f"    ✓ Added {added:,} new players")
+        print(f"  ✓ Total after YAS: {count:,}")
         print()
 
-    # Step 1f: Deduplicate by consolidating rows for same player
-    print("Deduplicating and consolidating player data...")
-    query = """
-        CREATE TABLE unified_players_dedup AS
-        SELECT
-            MAX(gsis_id) as gsis_id,
-            MAX(pfr_id) as pfr_id,
-            MAX(mfl_id) as mfl_id,
-            MAX(espn_id) as espn_id,
-            MAX(stats_global_id) as stats_global_id,
-            MAX(name) as name,
-            merge_name,
-            MAX(birthdate) as birthdate,
-            MAX(position) as position,
-            MAX(team) as team,
-            MAX(draft_year) as draft_year,
-            MAX(draft_round) as draft_round,
-            MAX(draft_pick) as draft_pick,
-            MAX(college) as college,
-            MAX(height) as height,
-            MAX(weight) as weight,
-            MAX(age) as age,
-            MAX(season) as season
-        FROM unified_players
-        GROUP BY
-            COALESCE(gsis_id, ''),
-            COALESCE(pfr_id, ''),
-            COALESCE(mfl_id, ''),
-            COALESCE(merge_name, ''),
-            COALESCE(birthdate, '')
-        HAVING COUNT(*) >= 1
-    """
-    con.execute(query)
-    con.execute("DROP TABLE unified_players")
-    con.execute("ALTER TABLE unified_players_dedup RENAME TO unified_players")
-
-    final_count = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
-    duplicates_removed = count - final_count
-    print(f"  ✓ Removed {duplicates_removed:,} duplicate entries")
-    print(f"  ✓ Final unified players count: {final_count:,}")
+    # No GROUP BY deduplication needed - the UPDATE-then-INSERT approach prevents duplicates
+    print(f"✓ Final unified players count: {count:,}")
     print()
 
 
