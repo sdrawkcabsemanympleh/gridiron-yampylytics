@@ -119,10 +119,12 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
           AND NOT EXISTS (
               SELECT 1 FROM unified_players u
               WHERE
+                  -- TIER 1: ID match
                   (c.pfr_id IS NOT NULL AND u.pfr_id = c.pfr_id)
+                  -- TIER 2: name + college (combine doesn't have birthdate)
                OR (u.merge_name = LOWER(REGEXP_REPLACE(TRIM(c.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i'))
-                   AND u.college = c.school
-                   AND u.position = c.pos)
+                   AND u.college IS NOT NULL
+                   AND u.college = c.school)
           )
     """)
 
@@ -192,7 +194,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
           AND (
               (d.pfr_player_id IS NOT NULL AND unified_players.pfr_id = d.pfr_player_id)
            OR (unified_players.merge_name = LOWER(REGEXP_REPLACE(TRIM(d.pfr_player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i'))
-               AND unified_players.position = d.position
+               AND unified_players.college IS NOT NULL
                AND unified_players.college = d.college)
           )
     """)
@@ -212,9 +214,11 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
           AND NOT EXISTS (
               SELECT 1 FROM unified_players u
               WHERE
+                  -- TIER 1: ID match
                   (d.pfr_player_id IS NOT NULL AND u.pfr_id = d.pfr_player_id)
+                  -- TIER 2: name + college (draft doesn't have birthdate)
                OR (u.merge_name = LOWER(REGEXP_REPLACE(TRIM(d.pfr_player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i'))
-                   AND u.position = d.position
+                   AND u.college IS NOT NULL
                    AND u.college = d.college)
           )
     """)
@@ -325,7 +329,7 @@ def apply_yamplayer_ids_to_datasets(
         (nflverse_dir / 'draft_picks.csv', 'pfr_player_id', 'pfr_player_name'),
         (nflverse_dir / 'player_stats.csv', 'player_id', 'player_display_name'),
         (nflverse_dir / 'injuries.csv', 'gsis_id', 'full_name'),
-        (nflverse_dir / 'depth_charts.csv', 'gsis_id', 'full_name'),
+        # (nflverse_dir / 'depth_charts.csv', 'gsis_id', 'full_name'),  # SKIP - corrupted data
         (yas_dir / 'yas_2025.csv', 'gsis_id', 'player_name'),
         (yas_dir / 'yas_historical.csv', 'gsis_id', 'player_name'),
     ]
@@ -338,7 +342,7 @@ def apply_yamplayer_ids_to_datasets(
         print(f"\nProcessing {file_path.name}...")
 
         # Load dataset
-        df = con.execute(f"SELECT * FROM read_csv_auto('{file_path}', strict_mode=false)").df()
+        df = con.execute(f"SELECT * FROM read_csv_auto('{file_path}', strict_mode=false, null_padding=true, parallel=false)").df()
         original_count = len(df)
 
         # Determine actual join column (gsis_id might be aliased as player_id)
