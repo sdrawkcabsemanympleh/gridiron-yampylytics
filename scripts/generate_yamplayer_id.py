@@ -28,6 +28,23 @@ def normalize_name_sql() -> str:
     return "LOWER(REGEXP_REPLACE(TRIM(name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i'))"
 
 
+def normalize_college_sql(college_field: str) -> str:
+    """Return SQL expression to normalize college names.
+
+    Args:
+        college_field: Name of the college column to normalize
+
+    Returns:
+        SQL expression that normalizes college names
+    """
+    return f"""
+        REGEXP_REPLACE(
+            REGEXP_REPLACE({college_field}, ' St\\.?$', ' State', 'i'),
+            ' Col\\.?$', ' College', 'i'
+        )
+    """
+
+
 def generate_yamplayer_id(row: dict) -> str:
     """Generate yamplayer_id hash from available identifiers.
 
@@ -76,8 +93,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
             name,
             {normalize_name_sql()} as merge_name,
             CAST(birthdate AS VARCHAR) as birthdate,
-            position,
-            college
+            {normalize_college_sql('college')} as college
         FROM read_csv_auto('{player_ids_file}', strict_mode=false)
         WHERE name IS NOT NULL
     """)
@@ -99,21 +115,20 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
           AND (
               (c.pfr_id IS NOT NULL AND unified_players.pfr_id = c.pfr_id)
            OR ({normalize_name_sql()} = LOWER(REGEXP_REPLACE(TRIM(c.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i'))
-               AND unified_players.college = c.school
-               AND unified_players.position = c.pos)
+               AND unified_players.college IS NOT NULL
+               AND unified_players.college = c.school)
           )
     """)
     print("  ✓ Enriched existing players with combine data")
 
     # INSERT: Add new players from combine
     con.execute(f"""
-        INSERT INTO unified_players (pfr_id, name, merge_name, position, college)
+        INSERT INTO unified_players (pfr_id, name, merge_name, college)
         SELECT DISTINCT
             c.pfr_id,
             c.player_name as name,
             LOWER(REGEXP_REPLACE(TRIM(c.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name,
-            c.pos as position,
-            c.school as college
+            {normalize_college_sql('c.school')} as college
         FROM read_csv_auto('{combine_file}', strict_mode=false) c
         WHERE c.player_name IS NOT NULL
           AND NOT EXISTS (
@@ -124,7 +139,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
                   -- TIER 2: name + college (combine doesn't have birthdate)
                OR (u.merge_name = LOWER(REGEXP_REPLACE(TRIM(c.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i'))
                    AND u.college IS NOT NULL
-                   AND u.college = c.school)
+                   AND u.college = {normalize_college_sql('c.school')})
           )
     """)
 
@@ -156,14 +171,13 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
 
     # INSERT: Add new players from rosters
     con.execute(f"""
-        INSERT INTO unified_players (gsis_id, pfr_id, name, merge_name, birthdate, position)
+        INSERT INTO unified_players (gsis_id, pfr_id, name, merge_name, birthdate)
         SELECT DISTINCT
             r.gsis_id,
             r.pfr_id,
             r.full_name as name,
             LOWER(REGEXP_REPLACE(TRIM(r.full_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name,
-            CAST(r.birth_date AS VARCHAR) as birthdate,
-            r.position
+            CAST(r.birth_date AS VARCHAR) as birthdate
         FROM read_csv_auto('{rosters_file}', strict_mode=false) r
         WHERE r.full_name IS NOT NULL
           AND NOT EXISTS (
@@ -202,12 +216,11 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
 
     # INSERT: Add new players from draft
     con.execute(f"""
-        INSERT INTO unified_players (pfr_id, name, merge_name, position, college)
+        INSERT INTO unified_players (pfr_id, name, merge_name, college)
         SELECT DISTINCT
             d.pfr_player_id as pfr_id,
             d.pfr_player_name as name,
             LOWER(REGEXP_REPLACE(TRIM(d.pfr_player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name,
-            d.position,
             d.college
         FROM read_csv_auto('{draft_file}', strict_mode=false) d
         WHERE d.pfr_player_name IS NOT NULL
@@ -249,13 +262,12 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
 
         # INSERT: Add new players from YAS
         con.execute(f"""
-            INSERT INTO unified_players (gsis_id, pfr_id, name, merge_name, position)
+            INSERT INTO unified_players (gsis_id, pfr_id, name, merge_name)
             SELECT DISTINCT
                 y.gsis_id,
                 y.pfr_id,
                 y.player_name as name,
-                LOWER(REGEXP_REPLACE(TRIM(y.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name,
-                y.pos as position
+                LOWER(REGEXP_REPLACE(TRIM(y.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name
             FROM read_csv_auto('{yas_file}', strict_mode=false) y
             WHERE y.player_name IS NOT NULL
               AND NOT EXISTS (
@@ -284,6 +296,17 @@ def generate_yamplayer_ids(con: duckdb.DuckDBPyConnection) -> None:
     print("\n" + "="*80)
     print("STEP 2: GENERATING YAMPLAYER_IDS")
     print("="*80)
+
+    # Deduplicate unified_players before generating IDs
+    print("\nDeduplicating unified_players table...")
+    con.execute("""
+        CREATE TEMP TABLE unified_deduped AS
+        SELECT DISTINCT * FROM unified_players
+    """)
+    con.execute("DROP TABLE unified_players")
+    con.execute("ALTER TABLE unified_deduped RENAME TO unified_players")
+    count = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
+    print(f"  ✓ Deduplicated to {count:,} unique players")
 
     # Export to pandas, generate IDs, reimport
     df = con.execute("SELECT * FROM unified_players").df()
@@ -342,7 +365,7 @@ def apply_yamplayer_ids_to_datasets(
         print(f"\nProcessing {file_path.name}...")
 
         # Load dataset
-        df = con.execute(f"SELECT * FROM read_csv_auto('{file_path}', strict_mode=false, null_padding=true, parallel=false)").df()
+        df = con.execute(f"SELECT * FROM read_csv_auto('{file_path}', strict_mode=false, null_padding=true, parallel=false, all_varchar=true)").df()
         original_count = len(df)
 
         # Determine actual join column (gsis_id might be aliased as player_id)
