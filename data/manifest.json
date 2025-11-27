@@ -214,8 +214,8 @@
     },
     "duckdb_schemas": {
       "nflverse": ["pbp", "player_stats", "rosters", "schedules", "injuries", "depth_charts", "depth_charts_legacy", "depth_charts_modern", "draft_picks", "combine", "contracts", "player_ids"],
-      "reference": ["gm_tenures", "team_code_mapping", "draft_values_jimmy_johnson", "draft_values_rich_hill", "draft_values_fitzgerald_spielberger", "draft_values_harvard"],
-      "yas": ["ras_2025", "ras_historical"],
+      "reference": ["gm_tenures", "team_code_mapping", "draft_values_jimmy_johnson", "draft_values_rich_hill", "draft_values_fitzgerald_spielberger", "draft_values_harvard", "yamplayer_mapping"],
+      "yas": ["yas_2025", "yas_historical"],
       "raw_executives": ["32 team files (atl_executives, buf_executives, etc.)"]
     }
   },
@@ -234,19 +234,43 @@
       "status": "complete",
       "records": "869,185 legacy + 223,875 modern"
     },
-    "calculate_ras": {
-      "script": "scripts/calculate_ras.py",
+    "calculate_yas": {
+      "script": "scripts/calculate_yas.py",
       "input": "data/nflverse/combine.csv",
-      "output": ["data/yas/ras_2025.csv", "data/yas/ras_historical.csv"],
-      "status": "planned",
-      "description": "Calculate Relative Athletic Scores from combine data"
+      "output": ["data/yas/yas_2025.csv", "data/yas/yas_historical.csv"],
+      "status": "complete",
+      "records": "8,649",
+      "description": "Calculate Yampy Athletic Scores (YAS) from combine data - 8 of 10 metrics, position-normalized 0-10 scale"
+    },
+    "generate_yamplayer_id": {
+      "script": "scripts/generate_yamplayer_id.py",
+      "input": ["data/nflverse/player_ids.csv", "data/nflverse/combine.csv", "data/nflverse/rosters.csv", "data/nflverse/draft_picks.csv", "data/yas/yas_2025.csv"],
+      "output": "data/reference/yamplayer_mapping.csv",
+      "status": "complete",
+      "unique_players": 43086,
+      "total_rows": 43129,
+      "duplicate_rate": "0.1%",
+      "description": "Generate unified yamplayer_id across all datasets using SQL-based entity resolution with tiered matching (ID → name+birthdate → name+college)"
+    },
+    "add_yamplayer_id": {
+      "script": "scripts/add_yamplayer_id.py",
+      "input": "data/reference/yamplayer_mapping.csv",
+      "output": "Updates yamplayer_id column in all nflverse datasets + YAS files",
+      "status": "complete",
+      "datasets_updated": 12,
+      "description": "Apply yamplayer_id to all datasets by joining on gsis_id/pfr_id"
     }
   },
-  "next_phase": "athletic_score_calculation",
+  "next_phase": "analytics_ready",
   "pending_tasks": [
-    "Implement RAS calculator (8 of 10 metrics available)",
     "Extract coach tenure from schedules",
     "Begin GM performance analysis",
     "Position mapping normalization for depth charts"
-  ]
+  ],
+  "completed_phases": {
+    "data_acquisition": "2025-11-14",
+    "data_reorganization": "2025-11-19",
+    "athletic_scores": "2025-11-26 (YAS calculator complete)",
+    "player_id_unification": "2025-11-26 (yamplayer_id complete, 43,086 unique players)"
+  }
 }

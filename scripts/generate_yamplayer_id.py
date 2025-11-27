@@ -420,7 +420,7 @@ def save_mapping_file(con: duckdb.DuckDBPyConnection, base_dir: Path, dry_run: b
     print("SAVING MAPPING FILE")
     print("="*80)
 
-    output_file = base_dir / 'data' / 'yamplayer_mapping.csv'
+    output_file = base_dir / 'data' / 'reference' / 'yamplayer_mapping.csv'
 
     df = con.execute("SELECT * FROM unified_players ORDER BY yamplayer_id").df()
 

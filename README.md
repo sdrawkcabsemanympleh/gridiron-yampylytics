@@ -48,6 +48,12 @@ uv run python -m scripts.combine_gm_data
 
 # Calculate Yampy Athletic Scores (YAS) from combine data
 uv run python -m scripts.calculate_yas
+
+# Generate unified player IDs (yamplayer_id) across all datasets
+uv run python -m scripts.generate_yamplayer_id
+
+# Apply yamplayer_id to all datasets
+uv run python -m scripts.add_yamplayer_id
 ```
 
 **4. Explore data with SQL:**
@@ -108,6 +114,7 @@ SELECT * FROM nflverse.combine;
 
 -- Reference data
 SELECT * FROM reference.gm_tenures;
+SELECT * FROM reference.yamplayer_mapping;  -- Unified player IDs (43K players)
 SELECT * FROM reference.draft_values_jimmy_johnson;
 
 -- Athletic scores
@@ -141,6 +148,8 @@ gridiron-yampylytics/
 - `combine_gm_data.py` - Merge 32 team GM files into single table
 - `clean_depth_charts.py` - Fix depth chart schema changes and newline issues
 - `calculate_yas.py` - Calculate Yampy Athletic Scores from combine data
+- `generate_yamplayer_id.py` - Generate unified player IDs across all datasets (43K unique players)
+- `add_yamplayer_id.py` - Apply yamplayer_id to all datasets
 
 **Database:**
 - `create_duckdb.py` - Generate DuckDB database with clean schemas
