@@ -57,14 +57,38 @@ uv run python -m scripts.add_yamplayer_id
 ```
 
 **4. Explore data with SQL:**
+
+Choose between two database options:
+
+**Option A: Materialized Tables (Recommended for analysis)**
 ```bash
-# Create DuckDB database
-uv run python -m scripts.create_duckdb
+# Create DuckDB database with materialized tables and indexes (~580 MB)
+uv run python -m scripts.create_duckdb_tables
+
+# Include play-by-play data (adds ~2.6 GB)
+uv run python -m scripts.create_duckdb_tables --include-pbp
 
 # Launch interactive SQL explorer (Harlequin)
 uv run harlequin gridiron_yampylytics.db
 ```
-If you are using Windows, you may run into a time zone formatting issue.  If you do, you will need to add `--no-download-tzdata` onto the end of the command.  This shouldn't cause issues given the data included.  Full command:
+- Fast query performance (data materialized with indexes)
+- Larger disk space (~580 MB default, ~3.2 GB with pbp)
+- Best for: interactive analysis, repeated queries, joins
+
+**Option B: CSV Views (Lightweight)**
+```bash
+# Create DuckDB database with CSV views (~few MB)
+uv run python -m scripts.create_duckdb_views
+
+# Launch interactive SQL explorer (Harlequin)
+uv run harlequin gridiron_yampylytics_views.db
+```
+- Minimal disk space (just view definitions)
+- Slower queries (re-reads CSVs each time)
+- Best for: exploration, one-off queries, limited disk space
+
+**Windows timezone fix:**
+If you encounter a timezone formatting issue on Windows, add `--no-download-tzdata`:
 ```bash
 uv run harlequin gridiron_yampylytics.db --no-download-tzdata
 ```
@@ -152,4 +176,5 @@ gridiron-yampylytics/
 - `add_yamplayer_id.py` - Apply yamplayer_id to all datasets
 
 **Database:**
-- `create_duckdb.py` - Generate DuckDB database with clean schemas
+- `create_duckdb_tables.py` - Generate DuckDB database with materialized tables and indexes (~580 MB, or ~3.2 GB with --include-pbp)
+- `create_duckdb_views.py` - Generate lightweight DuckDB database with CSV views (~few MB)
