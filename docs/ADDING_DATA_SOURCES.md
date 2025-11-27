@@ -7,4 +7,4 @@ Last updated: 11/25/2025
 - **yamplayer_id Injection:**  There's a script which generates and injects a universal, unique player ID to make joining easy across data sources.  You'll need to make sure your data is added there.
 - **Checks**
   - Make sure you check any other main scripts or tasks.
-  - Any other universal ID's1
+  - Any other universal ID's
