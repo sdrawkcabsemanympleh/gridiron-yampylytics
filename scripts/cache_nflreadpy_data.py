@@ -116,6 +116,14 @@ def cache_rosters(seasons: int | list[int] | bool, cache_dir: Path) -> None:
     print(f"Loading rosters (seasons={seasons})...")
     df = nfl.load_rosters(seasons=seasons)
 
+    # Sanitize headshot_url column to fix CSV parsing issues
+    # nflverse data has unescaped commas in URLs which breaks CSV format
+    if 'headshot_url' in df.columns:
+        print("  ⚙ Sanitizing headshot_url column (URL-encoding commas)...")
+        df = df.with_columns(
+            df['headshot_url'].str.replace_all(',', '%2C')  # URL-encode commas
+        )
+
     output_file = cache_dir / "rosters.csv" if seasons is True else cache_dir / f"rosters_{seasons}.csv"
     df.write_csv(output_file)
     print(f"  ✓ Saved {len(df):,} rows to {output_file}")

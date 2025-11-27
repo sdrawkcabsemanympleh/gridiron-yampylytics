@@ -94,7 +94,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
             {normalize_name_sql()} as merge_name,
             CAST(birthdate AS VARCHAR) as birthdate,
             {normalize_college_sql('college')} as college
-        FROM read_csv_auto('{player_ids_file}', strict_mode=false)
+        FROM read_csv_auto('{player_ids_file}', strict_mode=false, quote='"')
         WHERE name IS NOT NULL
     """)
 
@@ -109,7 +109,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
     con.execute(f"""
         UPDATE unified_players
         SET pfr_id = COALESCE(unified_players.pfr_id, c.pfr_id)
-        FROM read_csv_auto('{combine_file}', strict_mode=false) c
+        FROM read_csv_auto('{combine_file}', strict_mode=false, quote='"') c
         WHERE c.pfr_id IS NOT NULL
           AND c.player_name IS NOT NULL
           AND (
@@ -129,7 +129,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
             c.player_name as name,
             LOWER(REGEXP_REPLACE(TRIM(c.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name,
             {normalize_college_sql('c.school')} as college
-        FROM read_csv_auto('{combine_file}', strict_mode=false) c
+        FROM read_csv_auto('{combine_file}', strict_mode=false, quote='"') c
         WHERE c.player_name IS NOT NULL
           AND NOT EXISTS (
               SELECT 1 FROM unified_players u
@@ -157,7 +157,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
             gsis_id = COALESCE(unified_players.gsis_id, r.gsis_id),
             pfr_id = COALESCE(unified_players.pfr_id, r.pfr_id),
             birthdate = COALESCE(unified_players.birthdate, CAST(r.birth_date AS VARCHAR))
-        FROM read_csv_auto('{rosters_file}', strict_mode=false) r
+        FROM read_csv_auto('{rosters_file}', strict_mode=false, quote='"') r
         WHERE r.full_name IS NOT NULL
           AND (
               (r.gsis_id IS NOT NULL AND unified_players.gsis_id = r.gsis_id)
@@ -178,7 +178,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
             r.full_name as name,
             LOWER(REGEXP_REPLACE(TRIM(r.full_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name,
             CAST(r.birth_date AS VARCHAR) as birthdate
-        FROM read_csv_auto('{rosters_file}', strict_mode=false) r
+        FROM read_csv_auto('{rosters_file}', strict_mode=false, quote='"') r
         WHERE r.full_name IS NOT NULL
           AND NOT EXISTS (
               SELECT 1 FROM unified_players u
@@ -202,7 +202,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
     con.execute(f"""
         UPDATE unified_players
         SET pfr_id = COALESCE(unified_players.pfr_id, d.pfr_player_id)
-        FROM read_csv_auto('{draft_file}', strict_mode=false) d
+        FROM read_csv_auto('{draft_file}', strict_mode=false, quote='"') d
         WHERE d.pfr_player_name IS NOT NULL
           AND d.pfr_player_id IS NOT NULL
           AND (
@@ -222,7 +222,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
             d.pfr_player_name as name,
             LOWER(REGEXP_REPLACE(TRIM(d.pfr_player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name,
             d.college
-        FROM read_csv_auto('{draft_file}', strict_mode=false) d
+        FROM read_csv_auto('{draft_file}', strict_mode=false, quote='"') d
         WHERE d.pfr_player_name IS NOT NULL
           AND NOT EXISTS (
               SELECT 1 FROM unified_players u
@@ -250,7 +250,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
             SET
                 gsis_id = COALESCE(unified_players.gsis_id, y.gsis_id),
                 pfr_id = COALESCE(unified_players.pfr_id, y.pfr_id)
-            FROM read_csv_auto('{yas_file}', strict_mode=false) y
+            FROM read_csv_auto('{yas_file}', strict_mode=false, quote='"') y
             WHERE y.player_name IS NOT NULL
               AND (
                   (y.gsis_id IS NOT NULL AND unified_players.gsis_id = y.gsis_id)
@@ -268,7 +268,7 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
                 y.pfr_id,
                 y.player_name as name,
                 LOWER(REGEXP_REPLACE(TRIM(y.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name
-            FROM read_csv_auto('{yas_file}', strict_mode=false) y
+            FROM read_csv_auto('{yas_file}', strict_mode=false, quote='"') y
             WHERE y.player_name IS NOT NULL
               AND NOT EXISTS (
                   SELECT 1 FROM unified_players u
@@ -365,8 +365,14 @@ def apply_yamplayer_ids_to_datasets(
         print(f"\nProcessing {file_path.name}...")
 
         # Load dataset
-        df = con.execute(f"SELECT * FROM read_csv_auto('{file_path}', strict_mode=false, null_padding=true, parallel=false, all_varchar=true)").df()
+        df = con.execute(f"SELECT * FROM read_csv_auto('{file_path}', strict_mode=false, null_padding=true, parallel=false, all_varchar=true, quote='\"')").df()
         original_count = len(df)
+
+        # Drop any existing yamplayer_id column(s) to avoid duplication
+        yamplayer_cols = [col for col in df.columns if col == 'yamplayer_id' or col.startswith('yamplayer_id')]
+        if yamplayer_cols:
+            print(f"  ⚠ Removing {len(yamplayer_cols)} existing yamplayer_id column(s): {yamplayer_cols}")
+            df = df.drop(columns=yamplayer_cols)
 
         # Determine actual join column (gsis_id might be aliased as player_id)
         if join_col == 'player_id' and 'player_id' not in df.columns and 'gsis_id' in df.columns:

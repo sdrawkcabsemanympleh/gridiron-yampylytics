@@ -2,7 +2,6 @@
 
 This script creates a high-performance DuckDB database with:
 - Materialized tables (not views) for fast query performance
-- PRIMARY KEY constraints for data quality
 - Strategic indexes on foreign keys and common query patterns
 - Optional play-by-play data (2.6 GB - use --include-pbp flag)
 
@@ -11,9 +10,14 @@ Database size: ~580 MB (default) | ~3.2 GB (with pbp)
 
 import argparse
 import os
+import sys
 from pathlib import Path
 
 import duckdb
+
+# Configure UTF-8 output for Windows console
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 
 def create_table_with_indexes(
@@ -24,21 +28,19 @@ def create_table_with_indexes(
     primary_key: str | None = None,
     indexes: list[tuple[str, str]] | None = None,
 ) -> None:
-    """Create a materialized table from CSV with PRIMARY KEY and indexes.
+    """Create a materialized table from CSV with indexes.
 
     Args:
         con: DuckDB connection
         schema: Schema name (e.g., 'nflverse', 'reference')
         table_name: Table name
         csv_path: Path to CSV file
-        primary_key: PRIMARY KEY definition (e.g., 'yamplayer_id' or '(gsis_id, season)')
+        primary_key: Unused (kept for compatibility)
         indexes: List of (index_name, column_spec) tuples
     """
     full_name = f"{schema}.{table_name}"
 
     # Create materialized table from CSV
-    pk_clause = f"PRIMARY KEY ({primary_key})" if primary_key else ""
-
     print(f"Creating table: {full_name}...")
     con.execute(f"""
         CREATE TABLE {full_name} AS
@@ -46,30 +48,13 @@ def create_table_with_indexes(
             '{csv_path}',
             union_by_name=true,
             auto_detect=true,
-            null_padding=true
+            null_padding=true,
+            quote='"'
         )
     """)
 
-    # Add PRIMARY KEY constraint if specified
-    if primary_key:
-        try:
-            # DuckDB doesn't support ALTER TABLE ADD PRIMARY KEY directly on existing table
-            # So we recreate with constraint
-            con.execute(f"""
-                CREATE TABLE {full_name}_temp AS
-                SELECT * FROM {full_name}
-            """)
-            con.execute(f"DROP TABLE {full_name}")
-            con.execute(f"""
-                CREATE TABLE {full_name} (
-                    PRIMARY KEY ({primary_key})
-                ) AS SELECT * FROM {full_name}_temp
-            """)
-            con.execute(f"DROP TABLE {full_name}_temp")
-            print(f"  ✓ PRIMARY KEY: {primary_key}")
-        except Exception as e:
-            print(f"  ⚠ Could not add PRIMARY KEY ({primary_key}): {e}")
-            print(f"    Continuing without PRIMARY KEY constraint...")
+    row_count = con.execute(f"SELECT COUNT(*) FROM {full_name}").fetchone()[0]
+    print(f"  ✓ Loaded {row_count:,} rows")
 
     # Create indexes
     if indexes:
@@ -80,8 +65,7 @@ def create_table_with_indexes(
             except Exception as e:
                 print(f"  ⚠ Could not create index {idx_name}: {e}")
 
-    row_count = con.execute(f"SELECT COUNT(*) FROM {full_name}").fetchone()[0]
-    print(f"  ✓ Loaded {row_count:,} rows\n")
+    print()
 
 
 def main() -> None:
