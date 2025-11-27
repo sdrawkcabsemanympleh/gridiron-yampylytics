@@ -51,9 +51,6 @@ uv run python -m scripts.calculate_yas
 
 # Generate unified player IDs (yamplayer_id) across all datasets
 uv run python -m scripts.generate_yamplayer_id
-
-# Apply yamplayer_id to all datasets
-uv run python -m scripts.add_yamplayer_id
 ```
 
 **4. Explore data with SQL:**
