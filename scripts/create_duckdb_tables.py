@@ -49,7 +49,9 @@ def create_table_with_indexes(
             union_by_name=true,
             auto_detect=true,
             null_padding=true,
-            quote='"'
+            quote='"',
+            sample_size=-1,
+            parallel=false
         )
     """)
 

@@ -408,8 +408,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Mike Lush,mike lush,1958-04-18,,YAMP_023ebc8756b9
 00-0026432,BallLa00,9418,Lance Ball,lance ball,1985-06-19,Maryland,YAMP_0240f1443bd7
 ,,,Mike Wooten,mike wooten,1962-10-23,,YAMP_0240fc5aeda0
-,,,Matt Johnson,matt johnson,,BYU,YAMP_0243bd0d062f
 ,,,Matt Johnson,matt johnson,,USC,YAMP_0243bd0d062f
+,,,Matt Johnson,matt johnson,,BYU,YAMP_0243bd0d062f
 ,,,Joe Zombek,joe zombek,1932-12-24,,YAMP_024488ad39c2
 00-0027531,IvorCh00,10077,Chris Ivory,chris ivory,1988-03-22,Washington State,YAMP_024544db2f6e
 ,,,John Douglas,john douglas,1945-09-06,,YAMP_0245bb33b713
@@ -521,7 +521,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,GoeaLe20,,Leo Goeas,leo goeas,,Hawaii,YAMP_02d33c4dc464
 00-0038961,GarrEr00,16449,Eric Garror,eric garror,2000-03-31,Louisiana,YAMP_02d446aade57
 ,,,Mark Nichols,mark nichols,,Michigan St.,YAMP_02d6c1a7bda2
-00-0001040,BellMi01,,Mike Bell,mike bell,1957-08-30,,YAMP_02d73573c4c1
 00-0011189,,,Joe Mickles,joe mickles,1965-12-25,,YAMP_02d936772c9c
 ,,,Gene Donaldson,gene donaldson,1930-09-29,,YAMP_02db53fa631e
 ,TaylTr00,,Troy Taylor,troy taylor,,California,YAMP_02dd5797798e
@@ -1331,8 +1330,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Jerry Rhome,jerry rhome,1942-03-06,,YAMP_07bb2ecf3322
 ,,,Mickey Zofko,mickey zofko,1949-06-08,,YAMP_07bd2f9b4798
 ,,,Terry Strouf,terry strouf,,Wisconsin–LaCrosse,YAMP_07bddfb2fccd
-,SimpJo00,,John Simpson,john simpson,,Clemson,YAMP_07c04ee06495
 ,SimpJo00,,John Simpson,john simpson,,Baylor,YAMP_07c04ee06495
+,SimpJo00,,John Simpson,john simpson,,Clemson,YAMP_07c04ee06495
 ,,,Frank Bianchini,frank bianchini,1961-05-27,,YAMP_07c1f0b01c17
 00-0037476,,,Skyler Thomas,skyler thomas,,,YAMP_07c2e9fb9a94
 ,BakeTo20,,Tony Baker,tony baker,,East Carolina,YAMP_07c36beb7e61
@@ -1632,6 +1631,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Buddy Funck,buddy funck,,New Mexico,YAMP_0988b495aea2
 00-0027148,MurtLy20,,Lydon Murtha,lydon murtha,1985-11-13,,YAMP_098949429f32
 00-0036015,,,Zack Johnson,zack johnson,1997-01-19,,YAMP_098a1e00788d
+00-0036799,JohnJo13,15784,Josh Johnson,josh johnson,1999-08-10,Tulsa,YAMP_098b751b677e
 00-0040351,,,Desmond Little,desmond little,,,YAMP_098c0391d915
 00-0036090,HarrDe10,15063,De'Jon Harris,de'jon harris,1997-11-01,Arkansas,YAMP_098eda270f3f
 ,,,Nick Nighswander,nick nighswander,1952-11-03,,YAMP_0991232cbeb0
@@ -1820,6 +1820,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Sam Knox,sam knox,1910-03-29,,YAMP_0abe8a7ef7d9
 ,,,John Stonebraker,john stonebraker,1918-04-25,,YAMP_0ac0f7423d8c
 ,,,Len Watters,len watters,1898-06-04,,YAMP_0ac181431dcb
+00-0035165,WillJa15,,James Williams,james williams,,,YAMP_0ac582e398c5
 00-0039533,,,Clark Barrington,clark barrington,1998-04-27,,YAMP_0ac69d6712fd
 00-0029265,BentBi00,10821,Dwight Bentley,dwight bentley,1989-05-16,Louisiana-Lafayette,YAMP_0ac722ab0929
 00-0014264,,,Dan Saleaumua,dan saleaumua,1964-11-25,,YAMP_0ac880b959e4
@@ -2296,6 +2297,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,PierAa00,1547,Aaron Pierce,aaron pierce,,Washington,YAMP_0da657f0075d
 00-0018474,,,Mike Zandofsky,mike zandofsky,1965-11-30,,YAMP_0da6aad8418d
 00-0032823,,,Corey Tindal,corey tindal,,,YAMP_0da862c82446
+,MoorBr20,,Brandon Moore,brandon moore,1970-06-21,,YAMP_0da8a8e325ad
 00-0036255,MimsDe00,14846,Denzel Mims,denzel mims,1997-10-10,Baylor,YAMP_0da910281b99
 00-0038584,RoyxJa00,16308,Jaquelin Roy,jaquelin roy,2000-10-22,LSU,YAMP_0da9cae76202
 ,,,Paul Collins,paul collins,1907-10-31,,YAMP_0da9fdf0a15f
@@ -2307,7 +2309,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0038043,WillJo03,15885,Joshua Williams,joshua williams,1999-10-17,Fayetteville State Univer,YAMP_0db57fb8888d
 00-0002495,,,Mark Caesar,mark caesar,1970-01-12,,YAMP_0db832747ca9
 00-0007795,,,Chris Howard,chris howard,1975-05-02,,YAMP_0db9818f202b
-00-0040151,GranCh21,,Charles Grant,charles grant,2002-03-22,,YAMP_0dba23749fcd
 00-0012306,,,Cliff Odom,cliff odom,1958-08-15,,YAMP_0dbcf6811886
 00-0014605,,,Eugene Seale,eugene seale,1964-06-03,,YAMP_0dc001142eb5
 ,,,Chuck Hajek,chuck hajek,1910-11-11,,YAMP_0dc031e481c5
@@ -2391,7 +2392,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Ernie Meyer,ernie meyer,1904-06-23,,YAMP_0e588c732868
 00-0035482,,,Dante Booker,dante booker,1995-10-02,,YAMP_0e59e8197f1e
 ,,,Ralph DeLoach,ralph deloach,1957-01-13,,YAMP_0e5b489fd3d3
-,,,Devon Johnson,devon johnson,,Ferris State,YAMP_0e5c88bdf4e8
 ,,,Quintin Jones,quintin jones,1966-07-28,,YAMP_0e5d711a69a5
 ,TaylHo20,,Hosea Taylor,hosea taylor,,Houston,YAMP_0e62cc23dcfb
 ,,,Broderick Lancaster,broderick lancaster,,Colorado State,YAMP_0e63ad4f9d15
@@ -2525,8 +2525,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,4968,Sean Landeta,sean landeta,1979-01-03,Notre Dame,YAMP_0f341f8ee6a3
 ,,,Bev Wallace,bev wallace,1923-03-07,,YAMP_0f35967fd756
 00-0023893,MitcJa20,8522,Jayme Mitchell,jayme mitchell,1984-03-15,Mississippi,YAMP_0f363a9ebb89
-,,,Marko Cavka,marko cavka,,Sacramento State,YAMP_0f3658344c32
 ,,,Marko Cavka,marko cavka,,Sacramento St.,YAMP_0f3658344c32
+,,,Marko Cavka,marko cavka,,Sacramento State,YAMP_0f3658344c32
 ,,,Ed Champagne,ed champagne,1921-12-04,,YAMP_0f392d3222a4
 ,,,Dave Romasko,dave romasko,1963-11-03,,YAMP_0f3bbe0f17d2
 ,,,Jason Winrow,jason winrow,,Ohio St.,YAMP_0f40183ec4d4
@@ -2757,6 +2757,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Stacy Searels,stacy searels,,Auburn,YAMP_1095e722649a
 ,,,Don Wells,don wells,1922-07-12,,YAMP_10971579fb95
 ,,,Hanford Dixon,hanford dixon,1958-12-25,,YAMP_109766a3101d
+00-0039913,ColeBr00,,Brandon Coleman,brandon coleman,2000-10-12,,YAMP_109b1f3c00b6
 ,,,Gary Moss,gary moss,1964-07-18,,YAMP_109c5c988f2f
 00-0019934,,,Tarlos Thomas,tarlos thomas,1977-08-23,,YAMP_109e964bf127
 00-0001222,,5399,Eric Beverly,eric beverly,1974-03-28,Miami (Ohio),YAMP_109f1272e7c4
@@ -2930,7 +2931,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Bill McNelis,bill mcnelis,1902-12-11,,YAMP_11aad97ee824
 ,,,Ray Stachowicz,ray stachowicz,1959-03-06,,YAMP_11b078e8ae19
 ,,,Dutch Speck,dutch speck,1886-07-30,,YAMP_11b2713890eb
-,WileMi00,8862,Michael Wiley,michael wiley,1985-02-02,Georgia,YAMP_11b4429e517e
 ,FarmGe00,,George Farmer,george farmer,,Southern,YAMP_11b53e5145e8
 00-0038460,,,Jake Guidone,jake guidone,,,YAMP_11b771173c5c
 00-0029429,BrowBr02,10905,Bryce Brown,bryce brown,1991-05-14,Kansas State,YAMP_11c128682651
@@ -3490,7 +3490,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0029762,WetzJo00,,John Wetzel,john wetzel,1991-07-18,,YAMP_14feac355797
 00-0018571,,,Willie Jones,willie jones,1975-12-17,,YAMP_150234dc1b3d
 00-0029754,JohnSh00,11612,Shelton Johnson,shelton johnson,1990-07-16,Wisconsin,YAMP_15026036554d
-,,,Kevin Curtis,kevin curtis,,Texas Tech,YAMP_1502ad1ffbc8
 00-0039871,FautTr00,,Troy Fautanu,troy fautanu,2000-10-11,,YAMP_150411b3ccce
 00-0030578,PattCo00,11225,Cordarrelle Patterson,cordarrelle patterson,1991-03-17,Tennessee,YAMP_150492e6d666
 00-0030504,WatfEa00,,Earl Watford,earl watford,1990-06-24,,YAMP_1504d5a1eb01
@@ -3524,7 +3523,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,JackVe20,,Vestee Jackson,vestee jackson,,Washington,YAMP_1536801d06df
 ,,,Clenzie Pierson,clenzie pierson,,Rice,YAMP_153801f5a03e
 ,,,Allie White,allie white,1915-03-23,,YAMP_15388bdd0782
-00-0031083,JackAn00,,Andrew Jackson,andrew jackson,1964-05-06,,YAMP_153b53920093
 ,,,Jim Reynolds,jim reynolds,1920-01-08,,YAMP_153bb979279f
 ,,,Frank Laurinaitis,frank laurinaitis,1922-12-20,,YAMP_153d47498171
 00-0037474,,16569,Ty Shelby,ty shelby,1998-10-14,Louisiana-Monroe,YAMP_153ebf20ba23
@@ -3799,6 +3797,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0017899,WillPa20,3507,Pat Williams,pat williams,1972-10-24,Texas A&M,YAMP_16c90db78ad5
 ,,,Tom Finnin,tom finnin,1927-09-28,,YAMP_16cd9e5b1d5c
 00-0032691,,,Quenton Bundrage,quenton bundrage,1991-09-13,,YAMP_16cdf6b14ee2
+00-0027669,BrowCh28,,Charles Brown,charles brown,,,YAMP_16cf44d2caa2
 00-0031576,SmitZa00,12301,Za'Darius Smith,za'darius smith,1992-09-08,Kentucky,YAMP_16cf50241049
 ,,,Vee Green,vee green,1900-10-09,,YAMP_16cfcb3581b2
 ,,,Blanchard Carter,blanchard carter,1955-06-03,,YAMP_16d1f724957b
@@ -4118,8 +4117,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Wayne Trimble,wayne trimble,1944-12-10,,YAMP_18d143cc1355
 00-0022441,,7727,Lance Frazier,lance frazier,1981-05-23,West Virginia,YAMP_18d1484969e1
 00-0033010,DayxSh00,12771,Sheldon Day,sheldon day,1994-07-01,Notre Dame,YAMP_18d205258293
-,,,Russell Davis,russell davis,,Idaho,YAMP_18d2390cb2a2
 ,,,Russell Davis,russell davis,,Maryland,YAMP_18d2390cb2a2
+,,,Russell Davis,russell davis,,Idaho,YAMP_18d2390cb2a2
 ,MafiAt00,,Atonio Mafi,atonio mafi,,UCLA,YAMP_18d7a2306232
 00-0022889,WillRe00,7399,Reggie Williams,reggie williams,1983-05-17,Washington,YAMP_18d91a4fe510
 ,,,Tala Esera,tala esera,,Hawaii,YAMP_18db5ff3e8d3
@@ -4295,7 +4294,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Steve Durham,steve durham,1958-10-11,,YAMP_19caaafec853
 ,,834,Sherdrick Bonner,sherdrick bonner,,,YAMP_19cf402383c9
 ,,,Malik Verdon,malik verdon,,Iowa State,YAMP_19d13b7aee74
-,,1479,Andre Carter,andre carter,,Tennessee,YAMP_19d181b7e734
 00-0039224,,,Marvin Moody,marvin moody,,,YAMP_19d297fb7d8d
 00-0029979,,,Tristan Okpalaugo,tristan okpalaugo,1989-10-10,,YAMP_19d38779e3eb
 ,,,Rodney Crayton,rodney crayton,,Auburn,YAMP_19d43c12943d
@@ -4306,6 +4304,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Sonny Gordon,sonny gordon,1965-07-30,,YAMP_19d7b356a9e1
 00-0032239,JoneBy00,12268,Byron Jones,byron jones,1992-08-26,Connecticut,YAMP_19d8ebc29269
 ,,,Bill Capps,bill capps,1904-03-27,,YAMP_19ddbf794409
+00-0032433,MurpKy00,,Kyle Murphy,kyle murphy,1993-12-11,,YAMP_19de0bcd51d1
 ,,,Jackie Allen,jackie allen,1947-09-24,,YAMP_19de1477f907
 00-0021796,,,Josh Rue,josh rue,1979-08-19,,YAMP_19de51c4dc88
 ,,,Tony Rubino,tony rubino,1921-06-20,,YAMP_19e39fe4b7b0
@@ -4404,6 +4403,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,AJ Derby,aj derby,,Arkansas,YAMP_1a63289abdf2
 ,SherMa00,9252,Matt Sherry,matt sherry,1984-12-11,Villanova,YAMP_1a637d0a7026
 ,,,Rich Caster,rich caster,1948-10-16,,YAMP_1a639e5df4d9
+00-0021457,BrowCh03,,Chris Brown,chris brown,1978-05-09,,YAMP_1a6458b057cc
 00-0034271,LaslJo00,13658,Jordan Lasley,jordan lasley,1996-11-13,UCLA,YAMP_1a66411e15f5
 00-0035374,WalkMi00,14440,Michael Walker,michael walker,1996-10-29,Boston College,YAMP_1a6819e75a77
 00-0019442,,4806,Clint Stoerner,clint stoerner,1977-12-29,Arkansas,YAMP_1a689f5bea98
@@ -4488,8 +4488,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Teddy Gaines,teddy gaines,,Tennessee,YAMP_1adf20fc8480
 ,RossSc20,,Scott Ross,scott ross,,USC,YAMP_1adf78eeb7e5
 ,,10964,Devin Goda,devin goda,1989-05-05,Slippery Rock,YAMP_1adfaca9a60e
-,,,Chris Colmer,chris colmer,,North Carolina St.,YAMP_1ae052bd0c48
 ,,,Chris Colmer,chris colmer,,Boise State,YAMP_1ae052bd0c48
+,,,Chris Colmer,chris colmer,,North Carolina St.,YAMP_1ae052bd0c48
 00-0030404,ThomCh03,11186,Chris Thompson,chris thompson,1990-10-20,Florida State,YAMP_1ae123c4da22
 00-0019984,,,Donovan Arp,donovan arp,1978-01-12,,YAMP_1ae22bf6024b
 00-0004491,,,Pat Downey,pat downey,1974-06-21,,YAMP_1ae2663556ae
@@ -5231,8 +5231,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0033901,PociEt00,,Ethan Pocic,ethan pocic,1995-08-05,,YAMP_1f602c4a1aa5
 00-0029829,,,Dax Swanson,dax swanson,1991-03-21,,YAMP_1f62a280561e
 00-0029060,SchaJ.00,11550,J.K. Schaffer,j.k. schaffer,1990-06-10,Cincinnati,YAMP_1f62a8f348c5
-00-0037286,HarrKe01,,Kevin Harris,kevin harris,,Georgia,YAMP_1f62c5436b28
 00-0037286,HarrKe01,,Kevin Harris,kevin harris,,Texas Southern,YAMP_1f62c5436b28
+00-0037286,HarrKe01,,Kevin Harris,kevin harris,,Georgia,YAMP_1f62c5436b28
 00-0035117,,,Lester Cotton,lester cotton,1996-02-20,,YAMP_1f62d4a9d0ac
 00-0035912,BellLe02,14830,LeVante Bellamy,levante bellamy,1996-11-28,Western Michigan,YAMP_1f649a5335d9
 00-0031914,PierOl00,12966,Olsen Pierre,olsen pierre,1991-08-27,Miami (FL),YAMP_1f67b493d5df
@@ -5352,7 +5352,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,5072,Jon Carter,jon carter,1979-03-20,Troy State,YAMP_200c9310ac74
 00-0027941,DareMa00,10265,Marcell Dareus,marcell dareus,1989-11-18,Alabama,YAMP_20109a70b3e3
 00-0039812,HoppTy00,16710,Ty'Ron Hopper,ty'ron hopper,2001-04-26,Missouri,YAMP_2010a7c264af
-,JoneTy02,,Tyler Jones,tyler jones,,Boise State,YAMP_2012c36a4805
 ,JoneTy02,,Tyler Jones,tyler jones,,North Carolina State,YAMP_2012c36a4805
 ,,,Reggie Coleman,reggie coleman,,Tennessee,YAMP_201341ac896b
 00-0024609,,10059,Jesse Holley,jesse holley,1984-01-08,North Carolina,YAMP_20144212c89f
@@ -5452,8 +5451,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0012512,,,Lonnie Palelei,lonnie palelei,1970-10-15,,YAMP_209ce6de86c8
 00-0004836,,,Jumbo Elliott,jumbo elliott,1965-04-01,,YAMP_209d3beca6f3
 00-0034715,AlexDe01,13858,Deontez Alexander,deontez alexander,1996-07-25,Franklin,YAMP_209e2ee9b68a
-00-0029271,AdamJo01,,Joe Adams,joe adams,,Nebraska,YAMP_209f101dc1cd
 00-0029271,AdamJo01,,Joe Adams,joe adams,,Tennessee St.,YAMP_209f101dc1cd
+00-0029271,AdamJo01,,Joe Adams,joe adams,,Nebraska,YAMP_209f101dc1cd
 00-0034528,,,Devonte Boyd,devonte boyd,,,YAMP_20a0aa1fb844
 ,,,Sid Luckman,sid luckman,1916-11-21,,YAMP_20a1520b52fa
 00-0028347,LannSp00,10944,Spencer Lanning,spencer lanning,1988-05-21,South Carolina,YAMP_20a7ba8b5d51
@@ -5532,8 +5531,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0036450,VaugKe00,14810,Ke'Shawn Vaughn,ke'shawn vaughn,1997-05-04,Vanderbilt,YAMP_2101036f22f1
 00-0013256,,,Anthony Prior,anthony prior,1970-03-27,,YAMP_210604c4dd38
 ,GrigBi00,,Billy Griggs,billy griggs,,Virginia,YAMP_21075c06a556
-,,,Derek Smith,derek smith,,Kentucky,YAMP_2107de918e15
 ,,,Derek Smith,derek smith,,Virginia Tech,YAMP_2107de918e15
+,,,Derek Smith,derek smith,,Kentucky,YAMP_2107de918e15
 00-0019660,WhitDe00,5718,Dez White,dez white,1979-08-23,Georgia Tech,YAMP_210a75ba2518
 ,,,Scott Campbell,scott campbell,1962-04-15,,YAMP_210a8494eb15
 ,,17292,Kelly Akharaiyi,kelly akharaiyi,2000-02-02,Mississippi State,YAMP_210c52a562a5
@@ -5741,7 +5740,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0040550,,,Dontae Manning,dontae manning,2001-09-17,,YAMP_222fcbc017c9
 00-0029588,HerrDa00,10881,Dan Herron,dan herron,1989-03-21,Ohio State,YAMP_2232fe20a84e
 ,StraTi20,,Tim Stracka,tim stracka,,Wisconsin,YAMP_22330befabb6
-00-0034804,AlleBr20,,Brian Allen,brian allen,1995-10-11,,YAMP_22331c9e295f
 ,JustSt20,,Steve Justice,steve justice,,Wake Forest,YAMP_2233737312f7
 00-0038808,,,Jack Podlesny,jack podlesny,,,YAMP_2236497abb64
 00-0034193,RadeKe00,14363,Kevin Rader,kevin rader,1995-04-26,Youngstown State,YAMP_2237bd9ffd99
@@ -5764,6 +5762,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0029140,RainCh00,10712,Chris Rainey,chris rainey,1988-03-02,Florida,YAMP_225af8897990
 00-0028080,KlugKa00,10383,Karl Klug,karl klug,1988-03-31,Iowa,YAMP_225b9c043a16
 00-0031090,PricJa00,11863,Jabari Price,jabari price,1992-08-31,North Carolina,YAMP_225c3f2853ca
+,CurtKe00,,Kevin Curtis,kevin curtis,,Texas Tech,YAMP_225fe361d31d
 ,SwarGe20,,George Swarn,george swarn,,Miami (OH),YAMP_22605fa92433
 ,,,Mike Caterbone,mike caterbone,1962-02-17,,YAMP_22609c7bce0f
 ,,,Joe Kohlbrand,joe kohlbrand,1963-03-18,,YAMP_2260a703cd60
@@ -5812,6 +5811,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,FranJo00,,John Frank,john frank,,Ohio St.,YAMP_22a6165d9110
 ,MillCo20,,Corey Miller,corey miller,,South Carolina,YAMP_22a64e8a0697
 ,,,Scott Nicolas,scott nicolas,1960-08-07,,YAMP_22a74d8cc02c
+00-0030864,JohnAn00,1348,Anthony Johnson,anthony johnson,,Notre Dame,YAMP_22a9a04073c1
 00-0028518,FaysJa00,10796,Jarred Fayson,jarred fayson,1987-10-13,Illinois,YAMP_22ab3d230dd0
 ,,,Jason Franci,jason franci,1943-10-17,,YAMP_22ab8bc72728
 ,NailJa20,,Jamie Nails,jamie nails,,Florida A&M,YAMP_22ae84e413a7
@@ -5961,6 +5961,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,McCoEr01,,Erik McCoy,erik mccoy,,Texas A&M,YAMP_236c2edc3ab4
 00-0032930,,,Oni Omoile,oni omoile,1993-06-24,,YAMP_236c6b7f547a
 ,,,Jimmy Webb,jimmy webb,1952-04-13,,YAMP_236d4fd616b4
+00-0034641,JoneCh09,,Chris Jones,chris jones,1964-06-26,,YAMP_236eb573a39a
 ,TharLa20,,Larry Tharpe,larry tharpe,,Tennessee St.,YAMP_23709698b45d
 ,,,Dave Shula,dave shula,1959-05-28,,YAMP_2371f77721aa
 00-0028270,SaunWe00,10480,Weslye Saunders,weslye saunders,1989-01-16,South Carolina,YAMP_23725bbb1e56
@@ -6545,12 +6546,14 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0032794,VitaDa00,12822,Dan Vitale,dan vitale,1993-10-26,Northwestern,YAMP_26dcbb014cec
 ,,,Deacon Jones,deacon jones,1938-12-09,,YAMP_26e4781b85a6
 00-0039341,GuytTy00,,Tyler Guyton,tyler guyton,2002-06-11,,YAMP_26e49260e196
+00-0034690,SmitBr08,,Brandon Smith,brandon smith,,,YAMP_26e4e6f832ab
 ,BoydRa00,15264,Rakeem Boyd,rakeem boyd,1998-02-18,Arkansas,YAMP_26e523d52a59
 ,ToffJo20,,Joe Tofflemire,joe tofflemire,,Arizona,YAMP_26e5aaa66bfc
 00-0027969,HeywCa01,10266,Cameron Heyward,cameron heyward,1989-05-06,Ohio State,YAMP_26e5b0366c17
 00-0028582,GambDa00,10519,Darryl Gamble,darryl gamble,1987-11-17,Georgia,YAMP_26e5d9789919
 ,TrudJa00,,Jack Trudeau,jack trudeau,,Illinois,YAMP_26e680a81cce
 ,,,Frank Civiletto,frank civiletto,1900-09-11,,YAMP_26e77194d5da
+00-0021878,WillBr02,7372,Brandon Williams,brandon williams,1980-11-17,Michigan,YAMP_26eab3eee5c0
 00-0022034,HaggMa20,7156,Mario Haggan,mario haggan,1980-03-03,Mississippi State,YAMP_26ef022186a2
 ,,,J.T. Smith,j.t. smith,1955-10-29,,YAMP_26f22c1dc209
 00-0032521,HiltMi01,13414,Mike Hilton,mike hilton,1994-03-09,Mississippi,YAMP_26f385f51507
@@ -6807,7 +6810,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,9692,Eric Wilbur,eric wilbur,1984-12-24,Florida,YAMP_28830ff88572
 ,,,J.R. Wilburn,j.r. wilburn,1943-04-27,,YAMP_288428db428d
 00-0039288,SirmJa00,17402,Jackson Sirmon,jackson sirmon,2000-04-15,,YAMP_2884aff8b1ad
-,MoorBr00,,Brandon Moore,brandon moore,1970-06-21,,YAMP_288584bb79f8
 00-0007334,HerrKi20,2958,Kim Herring,kim herring,1975-09-10,Penn State,YAMP_2888baf97f57
 ,,,Jimmy Rogers,jimmy rogers,1955-06-29,,YAMP_288a5c6d2d5c
 ,BrowCh28,,Charles Brown,charles brown,,USC,YAMP_288af94f36d5
@@ -6860,6 +6862,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0016041,TannBa20,3029,Barron Tanner,barron tanner,1973-09-14,Oklahoma,YAMP_28d7cfd05e80
 ,FeneGi00,,Gill Fenerty,gill fenerty,,Holy Cross,YAMP_28d86ac53588
 ,,,Guy Turnbow,guy turnbow,1908-03-28,,YAMP_28d96bab7561
+00-0036236,HarrNi20,,Nick Harris,nick harris,1998-11-13,,YAMP_28d9deecaf2a
 00-0015871,,,Nicky Sualua,nicky sualua,1975-04-16,,YAMP_28da3f18f221
 00-0028004,MochDo00,10330,Dontay Moch,dontay moch,1988-07-19,Nevada,YAMP_28e0b0fb0f89
 ,,12259,Nathan Slaughter,nathan slaughter,1992-08-21,West Texas A&M,YAMP_28e10c00742c
@@ -7378,6 +7381,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Keith Griffin,keith griffin,1961-10-26,,YAMP_2bd8983fdcaf
 ,,,Tom Funchess,tom funchess,1944-09-12,,YAMP_2bdad44c80ad
 ,,,Steve Luke,steve luke,1953-09-04,,YAMP_2bdcb8ec16b4
+00-0033565,MorgJo03,,Jordan Morgan,jordan morgan,,,YAMP_2be3570f8453
 00-0037321,LucaCh01,15945,Chase Lucas,chase lucas,1997-03-04,Arizona State,YAMP_2be51b2408a0
 ,,,Larry Weltman,larry weltman,1899-01-26,,YAMP_2be6fd25df79
 00-0031294,,,Craig Watts,craig watts,,,YAMP_2be8a65d0b45
@@ -8102,7 +8106,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Tony Samuels,tony samuels,1954-12-30,,YAMP_301b8c488f8a
 00-0033794,CarrJo00,13349,Josh Carraway,josh carraway,1994-04-13,TCU,YAMP_301ba25f36e4
 00-0033257,,,Dalton Crossan,dalton crossan,,,YAMP_301c4781c8e7
-00-0027702,WillMi07,,Mike Williams,mike williams,1957-10-14,,YAMP_301cf3cfb4a9
+00-0037092,,,Chris Paul,chris paul,1998-11-19,,YAMP_301c4b4b68b6
 00-0039945,HaleAl00,16874,Alex Hale,alex hale,1998-07-03,Oklahoma State,YAMP_301ee1b32a82
 00-0029241,FranJu00,10952,Justin Francis,justin francis,1989-02-09,Rutgers,YAMP_3021e53b5647
 00-0030119,BarrSa00,11418,Sam Barrington,sam barrington,1990-10-05,South Florida,YAMP_30223c46e5e0
@@ -8143,7 +8147,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Riley Skinner,riley skinner,,Wake Forest,YAMP_306d080bbf51
 ,,,Farley Bell,farley bell,,Cincinnati,YAMP_306dc4b90d2a
 ,,,Walt Williams,walt williams,1954-07-10,,YAMP_3070548a65f9
-00-0019673,SmitPa00,,Paul Smith,paul smith,1978-01-31,,YAMP_30717aabbe84
 00-0037453,,,Damion Daniels,damion daniels,,,YAMP_3077738e077c
 ,GlenCo00,,Cordy Glenn,cordy glenn,,Georgia,YAMP_30782886c9f2
 ,,,Gene Carroll,gene carroll,1896-10-16,,YAMP_30789b0cd14e
@@ -8588,7 +8591,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Eric Coleman,eric coleman,,Clemson,YAMP_32d814953c32
 00-0002215,,,Jarrod Bunch,jarrod bunch,1968-08-09,,YAMP_32d841456742
 00-0033855,ThomCh05,13492,Chris Thompson,chris thompson,1994-05-09,Florida,YAMP_32d9d802c66d
-00-0023339,JoneCh06,,Chris Jones,chris jones,1982-07-17,,YAMP_32d9dd196400
 ,,,Blair Phillips,blair phillips,,Oregon,YAMP_32d9fcf5e2fa
 00-0029139,GettAd00,,Adam Gettis,adam gettis,,,YAMP_32dd53e65e39
 00-0020976,,6867,Filip Filipovic,filip filipovic,1977-11-05,South Dakota,YAMP_32dd94c38150
@@ -9040,8 +9042,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0022414,FloyMa00,1600,Malcom Floyd,malcom floyd,1981-09-08,Wyoming,YAMP_3577e2b352f7
 ,,,Dave Pivec,dave pivec,1943-09-25,,YAMP_3578631e5f01
 ,ShumEl01,,Elijah Shumate,elijah shumate,,Notre Dame,YAMP_357ad7cf435c
-,,,David Smith,david smith,,Western Kentucky,YAMP_357e14648756
 ,,,David Smith,david smith,,Northern Arizona,YAMP_357e14648756
+,,,David Smith,david smith,,Western Kentucky,YAMP_357e14648756
 00-0039804,,,Ireland Brown,ireland brown,,,YAMP_357fb2f3e6fc
 ,,,John Vesser,john vesser,1900-10-01,,YAMP_35804e8fad35
 00-0032312,BennMi99,,Michael Bennett,michael bennett,,,YAMP_3584e3822ae5
@@ -9221,7 +9223,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0031359,BenjKe00,11673,Kelvin Benjamin,kelvin benjamin,1991-02-05,Florida State,YAMP_367efb1dc3e3
 00-0026910,ToleGr99,9567,Greg Toler,greg toler,1985-01-02,St Pauls,YAMP_36801e98f00b
 00-0022054,ShiaVi00,7019,Visanthe Shiancoe,visanthe shiancoe,1980-06-18,Morgan State,YAMP_3681a50eb007
-00-0039904,MorgJo03,,Jordan Morgan,jordan morgan,2001-08-04,,YAMP_3682cf433234
 ,HarrBo21,,Bob Harris,bob harris,,Auburn,YAMP_36839d8aba4e
 ,,,William Howard,william howard,1964-06-02,,YAMP_36867cb45154
 00-0038700,,,Ezekiel Vandenburgh,ezekiel vandenburgh,1999-01-18,,YAMP_368a9839c61d
@@ -9329,6 +9330,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Harry Washington,harry washington,1956-07-30,,YAMP_371795038f8b
 ,MeggDa00,,Dave Meggett,dave meggett,,Towson,YAMP_3717b7504c32
 ,,,Oliver Ross,oliver ross,1949-09-18,,YAMP_3718310250fd
+00-0027702,WillMi04,,Mike Williams,mike williams,,Tulsa,YAMP_371853b99391
 ,,,Steve Owen,steve owen,1898-04-21,,YAMP_3718da7d1751
 ,,,John Harty,john harty,1958-12-17,,YAMP_3719d4b8c740
 ,,,Allen Nichols,allen nichols,1916-10-28,,YAMP_371b0f4f8292
@@ -9840,6 +9842,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Teddy Garcia,teddy garcia,1964-06-04,,YAMP_3a084aeb3dc7
 00-0034188,,,Kyle Meadows,kyle meadows,,,YAMP_3a0af4b25419
 00-0037277,QuitTe00,15905,Teagan Quitoriano,teagan quitoriano,2000-03-15,Oregon State,YAMP_3a0d405f7882
+,BellMa21,552,Marcus Bell,marcus bell,,,YAMP_3a0d85db99cf
 00-0009540,,,Sean LaChapelle,sean lachapelle,1970-07-29,,YAMP_3a0eca4c91cc
 00-0038908,OrjiAn00,16436,Anfernee Orji,anfernee orji,2000-10-06,Vanderbilt,YAMP_3a0fac5b975a
 00-0011932,NashMa00,3315,Marcus Nash,marcus nash,1976-02-01,Tennessee,YAMP_3a113f6e8b32
@@ -10019,6 +10022,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0033985,LikeWi00,,William Likely,william likely,,,YAMP_3b2f1566ce15
 00-0020836,,6807,Brad Kassell,brad kassell,1980-01-07,North Texas,YAMP_3b2f5c3c591f
 00-0033284,MotoTa00,,Taylor Moton,taylor moton,1994-08-14,,YAMP_3b311e845048
+00-0019890,ClarKe01,,Kenny Clark,kenny clark,1978-05-14,,YAMP_3b317f647e2e
 ,,,Kent Kafentzis,kent kafentzis,,Hawaii,YAMP_3b319d0ee611
 ,,,Pat Hughes,pat hughes,1947-06-02,,YAMP_3b319eca4ed1
 ,,,Mike Hold,mike hold,1963-03-16,,YAMP_3b31dfa3c97a
@@ -10113,7 +10117,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0034297,PrinBy00,13863,Byron Pringle,byron pringle,1993-11-17,Kansas State,YAMP_3bbd79ca9f98
 ,,,Mel Blount,mel blount,1948-04-10,,YAMP_3bc0f7fc29c1
 ,,,Earl Inmon,earl inmon,1954-03-21,,YAMP_3bc1a4821e80
-,JohnJo13,15784,Josh Johnson,josh johnson,1999-08-10,Tulsa,YAMP_3bc1bb3d0433
 00-0026556,RiveMi00,10249,Mike Rivera,mike rivera,1986-01-10,Kansas,YAMP_3bc3249213fd
 ,NoilSp00,13182,Speedy Noil,speedy noil,1995-10-14,Texas A&M,YAMP_3bc32a7952b2
 00-0013097,PoolKe00,3001,Keith Poole,keith poole,1974-06-18,Arizona State,YAMP_3bc447940898
@@ -10377,7 +10380,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Spark Clark,spark clark,1965-05-22,,YAMP_3d46808e5d42
 00-0036634,FielTo00,15431,Tony Fields,tony fields,1999-06-18,West Virginia,YAMP_3d481a4ca075
 ,,,Jim Higgins,jim higgins,1920-01-10,,YAMP_3d48c5cb2f72
-00-0034306,SmitRy00,,Ryan Smith,ryan smith,,,YAMP_3d48f5bc2d80
 ,,,Mike Oriard,mike oriard,1948-05-26,,YAMP_3d4ef6af9587
 ,,,John Macerelli,john macerelli,1930-11-02,,YAMP_3d50baaac9d7
 ,,,Rodney Wallace,rodney wallace,1949-02-10,,YAMP_3d5120e3ae09
@@ -10459,6 +10461,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Greg Lens,greg lens,1945-03-11,,YAMP_3dc798575f99
 ,HartDe00,12168,Dee Hart,dee hart,,Colorado State,YAMP_3dc891aa41e6
 ,,,William Harris,william harris,1965-02-10,,YAMP_3dcb8980a20e
+,,8055,Anthony Davis,anthony davis,,Wisconsin,YAMP_3dcc51ce8f63
 00-0017322,,,Ricky Watters,ricky watters,1969-04-07,,YAMP_3dce6f207e1f
 00-0034352,WillCo00,,Connor Williams,connor williams,1997-05-12,,YAMP_3dcf80bb3e29
 00-0017124,,,Joe Walter,joe walter,1963-06-18,,YAMP_3dd3a1de5b78
@@ -10820,7 +10823,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Gaylon Smith,gaylon smith,1916-07-15,,YAMP_3fecde1079b7
 ,,,Whizzer White,whizzer white,1928-09-26,,YAMP_3feeecc9034f
 ,,,Joe Robb,joe robb,1937-03-15,,YAMP_3feffe75bf7c
-00-0015306,SmitSt21,,Steve Smith,steve smith,1964-08-30,,YAMP_3ff4fb0c7d2a
 00-0019857,,,Troy Albea,troy albea,1978-04-30,,YAMP_3ff6d6d8b89a
 ,,,Bo Jackson,bo jackson,1962-11-30,,YAMP_3ffae6e338ab
 00-0024793,,,Joe Porter,joe porter,1985-11-27,,YAMP_3ffdc53ea35d
@@ -10937,7 +10939,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0027702,WillMi00,,Mike Williams,mike williams,,Northeastern,YAMP_40a5b3a4cf3a
 ,,11958,Jacques Smith,jacques smith,1991-12-31,Tennessee,YAMP_40a5ec1bbc60
 ,WilsDe00,12666,De'Runnya Wilson,de'runnya wilson,,Mississippi State,YAMP_40a6d77cb0ce
-00-0038907,JohnAn04,,Anthony Johnson,anthony johnson,1999-06-12,,YAMP_40a8ee52930d
 ,,,Milt Graham,milt graham,1934-07-28,,YAMP_40a9562c6d43
 ,,,Howie Williams,howie williams,1936-12-04,,YAMP_40a9e44319ac
 ,,5592,Todd Mcmanus,todd mcmanus,1971-01-18,Illinois,YAMP_40aa91e1b284
@@ -11223,7 +11224,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0004470,DougHu00,1982,Hugh Douglas,hugh douglas,1971-08-23,Central State,YAMP_425332d78155
 ,,,Chuck Apolskis,chuck apolskis,1914-12-18,,YAMP_4256443b4f7b
 ,,,Ed Berrang,ed berrang,1922-10-14,,YAMP_425c54b30c5e
-,DaviCh24,7093,Chris Davis,chris davis,,Syracuse,YAMP_425eb21ed70d
 ,,,Jack Lininger,jack lininger,1927-06-27,,YAMP_425fe741e4dc
 00-0027977,AyerAk00,10282,Akeem Ayers,akeem ayers,1989-07-10,UCLA,YAMP_4260d02a3e36
 ,KearTi21,,Tim Kearse,tim kearse,,San Jose St.,YAMP_426180605d01
@@ -12254,6 +12254,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,John Choma,john choma,1955-02-09,,YAMP_47cb48286c4f
 ,,,Bob White,bob white,,Penn St.,YAMP_47cc0c65267f
 ,GrahDo20,,Don Graham,don graham,,Penn St.,YAMP_47cf2c5a5c48
+00-0024011,BellMi01,,Mike Bell,mike bell,,Fresno State,YAMP_47cfd9ae1350
 00-0036688,ThomKi00,15642,Kiondre Thomas,kiondre thomas,1998-02-07,Kansas State,YAMP_47d1dd653ebe
 ,,,Robert Gaddis,robert gaddis,1952-01-20,,YAMP_47d2c34f0325
 ,,,Earl Klapstein,earl klapstein,1922-03-08,,YAMP_47d376b364d3
@@ -12657,7 +12658,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Oscar Britt,oscar britt,1919-06-18,,YAMP_4a31cd20af41
 00-0037328,AnthAn00,15952,Andre Anthony,andre anthony,1996-11-21,LSU,YAMP_4a31f921861a
 ,,,John Turner,john turner,1956-02-22,,YAMP_4a32c5abca30
-00-0036236,HarrNi01,,Nick Harris,nick harris,1998-11-13,,YAMP_4a3314188306
 00-0017480,,1715,Ryan Wetnight,ryan wetnight,1970-11-05,Stanford,YAMP_4a334fe0210c
 ,,,Hodges Mitchell,hodges mitchell,,Texas,YAMP_4a3417f7ebc9
 ,,,Bill Feaster,bill feaster,1904-01-01,,YAMP_4a3760786b67
@@ -14393,6 +14393,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Ed Klewicki,ed klewicki,1911-05-04,,YAMP_541fcdb9556a
 ,,,Vic Eaton,vic eaton,1933-01-03,,YAMP_54228a344bb8
 ,,8125,Darrien Johnson,darrien johnson,1980-05-03,Iowa,YAMP_5422d2cff7b7
+,BrowCh03,,Chris Brown,chris brown,1962-04-11,,YAMP_542459ec5b6e
 ,,,Gale Gillingham,gale gillingham,1944-02-03,,YAMP_542461752561
 ,,,Bruce Threadgill,bruce threadgill,1956-05-07,,YAMP_54248f8cb104
 ,MaybJe00,,Jermane Mayberry,jermane mayberry,,Texas A&M-Kingsville,YAMP_54261de26cda
@@ -14881,8 +14882,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Lou Metzger,lou metzger,1904-02-13,,YAMP_5717a637b9ec
 ,AdamMi02,,Mike Adams,mike adams,,Ohio State,YAMP_571cae68e347
 00-0039623,TiptMa00,16858,Mason Tipton,mason tipton,2000-09-27,Yale,YAMP_571fd7f60428
-,,,Chris Denman,chris denman,,Fresno St.,YAMP_57219ec3fd13
 ,,,Chris Denman,chris denman,,Fresno State,YAMP_57219ec3fd13
+,,,Chris Denman,chris denman,,Fresno St.,YAMP_57219ec3fd13
 00-0003944,,2613,Billy Davis,billy davis,1972-07-06,Pittsburgh,YAMP_57226a8fd0ba
 00-0031601,MyerRo01,,Robert Myers,robert myers,,,YAMP_57227ec794d2
 ,,,Steve Schnarr,steve schnarr,1952-07-30,,YAMP_57230602af42
@@ -14965,8 +14966,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0036408,RuizCe00,,Cesar Ruiz,cesar ruiz,1999-06-14,,YAMP_579254ae628c
 ,,,Toussaint Tyler,toussaint tyler,1959-03-19,,YAMP_5794d32716c1
 00-0000472,,,Darryl Ashmore,darryl ashmore,1969-11-01,,YAMP_5794f8429b3c
-,,,Andrew Carnahan,andrew carnahan,,Arizona St.,YAMP_57973d64ba25
 ,,,Andrew Carnahan,andrew carnahan,,Arizona State,YAMP_57973d64ba25
+,,,Andrew Carnahan,andrew carnahan,,Arizona St.,YAMP_57973d64ba25
 00-0009956,,,Adam Lingner,adam lingner,1960-11-02,,YAMP_5797b6043392
 ,,,Shawn Wiggins,shawn wiggins,,Wyoming,YAMP_5798d5d8df9e
 ,,,Fred Mazurek,fred mazurek,1943-03-21,,YAMP_579913757460
@@ -15314,6 +15315,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Mac Tuiaea,mac tuiaea,,Washington,YAMP_59a2a91ba449
 ,TennMa20,,Matt Tennant,matt tennant,,Boston College,YAMP_59a37eca964a
 ,,,Rhema McKnight,rhema mcknight,,Notre Dame,YAMP_59a52d61119b
+,BrowCh25,,Chris Brown,chris brown,,Texas,YAMP_59a7109e45c1
 ,BrowCh25,,Chris Brown,chris brown,,Ala-Birmingham,YAMP_59a7109e45c1
 00-0033538,,,Garett Bolles,garett bolles,1992-05-27,,YAMP_59a901318ee0
 ,,,William Glass,william glass,1957-12-21,,YAMP_59a9290867dd
@@ -15368,6 +15370,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Richard Brothers,richard brothers,,Arkansas,YAMP_59e41729af06
 00-0038434,,,Johnny King,johnny king,,,YAMP_59e4c5d79b26
 ,FultZa00,,Zach Fulton,zach fulton,,Tennessee,YAMP_59ebbc3f1db1
+00-0039684,WileMi01,8862,Michael Wiley,michael wiley,1985-02-02,Georgia,YAMP_59ed656a6a48
 00-0034478,,,Chad Kanoff,chad kanoff,1994-10-06,,YAMP_59ed6a9be704
 00-0031567,WillDa06,,Daryl Williams,daryl williams,1992-08-31,,YAMP_59ee66c2452a
 00-0034434,NortKe01,13842,Kendrick Norton,kendrick norton,1997-06-07,Miami (FL),YAMP_59f00f92e40c
@@ -15393,6 +15396,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Charles Barnard,charles barnard,1915-03-03,,YAMP_5a1aafa81bed
 ,,,Ricky Martin,ricky martin,,New Mexico,YAMP_5a2071861a89
 ,,5853,Jason Gavadza,jason gavadza,,Kent,YAMP_5a213e0c3058
+00-0030917,DaviCh24,7093,Chris Davis,chris davis,,Syracuse,YAMP_5a2150783086
 ,,,Lloyd Mumphord,lloyd mumphord,1946-12-20,,YAMP_5a238424e9d1
 ,PierRo00,,Ross Pierschbacher,ross pierschbacher,,Alabama,YAMP_5a23927c726e
 00-0030548,ReidEr00,11323,Eric Reid,eric reid,1991-12-10,LSU,YAMP_5a241dedcc15
@@ -15860,8 +15864,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,CareVe20,,Vernon Carey,vernon carey,,Miami (FL),YAMP_5cd952bbcaaf
 ,,,Zy Alexander,zy alexander,,LSU,YAMP_5cda18a50f60
 00-0036131,KindSo00,,Solomon Kindley,solomon kindley,1997-07-03,,YAMP_5cdb05257489
-,,,Mike Miller,mike miller,,Notre Dame,YAMP_5cdc333707ad
 ,,,Mike Miller,mike miller,,Texas St.,YAMP_5cdc333707ad
+,,,Mike Miller,mike miller,,Notre Dame,YAMP_5cdc333707ad
 ,,,Ted Connolly,ted connolly,1931-12-05,,YAMP_5cdcfad13e60
 00-0023610,SimsWe20,,Wes Sims,wes sims,1981-04-08,,YAMP_5cddab6cc412
 ,,,Lance Nimmo,lance nimmo,,West Virginia,YAMP_5cdea624bc36
@@ -16326,7 +16330,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Ray Collins,ray collins,1927-08-04,,YAMP_5fc912df9777
 ,,,Paris Gaines,paris gaines,,Fresno State,YAMP_5fcaa07ff7ab
 ,,,Bill Hill,bill hill,1959-04-21,,YAMP_5fcba9d1df5f
-00-0033011,McGoCo01,,Connor McGovern,connor mcgovern,1993-04-27,,YAMP_5fce92d50193
 00-0019589,WheaAu20,,Austin Wheatley,austin wheatley,1977-11-16,,YAMP_5fceae03855a
 ,,,Jim Battle,jim battle,1941-09-18,,YAMP_5fcfa5e42f8f
 ,,,Jack Colahan,jack colahan,1905-02-05,,YAMP_5fcfff74b79d
@@ -16386,6 +16389,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0034604,,,Andrew Trumbetti,andrew trumbetti,1996-03-14,,YAMP_6015ebce053a
 ,NwanUc20,,Uche Nwaneri,uche nwaneri,,Purdue,YAMP_6015ef41df71
 00-0017755,,,Clarence Williams,clarence williams,1969-08-07,,YAMP_60194ba22af9
+00-0034804,AlleBr02,,Brian Allen,brian allen,1995-10-11,,YAMP_6019815cec24
 00-0030151,BrayTy00,11170,Tyler Bray,tyler bray,1991-12-27,Tennessee,YAMP_6019ee519ba7
 00-0033768,,,Matt Godin,matt godin,1993-09-30,,YAMP_601c2cd23b4b
 ,,,Wally Dreyer,wally dreyer,1923-02-25,,YAMP_601cc1a6560e
@@ -16408,6 +16412,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Steve Bernish,steve bernish,,South Carolina,YAMP_6031befece02
 ,,,Bob Dove,bob dove,1921-02-21,,YAMP_6032579e724f
 ,,,Ken Sitton,ken sitton,,Oklahoma,YAMP_6033b2c0cad0
+00-0023339,JoneCh09,,Chris Jones,chris jones,1982-07-17,,YAMP_6036288068df
 00-0008764,JoneJa04,,James Jones,james jones,1969-02-06,,YAMP_6036e5ea9a2c
 ,,,Ralph Perretta,ralph perretta,1953-01-30,,YAMP_60388fb906d4
 ,,,Roy Ratekin,roy ratekin,1898-09-25,,YAMP_603a734cea72
@@ -16452,7 +16457,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,WomaFl20,,Floyd Womack,floyd womack,,Mississippi St.,YAMP_60798d96886a
 00-0008775,,,Jermaine Jones,jermaine jones,1976-07-25,,YAMP_607ac1a577cf
 00-0023761,,,Travis Williams,travis williams,1983-01-20,,YAMP_607c51412efd
-00-0035870,MurpKy02,,Kyle Murphy,kyle murphy,1998-05-18,,YAMP_607fc8233ea3
 00-0006169,,,Antonio Goss,antonio goss,1966-08-11,,YAMP_607fd1fcbe35
 ,,,Nat Moore,nat moore,1951-09-19,,YAMP_6083ef0d085c
 ,,,Bobby Thompson,bobby thompson,1939-03-30,,YAMP_608557eec915
@@ -16491,7 +16495,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Paul Carmichael,paul carmichael,1944-08-28,,YAMP_60bfce6b0309
 ,,,John Yonakor,john yonakor,1921-08-04,,YAMP_60c21d9cd9b4
 00-0020220,,,Shawn Mills,shawn mills,1977-02-10,,YAMP_60c27feb6454
-00-0035424,,,Chris Brown,chris brown,1996-04-26,,YAMP_60c32f10824b
 ,,4296,Chris Jacke,chris jacke,,Baylor,YAMP_60c36cbbcf6f
 ,,,Delvin Williams,delvin williams,1951-04-17,,YAMP_60c39ff6fbc0
 ,,,Tom Backes,tom backes,,Oklahoma,YAMP_60c3f5e20e08
@@ -16509,7 +16512,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0000094,,,Mel Agee,mel agee,1968-11-22,,YAMP_60cf0e7b6da9
 00-0032585,,,Will Ratelle,will ratelle,,,YAMP_60cf7924d9bd
 ,CosmSa00,,Samuel Cosmi,samuel cosmi,,Texas,YAMP_60d02e5126cf
-,DaviAn24,8055,Anthony Davis,anthony davis,,Wisconsin,YAMP_60d50b1ceffa
 00-0028002,CobbRa00,10308,Randall Cobb,randall cobb,1990-08-22,Kentucky,YAMP_60d542d1bee7
 00-0021281,,,Pete Hunter,pete hunter,1980-05-25,,YAMP_60d5dc858683
 00-0024105,,8607,Charles Sharon,charles sharon,1983-04-04,Bowling Green,YAMP_60d5ee58dbcb
@@ -16593,6 +16595,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0033248,,,Casey Sayles,casey sayles,,,YAMP_61420be25c99
 00-0017583,,,William White,william white,1966-02-19,,YAMP_6143a5c177ee
 ,ScotCh23,,Chris Scott,chris scott,1961-12-11,,YAMP_6143df026ea6
+00-0019860,WillMa06,,Marcus Williams,marcus williams,1977-12-12,,YAMP_61452a59ca66
 ,HarrCo20,2440,Corey Harris,corey harris,,Vanderbilt,YAMP_61453a9dd34d
 00-0035377,WillAn20,,Andrew Williams,andrew williams,,,YAMP_61457cddbe57
 00-0007883,,,Danan Hughes,danan hughes,1970-12-11,,YAMP_6145e0af1315
@@ -17235,7 +17238,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Curtis Adams,curtis adams,1962-04-30,,YAMP_6534ae03c107
 00-0020797,HickMa00,7738,Maurice Hicks,maurice hicks,1978-07-22,North Carolina A&T,YAMP_65359f654231
 00-0038571,,,Jon Gaines,jon gaines,1999-05-24,,YAMP_65378b792316
-00-0038673,TaylLe02,,Leonard Taylor,leonard taylor,1999-08-26,,YAMP_6537c21d87a0
 00-0033023,,,Joe Hansley,joe hansley,,,YAMP_65382fb5d907
 00-0031543,LongTy00,14190,Ty Long,ty long,1993-04-06,UAB,YAMP_653887bb6a60
 ,,,Tony Benjamin,tony benjamin,1955-10-27,,YAMP_6538e1cd29df
@@ -17384,7 +17386,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0039412,JeanJa00,16780,Javontae Jean-Baptiste,javontae jean-baptiste,2000-05-16,Notre Dame,YAMP_65fd33a521c3
 00-0027864,MathRy00,9851,Ryan Mathews,ryan mathews,1987-10-10,Fresno State,YAMP_65fd75f11e2c
 ,,,Tony Plummer,tony plummer,1947-01-21,,YAMP_65fde6581e5d
-00-0027669,BrowCh28,,Charles Brown,charles brown,1987-04-10,,YAMP_65fecfd6d060
 ,LaneEr00,,Eric Lane,eric lane,,BYU,YAMP_6600348ff3aa
 ,,,Bill May,bill may,1913-02-04,,YAMP_660159d9bc3e
 ,,,Ben Whaley,ben whaley,1926-10-14,,YAMP_6602dfcb7692
@@ -17454,11 +17455,10 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0008894,,,Walter Jones,walter jones,1974-01-19,,YAMP_665d6e716054
 ,StraSt00,,Steve Strachan,steve strachan,,Boston Col.,YAMP_665fe11d246b
 00-0028116,RobiAl00,10412,Aldrick Robinson,aldrick robinson,1988-09-24,SMU,YAMP_6660c8e85c4c
-00-0035165,WillJa08,,James Williams,james williams,,,YAMP_666208579e2a
 00-0023335,,8598,Tyson Smith,tyson smith,1981-10-09,Iowa State,YAMP_666392ba798d
 00-0006362,,,Andrew Greene,andrew greene,1969-09-24,,YAMP_6664db6c108a
-,PatcMa01,,Matt Patchan,matt patchan,,Miami (FL),YAMP_6666ca13f171
 ,PatcMa01,,Matt Patchan,matt patchan,,Boston College,YAMP_6666ca13f171
+,PatcMa01,,Matt Patchan,matt patchan,,Miami (FL),YAMP_6666ca13f171
 00-0038865,FarmAn00,16502,Andrew Farmer,andrew farmer,2000-04-19,Lane,YAMP_66675708a652
 00-0036846,NorwTr00,15489,Tre Norwood,tre norwood,1999-04-19,Oklahoma,YAMP_6667f894b357
 ,,,Gary Cooper,gary cooper,,Clemson,YAMP_666e54b120e8
@@ -18010,7 +18010,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0023438,EdwaBr00,7815,Braylon Edwards,braylon edwards,1983-02-21,Michigan,YAMP_69a8f98a26c7
 00-0036374,SneeLJ00,14956,L'Jarius Sneed,l'jarius sneed,1997-01-21,Louisiana Tech,YAMP_69aa4c5dd246
 ,,,Jim Ringo,jim ringo,1931-11-21,,YAMP_69ad77d12a08
-,GreeMi00,3510,Mike Green,mike green,,,YAMP_69ae4be5e758
 00-0031687,MostRa00,12447,Raheem Mostert,raheem mostert,1992-04-09,Purdue,YAMP_69ae8496828d
 00-0040091,,,Glendon Miller,glendon miller,,,YAMP_69ae8f02b6df
 ,McKiAl20,5556,Alvin Mckinley,alvin mckinley,,,YAMP_69afc0ecf0eb
@@ -18285,6 +18284,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0039889,SmitMa07,16697,Maason Smith,maason smith,2002-10-13,LSU,YAMP_6b4d021e699e
 ,,,Howie Parker,howie parker,1926-08-23,,YAMP_6b4d9b1ec72e
 ,,,Frank Reagan,frank reagan,1919-07-28,,YAMP_6b4e646d392a
+00-0027118,DaviNa01,,Nate Davis,nate davis,,Charlotte,YAMP_6b5180fe8902
 ,ParkEr21,,Ervin Parker,ervin parker,,South Carolina St.,YAMP_6b51ea2b1114
 ,,,Pete Schabarum,pete schabarum,1929-01-09,,YAMP_6b51ed7b7183
 00-0020873,ScotBa20,6840,Bart Scott,bart scott,1980-08-18,Southern Illinois,YAMP_6b526354d19d
@@ -18330,6 +18330,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Ashley Lee,ashley lee,,Virginia Tech,YAMP_6b80e019b74e
 00-0040326,CombBr00,,Branson Combs,branson combs,2000-07-14,,YAMP_6b8147b6afe6
 ,ButlBo21,,Bobby Butler,bobby butler,,Florida St.,YAMP_6b827d5e4c93
+00-0032772,SmitRy00,8876,Ryan Smith,ryan smith,1985-07-17,Florida,YAMP_6b89c49cbffd
 ,,2502,Vaughn Booker,vaughn booker,,Cincinnati,YAMP_6b8b0da8f4eb
 ,,,Ken Criter,ken criter,1947-02-17,,YAMP_6b8dd7d8e41e
 00-0020917,BurnJo00,6868,Joe Burns,joe burns,1979-09-15,Georgia Tech,YAMP_6b8dec96fad3
@@ -18436,7 +18437,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Jessie Clark,jessie clark,1960-01-03,,YAMP_6c28fd99d4c5
 ,,,Richard Harris,richard harris,1948-01-21,,YAMP_6c301d83a881
 00-0025509,FreeDo20,,Doug Free,doug free,1984-01-16,,YAMP_6c303ae6222d
-,,,Kendrick Rogers,kendrick rogers,,Central Missouri State,YAMP_6c318985aeef
 ,CollMa20,,Mark Collins,mark collins,,Cal State-Fullerton,YAMP_6c32b3f38f4c
 00-0004360,,,Mark Dixon,mark dixon,1970-11-26,,YAMP_6c353f5010ec
 00-0029108,MoyeDe00,11496,Derek Moye,derek moye,1988-08-12,Penn State,YAMP_6c35e2524b14
@@ -18547,7 +18547,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Larry Burt,larry burt,,Miami (OH),YAMP_6cddbb107d24
 00-0034751,JackJo01,13708,Josh Jackson,josh jackson,1996-04-03,Iowa,YAMP_6cdf46508164
 ,JeffCe00,,Cece Jefferson,cece jefferson,,Florida,YAMP_6ce0ebe8f3dc
-,AlleBr02,,Brian Allen,brian allen,,Michigan State,YAMP_6ce105f34267
 ,MoyeAl20,,Alex Moyer,alex moyer,,Northwestern,YAMP_6ce27ddbafea
 ,,,Malcolm Taylor,malcolm taylor,1960-06-20,,YAMP_6ce79a97bc56
 00-0034865,,,Adam Reth,adam reth,,,YAMP_6ce7caed2162
@@ -18645,7 +18644,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Stan Waldemore,stan waldemore,1955-02-20,,YAMP_6d5de8b5776b
 00-0037757,RaimBe00,,Bernhard Raimann,bernhard raimann,1997-09-23,,YAMP_6d5df6b78747
 ,,,Joe Vance,joe vance,1905-09-16,,YAMP_6d5f300dfbde
-,BellMi01,,Mike Bell,mike bell,,Fresno State,YAMP_6d602e4295bb
 ,,,Larry Krutko,larry krutko,1935-06-27,,YAMP_6d6506859298
 00-0019269,,,Ike Reid,ike reid,1975-12-21,,YAMP_6d65d84ec127
 ,,,Bill Godwin,bill godwin,1919-05-08,,YAMP_6d67324535be
@@ -19210,6 +19208,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0022724,McHuSe00,7631,Sean McHugh,sean mchugh,1982-05-27,Penn State,YAMP_70bf6f41cfb4
 00-0035096,,,Jay-Tee Tiuli,jay-tee tiuli,1996-01-14,,YAMP_70c39c61fba0
 ,HillTr02,,Trevon Hill,trevon hill,,Miami,YAMP_70c6e4bcd6af
+00-0039433,HarrMa08,,Marcus Harris,marcus harris,,Wyoming,YAMP_70c891b6c301
 ,SchlBl20,,Blake Schlueter,blake schlueter,,TCU,YAMP_70ca980282f6
 00-0022997,FrazAn20,8142,Andre Frazier,andre frazier,1982-06-29,Cincinnati,YAMP_70ca9e56f0df
 ,,,Jack Dwyer,jack dwyer,1927-01-15,,YAMP_70cab2de4530
@@ -19366,7 +19365,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0032996,JohnDe05,12869,Devon Johnson,devon johnson,1993-07-28,Marshall,YAMP_71ac1f478dd7
 00-0028795,ReynCh00,11540,Chase Reynolds,chase reynolds,1987-10-22,Montana,YAMP_71ac7df2f752
 00-0021208,HillCh20,6591,Charles Hill,charles hill,1980-11-01,Maryland,YAMP_71ad27995c66
-00-0028750,SmitBr08,,Brandon Smith,brandon smith,1987-02-23,,YAMP_71ad288c6774
 00-0005234,,,Dave Fiore,dave fiore,1974-08-10,,YAMP_71b1392fe735
 00-0032879,TurnLa00,,Landon Turner,landon turner,1993-05-15,,YAMP_71b1de12b936
 ,,,Bill Stits,bill stits,1931-07-26,,YAMP_71b52758bdf2
@@ -19744,6 +19742,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0032518,ZimmJu00,12888,Justin Zimmer,justin zimmer,1992-10-23,Ferris State,YAMP_73dfc46e8658
 00-0030228,BouyA.00,11512,A.J. Bouye,a.j. bouye,1991-08-16,Central Florida,YAMP_73e020da4bb2
 ,,,Jim Plunkett,jim plunkett,1947-12-05,,YAMP_73e0a04d85cf
+00-0021346,SmitSt02,,Steve Smith,steve smith,1979-06-28,,YAMP_73e27b88522a
 ,,,Art Macioszczyk,art macioszczyk,1920-10-19,,YAMP_73e32b7f8818
 ,,,Ben Dougherty,ben dougherty,,Florida A&M,YAMP_73e4fed55abe
 ,DuerDa00,,Dave Duerson,dave duerson,,Notre Dame,YAMP_73e68c6b5789
@@ -20008,6 +20007,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0034642,,,Kyle Lewis,kyle lewis,,,YAMP_75666d8757b4
 00-0035433,,14568,Tyler Newsome,tyler newsome,1995-07-14,Notre Dame,YAMP_75667c6ebd02
 ,SilaAm00,,Amini Silatolu,amini silatolu,,Midwestern State,YAMP_7566c66124d6
+,,,Mike Green,mike green,1961-06-29,,YAMP_756717da1850
 ,WillEr01,,Erik Williams,erik williams,,Central State (OH),YAMP_756897fc67a9
 ,,,Lenny Lyles,lenny lyles,1936-01-26,,YAMP_756b9820d388
 ,OlivJa20,,Jack Oliver,jack oliver,,Memphis,YAMP_756d83ea00be
@@ -20163,7 +20163,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,DariTr20,,Trey Darilek,trey darilek,,Texas-El Paso,YAMP_76565306c0d3
 00-0040077,LongRo00,17237,Robert Longerbeam,robert longerbeam,2001-01-18,Rutgers,YAMP_7656bccd022c
 ,,1692,Wayne Chrebet,wayne chrebet,1970-03-12,Michigan,YAMP_765841ed5aac
-,DaviNa01,,Nate Davis,nate davis,,Charlotte,YAMP_7658a21716fe
 ,,13178,Jordan Westerkamp,jordan westerkamp,1994-06-23,Nebraska,YAMP_765ad718dc46
 00-0029587,ElliRh00,10838,Rhett Ellison,rhett ellison,1988-10-03,USC,YAMP_765b63972316
 ,,,Robby Felix,robby felix,,Texas-El Paso,YAMP_765be1817bc9
@@ -20679,6 +20678,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Gene Brito,gene brito,1925-10-23,,YAMP_79a3366f85e2
 ,,,Bob Hayes,bob hayes,1942-12-20,,YAMP_79a7def9628b
 ,,,Tanner Carew,tanner carew,,Oregon,YAMP_79ab9f2231f3
+00-0034641,JoneCh01,,Chris Jones,chris jones,,Miami (FL),YAMP_79ae33c4be40
 ,,,Tom Janik,tom janik,1940-09-06,,YAMP_79b01e986960
 ,,,Hal Van Every,hal van every,1918-02-10,,YAMP_79b136c769b3
 ,,,Ralph Barkman,ralph barkman,1907-09-22,,YAMP_79b15ca910f4
@@ -20723,7 +20723,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0022781,JenkMi00,7419,Michael Jenkins,michael jenkins,1982-06-18,Ohio State,YAMP_79ece75cba01
 00-0031503,WinsJa00,12140,Jameis Winston,jameis winston,1994-01-06,Florida State,YAMP_79eeed40bcea
 ,NianLu00,,Lucas Niang,lucas niang,,TCU,YAMP_79ef5dc1b892
-,ClarKe22,7267,Kenny Clark,kenny clark,,,YAMP_79f05eaaad5c
 ,,,Clifton Eley,clifton eley,1961-06-21,,YAMP_79f210ef7079
 ,,,Greg Brezina,greg brezina,1946-01-07,,YAMP_79f26b437384
 00-0036820,ScotJo01,,Jordon Scott,jordon scott,1998-10-25,,YAMP_79f2de01cb7e
@@ -20825,7 +20824,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0037200,,,Jake Julien,jake julien,,,YAMP_7a716831d0db
 ,,,Greg Christy,greg christy,1962-04-29,,YAMP_7a71a04123c9
 ,,,John Shinners,john shinners,1947-03-01,,YAMP_7a73dcbdf420
-00-0039913,ColeBr02,,Brandon Coleman,brandon coleman,2000-10-12,,YAMP_7a7401863737
 ,,,Mark Lang,mark lang,,Texas,YAMP_7a75d3aeae89
 00-0033407,MorgDr00,13381,Drew Morgan,drew morgan,1994-12-02,Arkansas,YAMP_7a791932795a
 ,,,Putt Choate,putt choate,1956-12-11,,YAMP_7a795b8cf7ca
@@ -21243,8 +21241,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Doug Satcher,doug satcher,1945-05-28,,YAMP_7cf4900394d0
 00-0031846,HallRa02,12411,Rannell Hall,rannell hall,1993-01-30,UCF,YAMP_7cf609ae4919
 ,,,Willie Gillespie,willie gillespie,1961-10-24,,YAMP_7cf73bbc4890
-,,,Arther Love,arther love,,South Carolina State,YAMP_7cf7e7731d8d
 ,,,Arther Love,arther love,,South Carolina St.,YAMP_7cf7e7731d8d
+,,,Arther Love,arther love,,South Carolina State,YAMP_7cf7e7731d8d
 ,MinoTr00,5776,Travis Minor,travis minor,,Michigan State,YAMP_7cf7f29ed0fa
 00-0034764,GallMi00,13646,Michael Gallup,michael gallup,1996-03-04,Colorado State,YAMP_7cfa08ef6e96
 ,,,Kirk Pointer,kirk pointer,,Austin Peay St.,YAMP_7cfc5ba49a2a
@@ -21417,6 +21415,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Bill Volok,bill volok,1910-03-23,,YAMP_7e13170be4ed
 00-0025559,NaanLe00,8847,Legedu Naanee,legedu naanee,1983-09-16,Boise State,YAMP_7e16a07963f5
 ,,,Del Rodgers,del rodgers,1960-06-22,,YAMP_7e16a609be55
+00-0035649,DaviNa00,,Nate Davis,nate davis,1996-09-23,,YAMP_7e17b442d87f
 ,StewWa01,,Walter Stewart,walter stewart,,Cincinnati,YAMP_7e194078ce1c
 00-0029141,MorrAl00,10870,Alfred Morris,alfred morris,1988-12-12,Florida Atlantic,YAMP_7e1a0b741fa1
 00-0040312,,,Addison West,addison west,,,YAMP_7e1b3f239ae0
@@ -21428,7 +21427,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Joel Bell,joel bell,,Furman,YAMP_7e238793d04d
 ,ChatCl20,,Cliff Chatman,cliff chatman,,Central Oklahoma,YAMP_7e24a15f579f
 ,,,Jeff Winans,jeff winans,1951-10-12,,YAMP_7e26c6d4507e
-,LittGr01,,Greg Little,greg little,,Mississippi,YAMP_7e271fcceeaa
 00-0010089,,,Greg Lotysz,greg lotysz,1974-04-09,,YAMP_7e2ab76f536d
 ,,,Socko Wiethe,socko wiethe,1912-10-17,,YAMP_7e3087248ad4
 00-0022095,GrifQu00,7036,Quentin Griffin,quentin griffin,1981-01-12,Oklahoma,YAMP_7e32270e57b5
@@ -21893,6 +21891,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0031271,MillTr00,11879,Trey Millard,trey millard,1991-07-21,Oklahoma,YAMP_80e01a4a73a5
 00-0020353,FerrBi20,,Bill Ferrario,bill ferrario,1978-09-22,,YAMP_80e0b4c3f33c
 00-0026121,HamiLy20,9703,Lynell Hamilton,lynell hamilton,1985-08-05,San Diego State,YAMP_80e2d04391c2
+00-0032828,WillBr95,,Brandon Williams,brandon williams,,,YAMP_80e63ecb0e69
 ,,,Cliff Lewis,cliff lewis,1923-03-22,,YAMP_80e8fc045583
 00-0029600,BranAn00,10752,Andre Branch,andre branch,1989-07-14,Clemson,YAMP_80ea022dd0e2
 ,,,Zack Quaccia,zack quaccia,,Stanford,YAMP_80ec6bff84a8
@@ -21955,7 +21954,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0039783,GoodAn00,17384,Anthony Goodlow,anthony goodlow,2000-07-25,,YAMP_8134d83ea408
 ,,,Luke Getsy,luke getsy,,Akron,YAMP_813515f0ae0d
 00-0040410,,,Eli Cox,eli cox,2000-10-19,,YAMP_81352de3c3b6
-00-0030833,AlleJo03,,Josh Allen,josh allen,,,YAMP_8137d0fcc0d8
 ,,2316,Koy Detmer,koy detmer,,Stanford,YAMP_813a99263911
 ,,,Walt Sechrist,walt sechrist,1897-09-16,,YAMP_813ab4b32ca9
 ,,,Bob Balog,bob balog,1924-11-02,,YAMP_813ad9971693
@@ -22045,7 +22043,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Cornelius Green,cornelius green,,Miami (FL),YAMP_81c641bda8f8
 ,HectJo00,,Johnny Hector,johnny hector,,Texas A&M,YAMP_81c78d02c478
 ,CostDa20,,Dave Costa,dave costa,,Wisconsin,YAMP_81c80094eb16
-00-0034690,SmitBr07,,Brandon Smith,brandon smith,,,YAMP_81c83afc77d5
 00-0036151,HuffBr00,15121,Bryce Huff,bryce huff,1998-04-17,Memphis,YAMP_81c928bc3bf1
 ,,,Gerry Krall,gerry krall,1927-04-19,,YAMP_81c9e2cb7e37
 00-0015455,,,Darryl Spencer,darryl spencer,1970-03-21,,YAMP_81c9ecf4afb2
@@ -22341,7 +22338,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0006207,,,Hason Graham,hason graham,1971-03-21,,YAMP_8365cef46d90
 ,,,Joe Taylor,joe taylor,1939-08-27,,YAMP_83664b2ec315
 00-0012375,,,Jerry Olsavsky,jerry olsavsky,1967-03-29,,YAMP_836bd28f81b9
-00-0019860,WillMa21,,Marcus Williams,marcus williams,1977-12-12,,YAMP_836c188ee5d3
 ,,,Tim Clifford,tim clifford,,Indiana,YAMP_836c6533e583
 00-0031560,StroJa01,12179,Jaelen Strong,jaelen strong,1994-01-25,Arizona State,YAMP_836da46d4595
 00-0003230,,,Marco Coleman,marco coleman,1969-12-18,,YAMP_836e4141134f
@@ -22674,6 +22670,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Don Manoukian,don manoukian,1934-06-09,,YAMP_856f22b51659
 00-0038568,PhilCl00,16293,Clark Phillips,clark phillips,2001-12-19,Utah,YAMP_856fd69bd282
 ,,,Jake Burton,jake burton,,Baylor,YAMP_85773580d9ce
+00-0030801,ColeBr02,,Brandon Coleman,brandon coleman,,TCU,YAMP_8577f7786199
 ,,,Autry Beamon,autry beamon,1953-11-12,,YAMP_8579fbc19db3
 ,SmitEm00,1621,Emmitt Smith,emmitt smith,,Florida,YAMP_857b8c46f5e8
 00-0001047,,,Ricky Bell,ricky bell,1974-10-02,,YAMP_857be4ce54d7
@@ -24069,6 +24066,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,PricBi01,,Billy Price,billy price,,Ohio State,YAMP_8da020279e02
 ,,,Bruce Livingston,bruce livingston,1963-08-07,,YAMP_8da09d7b6295
 ,,,Carl George,carl george,1892-03-13,,YAMP_8da1e3ef06a9
+00-0038673,,,Leonard Taylor,leonard taylor,1999-08-26,,YAMP_8da3166ad129
 00-0015150,,,Derek G. Smith,derek g. smith,1976-04-13,,YAMP_8da35e760970
 ,,,Doug Smith,doug smith,1959-06-13,,YAMP_8da37f709d8f
 ,,,Curt Sandig,curt sandig,1918-07-12,,YAMP_8da641bab025
@@ -24134,6 +24132,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Jim Brutz,jim brutz,1919-02-12,,YAMP_8dfe61f623a2
 ,,,Al Pastrana,al pastrana,1944-11-20,,YAMP_8e047260bb73
 ,McSwRo20,,Rod McSwain,rod mcswain,,Clemson,YAMP_8e054cf4cbd2
+00-0033120,ClarKe01,7267,Kenny Clark,kenny clark,,,YAMP_8e06bced1272
 ,,,Bennie Cunningham,bennie cunningham,1954-12-23,,YAMP_8e0788cccd88
 ,,,Willie Taylor,willie taylor,1955-12-09,,YAMP_8e088ee2c4b6
 00-0035082,,,Greg Roberts,greg roberts,1996-03-21,,YAMP_8e0a52c80746
@@ -24268,7 +24267,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0030970,VaugDu00,11916,Dustin Vaughan,dustin vaughan,1991-01-27,West Texas A&M,YAMP_8eb73162e434
 ,ReidMi20,,Michael Reid,michael reid,,Wisconsin,YAMP_8eb74312cdbf
 00-0026208,JackCh99,9135,Chevis Jackson,chevis jackson,1985-12-11,LSU,YAMP_8eb811db2c7f
-00-0033565,MorgJo02,,Jordan Morgan,jordan morgan,,,YAMP_8eb890f5cfac
 ,,12624,Blake Frohnapfel,blake frohnapfel,,Massachusetts,YAMP_8eb9e5279940
 00-0027046,KnigTe99,9513,Terrance Knighton,terrance knighton,1986-07-04,Temple,YAMP_8eba41849f1a
 00-0000646,,,Stephen Baker,stephen baker,1964-08-30,,YAMP_8ebba5de2494
@@ -24412,7 +24410,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Lou Little,lou little,1891-12-06,,YAMP_8f7b01169ffe
 ,,2511,Mike Dumas,mike dumas,1971-05-17,Ohio State,YAMP_8f7e1eb8737b
 00-0024335,WillJa21,8361,Jamar Williams,jamar williams,1984-06-14,Arizona State,YAMP_8f7ed0103ee0
-00-0032762,JoneCh01,,Chris Jones,chris jones,,Miami (FL),YAMP_8f7f41e293a0
 ,,,John Sodaski,john sodaski,1948-01-14,,YAMP_8f8166f199f7
 00-0003616,,,Elbert Crawford,elbert crawford,1966-06-20,,YAMP_8f8318728371
 ,,,Henry Willegale,henry willegale,1901-06-09,,YAMP_8f86c85ede37
@@ -24684,6 +24681,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,1734,Greg Clark,greg clark,,,YAMP_911387c34b00
 ,,,Pat Dowling,pat dowling,1901-04-14,,YAMP_9113d0cae37e
 ,,,David Hadley,david hadley,1948-10-08,,YAMP_911509509321
+00-0030864,JohnAn06,,Anthony Johnson,anthony johnson,,Virginia,YAMP_911626b30807
 00-0021210,RichKr20,,Kris Richard,kris richard,1979-10-28,,YAMP_9117e341d71a
 00-0008884,JoneTo00,1374,Glenn Cadrez,glenn cadrez,1992-03-21,Texas,YAMP_9119d7f782bb
 ,,,Robin Jones,robin jones,,Baylor,YAMP_911cb590ade0
@@ -24767,7 +24765,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Tim Hill,tim hill,,Kansas,YAMP_919534549594
 00-0027920,ArceEm00,10503,Emmanuel Arceneaux,emmanuel arceneaux,1987-09-17,Alcorn State,YAMP_91967d9a2ea9
 ,,,Bob Titchenal,bob titchenal,1917-10-17,,YAMP_919a759f3a89
-00-0021346,SmitSt21,,Steve Smith,steve smith,1979-06-28,,YAMP_919be6428e7c
 ,,,Harry Jackson,harry jackson,,St. Cloud St.,YAMP_919c04306a6c
 ,,,Bill Collins,bill collins,1901-10-20,,YAMP_919df2a62d47
 ,BadgBr20,,Brad Badger,brad badger,,Stanford,YAMP_919e93581714
@@ -24914,7 +24911,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Ted McKnight,ted mcknight,1954-02-26,,YAMP_926c06be946f
 00-0028555,FranSt00,10665,Stephen Franklin,stephen franklin,1988-09-26,Southern Illinois,YAMP_926c1c2380ac
 ,,,Chris Brown,chris brown,,Oklahoma,YAMP_926db4744d71
-,,,Chris Brown,chris brown,,Texas,YAMP_926db4744d71
 ,CoxxRe20,6445,Renard Cox,renard cox,,,YAMP_926db4b8b322
 ,,,Sherman Lewis,sherman lewis,1942-06-29,,YAMP_926df51a535a
 ,,,Andy Nacrelli,andy nacrelli,1933-08-15,,YAMP_926e90e8e3cd
@@ -25295,7 +25291,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0029647,WilbKy00,10831,Kyle Wilber,kyle wilber,1989-04-26,Wake Forest,YAMP_948ba43ab64e
 00-0035038,,,Dorian Baker,dorian baker,,,YAMP_948dd5b6df2d
 00-0023192,,8070,Tyson Thompson,tyson thompson,1981-05-21,San Jose State,YAMP_948ede656c9c
-00-0034608,AlleAu00,,Austin Allen,austin allen,,,YAMP_948ee9740017
 00-0007070,,,Ken Harvey,ken harvey,1965-05-06,,YAMP_949012a3b5bb
 00-0019557,BarnRa20,5874,Rashidi Barnes,rashidi barnes,1978-06-26,Colorado,YAMP_94913debf64b
 ,,,Spider Johnson,spider johnson,1907-10-21,,YAMP_9497611d38bb
@@ -25433,6 +25428,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0029611,BrowAa01,10891,Aaron Brown,aaron brown,1988-09-24,Hawaii,YAMP_955769eb129a
 ,,,Carroll Hardy,carroll hardy,1933-05-18,,YAMP_9558ad3b364e
 ,,,Steve Reese,steve reese,1952-01-07,,YAMP_955ac95fd488
+,,,Will Johnson,will johnson,1964-12-04,,YAMP_955c4d688a37
 00-0029888,MorrDa01,11554,Darryl Morris,darryl morris,1990-09-04,Texas State,YAMP_955e8a7c0b3d
 00-0019192,BrowTr01,4840,Travis Brown,travis brown,1977-07-17,Northern Arizona,YAMP_9560acc72ff4
 00-0021963,,7190,Ryan Hoag,ryan hoag,1979-11-23,Gustavus Adolphus,YAMP_956387fe888b
@@ -25563,8 +25559,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0035303,WebeMi00,14077,Mike Weber,mike weber,1997-08-25,Ohio State,YAMP_9636eaf5041c
 00-0033423,,,Richie Brown,richie brown,1994-04-15,,YAMP_963770bd27d5
 00-0039753,LimmBe00,,Beaux Limmer,beaux limmer,2001-06-10,,YAMP_9638f9202a10
-,,,Doug Datish,doug datish,,Ohio St.,YAMP_963982c42994
 ,,,Doug Datish,doug datish,,Ohio State,YAMP_963982c42994
+,,,Doug Datish,doug datish,,Ohio St.,YAMP_963982c42994
 00-0030421,CollJa00,11349,Jamie Collins,jamie collins,1990-05-02,Southern Miss,YAMP_9639c9c5cfca
 00-0030280,DaviKn00,11194,Knile Davis,knile davis,1991-10-05,Arkansas,YAMP_963a90c7f0da
 00-0033856,FourLe00,13129,Leonard Fournette,leonard fournette,1995-01-18,LSU,YAMP_963e0abf542c
@@ -25863,7 +25859,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,EdmuFe00,,Ferrell Edmunds,ferrell edmunds,,Maryland,YAMP_981d8d30f9f8
 00-0032346,,,Daniel Davie,daniel davie,,,YAMP_981e3574b600
 00-0008000,,,Mike Iaquaniello,mike iaquaniello,1968-02-13,,YAMP_982005beda14
-,WillJi23,,Jimmy Williams,jimmy williams,1960-11-15,,YAMP_9820fe008fa6
 00-0027999,MoutJo00,10328,Jonas Mouton,jonas mouton,1988-03-17,Michigan,YAMP_98220615e0a2
 00-0039874,WrigJa04,16610,Jaylen Wright,jaylen wright,2003-04-01,Tennessee,YAMP_9823bc72a317
 00-0033221,BrunDa00,,Daniel Brunskill,daniel brunskill,1994-01-27,,YAMP_9824cad43703
@@ -26091,8 +26086,8 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Jamie Caleb,jamie caleb,1936-10-29,,YAMP_995a2e500326
 00-0038090,MoorSk01,15766,Skyy Moore,skyy moore,2000-09-10,Western Michigan,YAMP_995bd52cc30f
 ,SeniJu00,,Justin Senior,justin senior,,Mississippi State,YAMP_996415a19c4b
-,,,Andre Maddox,andre maddox,,North Carolina St.,YAMP_996718f2e179
 ,,,Andre Maddox,andre maddox,,Boise State,YAMP_996718f2e179
+,,,Andre Maddox,andre maddox,,North Carolina St.,YAMP_996718f2e179
 ,,,Jim Hester,jim hester,1944-12-13,,YAMP_996773d0f8b8
 ,KernDo20,,Don Kern,don kern,,Arizona St.,YAMP_9967d356718c
 ,,,Clem Neacy,clem neacy,1898-07-19,,YAMP_996bb5b9e92d
@@ -26295,6 +26290,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0035132,,,Lukayus McNeil,lukayus mcneil,1994-10-13,,YAMP_9a7b668438b9
 00-0040427,,,Ben Scott,ben scott,2001-01-09,,YAMP_9a7cdab840e2
 ,,,Ed Skoronski,ed skoronski,1910-10-15,,YAMP_9a7e4ace6ede
+00-0027997,LittGr01,,Greg Little,greg little,,Mississippi,YAMP_9a7e72e8583d
 ,,519,Arizona Cardinals,arizona cardinals,,,YAMP_9a7f04fbbd85
 00-0023248,,8205,Paul Irons,paul irons,1983-12-23,Florida State,YAMP_9a7f26b3bf27
 00-0023903,LaurLa20,8596,Lance Laury,lance laury,1982-01-17,South Carolina,YAMP_9a7ffc7bc7e7
@@ -26531,13 +26527,11 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,William Judson,william judson,1959-03-26,,YAMP_9be7a3e32acd
 00-0033323,,,Darrell Williams,darrell williams,,,YAMP_9be7dafc2de4
 00-0038544,JohnQu02,16188,Quentin Johnston,quentin johnston,2001-09-06,TCU,YAMP_9be7e8ae3867
-,,,Marcus Harris,marcus harris,,Wyoming,YAMP_9be87d0a3c3a
 ,,,Leonard Coleman,leonard coleman,1962-01-30,,YAMP_9be9bb1af63a
 ,MillJo00,,John Henry Mills,john henry mills,,Wake Forest,YAMP_9bec5b516d25
 ,,,Joe Davidson,joe davidson,1903-01-24,,YAMP_9bed54202edb
 ,HearHe00,,Herman Heard,herman heard,,Colorado State-Pueblo,YAMP_9beedf9f5be4
 00-0033891,JoneZa00,13176,Zay Jones,zay jones,1995-03-30,East Carolina,YAMP_9bf05443db50
-00-0021878,WillBr01,7372,Brandon Williams,brandon williams,1980-11-17,Michigan,YAMP_9bf10e9760c5
 ,,,Joe Nelms,joe nelms,,California,YAMP_9bf2157074d4
 ,BrucMk20,,Mkristo Bruce,mkristo bruce,,Washington State,YAMP_9bf47b4acac7
 ,,,Max Burnell,max burnell,1915-05-07,,YAMP_9bf7fd0820a2
@@ -26616,7 +26610,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0027951,FairNi00,10258,Nick Fairley,nick fairley,1988-01-23,Auburn,YAMP_9c56bb447875
 ,,,Peaches Nadolney,peaches nadolney,1899-05-23,,YAMP_9c56c2f26da4
 00-0037326,DeatDa00,,Dawson Deaton,dawson deaton,1999-05-06,,YAMP_9c56ee3a44c6
-00-0035649,DaviNa01,,Nate Davis,nate davis,1996-09-23,,YAMP_9c58b58bc44d
 ,,,Renaldo Works,renaldo works,,Oklahoma,YAMP_9c5bc6e9561e
 00-0028202,DrauSh00,10689,Shaun Draughn,shaun draughn,1987-12-07,North Carolina,YAMP_9c5ce817ead7
 ,,,Abe Karnofsky,abe karnofsky,1922-09-22,,YAMP_9c5db1a3ce64
@@ -26656,7 +26649,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0035234,HowaTy00,,Tytus Howard,tytus howard,1996-05-23,,YAMP_9c8e0dbc37cc
 ,SimsKe00,,Keith Sims,keith sims,,Iowa St.,YAMP_9c8e4b7a239b
 00-0035304,GillCu00,14287,Cullen Gillaspia,cullen gillaspia,1995-05-12,Texas A&M,YAMP_9c8ff1bce52c
-,JohnWi01,,Will Johnson,will johnson,1964-12-04,,YAMP_9c90abec730e
 ,,,Carl Allen,carl allen,1955-12-21,,YAMP_9c91a08dd2c7
 ,,,Dick Evans,dick evans,1917-05-31,,YAMP_9c91b3ce4f62
 ,ColoMa20,,Marc Colombo,marc colombo,,Boston College,YAMP_9c93cb667f66
@@ -26813,7 +26805,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Bap Manzini,bap manzini,1920-08-27,,YAMP_9d8ce307790e
 ,,,Tommy Mason,tommy mason,1939-07-08,,YAMP_9d8f97299655
 00-0015867,,,Oscar Sturgis,oscar sturgis,1971-01-12,,YAMP_9d8fa4fd7400
-00-0033565,MorgJo02,,Jordan Morgan,jordan morgan,1994-05-13,,YAMP_9d9002724a05
 ,RedmAl01,,Alex Redmond,alex redmond,,UCLA,YAMP_9d9049bb7604
 00-0030982,RobeMa00,12000,Marcus Roberson,marcus roberson,1992-10-04,Florida,YAMP_9d90d0772cfb
 ,,,Bob St. Clair,bob st. clair,1931-02-18,,YAMP_9d9105ddb9e2
@@ -27113,6 +27104,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0029626,PeadIs00,10718,Isaiah Pead,isaiah pead,1989-12-14,Cincinnati,YAMP_9f66b5f4eee0
 00-0028128,JoneCo01,10422,Colin Jones,colin jones,1987-10-27,TCU,YAMP_9f67ce577356
 00-0038562,MoodJa00,16286,Jake Moody,jake moody,1999-11-23,Michigan,YAMP_9f6808923ed8
+00-0035694,LittGr01,,Greg Little,greg little,1997-11-04,,YAMP_9f6da41b5104
 00-0039596,WisdRa00,17366,Rashad Wisdom,rashad wisdom,2001-06-06,UTSA,YAMP_9f6dbd090dde
 ,,,Fred Wallner,fred wallner,1928-04-12,,YAMP_9f6fbf711198
 ,HaegJo00,,Joe Haeg,joe haeg,,North Dakota State,YAMP_9f707024545b
@@ -27631,6 +27623,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0028054,MattCa00,10363,Casey Matthews,casey matthews,1989-01-16,Oregon,YAMP_a2de456785e6
 00-0005084,,,Kris Farris,kris farris,1977-03-27,,YAMP_a2e1b8d88417
 ,BryaTr20,,Trent Bryant,trent bryant,,Arkansas,YAMP_a2e217710624
+00-0033565,MorgJo03,,Jordan Morgan,jordan morgan,1994-05-13,,YAMP_a2e2832f307f
 00-0033927,JohnJo22,,John Johnson,john johnson,,Clemson,YAMP_a2e3bada7ad1
 00-0012321,,3514,Jeff Ogden,jeff ogden,1975-02-22,Eastern Washington,YAMP_a2e3f8c81244
 ,,,Frank Balasz,frank balasz,1918-01-23,,YAMP_a2e57044bdb5
@@ -27749,6 +27742,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0025391,AdamGa99,8660,Gaines Adams,gaines adams,1983-06-08,Clemson,YAMP_a37e78714f73
 ,ClaxBe20,,Ben Claxton,ben claxton,,Mississippi,YAMP_a37fbd16b9b2
 00-0029740,MomaIf00,11343,Ifeanyi Momah,ifeanyi momah,1989-10-23,Boston College,YAMP_a382352a51d5
+00-0033011,McGoCo00,,Connor McGovern,connor mcgovern,1993-04-27,,YAMP_a382545f2291
 ,,,Mark Mitchell,mark mitchell,1954-01-10,,YAMP_a38580eb67ab
 ,WillZa00,,Zachary Williams,zachary williams,,Washington St.,YAMP_a385e83a507d
 ,FergVa00,,Vagas Ferguson,vagas ferguson,,Notre Dame,YAMP_a38935fe4213
@@ -27926,6 +27920,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0028600,LattJa00,10534,Jamari Lattimore,jamari lattimore,1988-10-06,Middle Tennessee State,YAMP_a477959abc8a
 ,,,Marcus Griffin,marcus griffin,,Texas,YAMP_a47b654c5eea
 ,,,Jmon Moore,jmon moore,,Missouri,YAMP_a47d51259da9
+00-0030864,JohnAn04,4494,Anthony Johnson,anthony johnson,,Virginia Tech,YAMP_a47d960e2f0e
 00-0034974,LoveJu00,14179,Julian Love,julian love,1998-03-19,Notre Dame,YAMP_a47f1ff1bf14
 00-0029930,,,Marquis Jackson,marquis jackson,,,YAMP_a480115601f9
 00-0034594,MoorA.00,13955,A.J. Moore,a.j. moore,1995-12-15,Mississippi,YAMP_a481963c6c45
@@ -28236,7 +28231,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Bob Tucker,bob tucker,1945-06-08,,YAMP_a65c317473be
 ,,,Turner Baur,turner baur,,Stanford,YAMP_a65c8d262b04
 ,,,DeWayne Chivers,dewayne chivers,,South Carolina,YAMP_a660c8438e8f
-,JohnAn06,,Anthony Johnson,anthony johnson,,Virginia,YAMP_a6635956fc32
 ,,,Reid Lennan,reid lennan,1922-08-17,,YAMP_a664a3869cf6
 00-0025499,SepuDa20,8795,Daniel Sepulveda,daniel sepulveda,1984-01-12,Baylor,YAMP_a665b21a705d
 ,,,Joe Morrison,joe morrison,1937-08-21,,YAMP_a665fcc3044f
@@ -28517,7 +28511,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Phil Murphy,phil murphy,1957-09-26,,YAMP_a80909f6e5d5
 ,,,Ryan Colburn,ryan colburn,,Fresno State,YAMP_a80b8c59301a
 00-0037157,KnigZo00,15727,Bam Knight,bam knight,2001-04-11,North Carolina State,YAMP_a80b9de23ee7
-00-0032433,MurpKy02,,Kyle Murphy,kyle murphy,1993-12-11,,YAMP_a80eb68c3728
 ,,,Kevin McLain,kevin mclain,1954-09-15,,YAMP_a80ee1979943
 ,,,Matt Hazeltine,matt hazeltine,1933-08-02,,YAMP_a8104dd7a00a
 ,RomaBi00,2204,Bill Romanowski,bill romanowski,,Boston College,YAMP_a810cc695633
@@ -28894,6 +28887,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Lowell Caylor,lowell caylor,1941-06-17,,YAMP_aa5fbf9e27ba
 00-0002975,,,Steve Christie,steve christie,1967-11-13,,YAMP_aa606b9312d2
 ,,,Jim Cox,jim cox,1946-12-21,,YAMP_aa614977898a
+00-0038907,JohnAn06,,Anthony Johnson,anthony johnson,1999-06-12,,YAMP_aa61734b334e
 00-0021223,WellJo00,6607,Jonathan Wells,jonathan wells,1979-07-21,Ohio State,YAMP_aa6345608508
 ,,,John Nies,john nies,1967-02-13,,YAMP_aa649e39eff9
 00-0037213,,,Kehinde Oginni,kehinde oginni,,,YAMP_aa650e8b6e83
@@ -29157,6 +29151,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0039311,BailEm00,16611,Emani Bailey,emani bailey,2001-11-28,TCU,YAMP_ac180c4a848c
 ,,,James Mallard,james mallard,,Alabama,YAMP_ac1e45694493
 00-0013715,,,Tim Ridder,tim ridder,1976-12-17,,YAMP_ac1f19c97a3c
+00-0015306,SmitSt02,,Steve Smith,steve smith,1964-08-30,,YAMP_ac232ab22c31
 00-0031303,BorlCh00,11731,Chris Borland,chris borland,1991-04-02,Wisconsin,YAMP_ac2366e0f0d2
 ,,,Larry Little,larry little,1945-11-02,,YAMP_ac27567e461d
 ,,,Greg Williams,greg williams,1959-08-01,,YAMP_ac2758c65795
@@ -29200,6 +29195,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,5601,Lamont Green,lamont green,1976-01-10,Florida State,YAMP_ac632ee5c445
 00-0031978,,,Jonathon Mincy,jonathon mincy,,,YAMP_ac6348f50eb4
 00-0000874,,,Patrick Bates,patrick bates,1970-11-27,,YAMP_ac63aa5e71b9
+00-0032996,JohnDe05,,Devon Johnson,devon johnson,,Ferris State,YAMP_ac650db7fba3
 ,,,Fletcher Louallen,fletcher louallen,1962-09-12,,YAMP_ac682bfbd509
 00-0037209,CrumDu00,15706,Dustin Crum,dustin crum,1999-01-05,Kent State,YAMP_ac6a1dcb2756
 ,,,Lance Poimboeuf,lance poimboeuf,1940-11-10,,YAMP_ac6b3bdb0907
@@ -29437,6 +29433,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0033647,,,Jamal Marcus,jamal marcus,,,YAMP_adc9d8758c2b
 ,,,Wayne Walton,wayne walton,1948-10-15,,YAMP_adca5fcb56a0
 ,OverDa00,,David Overstreet,david overstreet,,Oklahoma,YAMP_adcdb3e7d1e6
+00-0027702,WillMi04,,Mike Williams,mike williams,1957-10-14,,YAMP_adcf10230317
 00-0033797,MuhaKh00,13359,Khalfani Muhammad,khalfani muhammad,1994-09-26,California,YAMP_adcf326b6885
 ,,,Roman Gabriel,roman gabriel,1940-08-05,,YAMP_add07008e1fd
 ,ClarSt00,,Steven Clark,steven clark,1959-10-29,,YAMP_add13972542b
@@ -29657,7 +29654,6 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Lew Jones,lew jones,1911-12-15,,YAMP_af0a92d67176
 00-0004849,,,Elbert Ellis,elbert ellis,1969-06-23,,YAMP_af0f44354e46
 00-0025470,JohnCh98,,Charles Johnson,charles johnson,1956-05-08,,YAMP_af10a02af6ff
-00-0037092,PaulCh00,,Chris Paul,chris paul,1998-11-19,,YAMP_af11fc76a664
 00-0019457,BechAn00,5676,Anthony Becht,anthony becht,1977-08-08,West Virginia,YAMP_af1211bb62ee
 ,,,Rocky Rasley,rocky rasley,1947-04-27,,YAMP_af179f234984
 00-0019962,,,Leon Hires,leon hires,1977-12-06,,YAMP_af18e6ab5d5b
@@ -30185,6 +30181,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 ,,,Jack Dugger,jack dugger,1923-01-13,,YAMP_b2059305ba35
 00-0038925,EnecIk00,,Ikenna Enechukwu,ikenna enechukwu,2000-01-24,,YAMP_b208e525511a
 00-0036967,TryoJo00,15379,Joe Tryon,joe tryon,1999-04-30,Washington,YAMP_b20c6dfebd14
+00-0035424,BrowCh03,,Chris Brown,chris brown,1996-04-26,,YAMP_b20f98880d25
 ,,,Spin Roy,spin roy,1897-10-19,,YAMP_b21027cd20f6
 00-0030332,MaheBr01,13909,Brett Maher,brett maher,1989-11-21,Nebraska,YAMP_b2106d7d4619
 ,,,Terry Wright,terry wright,1964-07-17,,YAMP_b21136d911df
@@ -30647,6 +30644,7 @@ gsis_id,pfr_id,mfl_id,name,merge_name,birthdate,college,yamplayer_id
 00-0036411,WinfAn00,14909,Antoine Winfield,antoine winfield,1998-08-16,Minnesota,YAMP_b4e44fad6c51
 ,,,Craig Richardson,craig richardson,,East. Washington,YAMP_b4e557b58ecc
 00-0027986,WisnSt01,,Stefen Wisniewski,stefen wisniewski,1989-03-22,,YAMP_b4e6c32a2f15
+,,3510,Mike Green,mike green,,,YAMP_b4e7d60163be
 ,,,Preston Dennard,preston dennard,1955-11-28,,YAMP_b4eb684308b3
 00-0012911,,,Ed Philion,ed philion,1970-03-27,,YAMP_b4ec2c151bb8
 ,,,Mike Gregory,mike gregory,1905-07-30,,YAMP_b4ed3598d44a
@@ -30818,7 +30816,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Elbie Nickel,elbie nickel,1922-12-28,,YAMP_b5fdc99065ef
 ,,,Bob Reynolds,bob reynolds,1914-03-30,,YAMP_b5fe2a2b4900
 ,,,Vern Burke,vern burke,1941-04-30,,YAMP_b5feca758d5c
-,HarrNi01,3788,Nick Harris,nick harris,1972-11-08,Illinois,YAMP_b5ff78d9b32e
 ,JoneMi00,,Mike Jones,mike jones,,Tennessee St.,YAMP_b5ff7ee6ec54
 ,,,Mike Crangle,mike crangle,1947-02-03,,YAMP_b6002d37f4c0
 ,,,Lew Mayne,lew mayne,1920-03-21,,YAMP_b602cf8b9106
@@ -31272,9 +31269,9 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Lonell Phea,lonell phea,,Houston,YAMP_b8aebc258d24
 ,,,Jug Earp,jug earp,1897-07-22,,YAMP_b8aef031cb00
 ,DorsJo20,,John Dorsey,john dorsey,,Connecticut,YAMP_b8b1d19ab41f
-00-0034641,JoneCh06,,Chris Jones,chris jones,,Clemson,YAMP_b8b3a2a2efdb
 ,KeitBr20,,Brandon Keith,brandon keith,,New Mexico,YAMP_b8b49afce5c9
 00-0008759,,,Hassan Jones,hassan jones,1964-07-02,,YAMP_b8b6458729a1
+00-0031083,JackAn02,,Andrew Jackson,andrew jackson,1964-05-06,,YAMP_b8b673980c8e
 ,FitzNi01,,Nick Fitzgerald,nick fitzgerald,,Mississippi State,YAMP_b8bc59221271
 00-0011044,McNoCa00,3876,Cade McNown,cade mcnown,1977-01-12,UCLA,YAMP_b8bc71c1b24b
 00-0027237,FletDa00,10141,Dane Fletcher,dane fletcher,1986-09-14,Montana State,YAMP_b8bd70340d4b
@@ -31382,7 +31379,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0022110,SmitTr01,7151,Trent Smith,trent smith,1979-09-15,Oklahoma,YAMP_b955137b8dfb
 ,,,Lowell Lotulelei,lowell lotulelei,,Utah,YAMP_b955f184cc7e
 ,,,Dave Dalby,dave dalby,1950-10-19,,YAMP_b9576efabe44
-,BrowCh25,,Chris Brown,chris brown,1962-04-11,,YAMP_b9598a98c5db
 ,,,Jack McCarthy,jack mccarthy,,,YAMP_b95a435859ee
 00-0033612,ShelSo00,,Sojourn Shelton,sojourn shelton,,,YAMP_b95aa8626831
 ,,,Harland Svare,harland svare,1930-11-15,,YAMP_b95fa0c6b912
@@ -31666,6 +31662,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Aldo Forte,aldo forte,1918-01-20,,YAMP_baf2433472be
 00-0040575,,,Jordan Polk,jordan polk,,,YAMP_baf2e87337fe
 00-0001656,,,Donny Brady,donny brady,1973-11-26,,YAMP_baf2f86ed9d2
+00-0020267,HarrNi20,3788,Nick Harris,nick harris,1972-11-08,Illinois,YAMP_baf3dabe77aa
 ,,,Greg Zolman,greg zolman,,Vanderbilt,YAMP_baf6fb01aa89
 00-0033570,WalkAn01,13306,Anthony Walker,anthony walker,1995-08-08,Northwestern,YAMP_baf9c7455a08
 ,ColeSh00,,Shon Coleman,shon coleman,,Auburn,YAMP_bafae2052cd0
@@ -31788,7 +31785,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0028141,WillZa01,,Zack Williams,zack williams,1988-12-27,,YAMP_bbb91dc1dab3
 ,,,Steve Kinney,steve kinney,1949-06-27,,YAMP_bbba52d2e008
 00-0027051,CaldAn20,,Antoine Caldwell,antoine caldwell,1986-04-19,,YAMP_bbbb81231c96
-,JohnAn00,1348,Anthony Johnson,anthony johnson,,Notre Dame,YAMP_bbbc3571f2fb
 ,,,Scott Hernandez,scott hernandez,1959-10-17,,YAMP_bbbda03f2667
 ,LeidJe20,,Jeff Leiding,jeff leiding,,Texas,YAMP_bbbf84e5559a
 ,,8928,Mike Barr,mike barr,,Rutgers,YAMP_bbbfd614e2a9
@@ -31800,7 +31796,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0006918,HarrAn01,3159,Anthony Harris,anthony harris,1973-01-25,Auburn,YAMP_bbcc5d8526a1
 ,,,Perry Harrington,perry harrington,1958-03-13,,YAMP_bbcca5d672a7
 ,,,Don Breaux,don breaux,1940-08-03,,YAMP_bbcdc22ce335
-00-0021457,,,Chris Brown,chris brown,1978-05-09,,YAMP_bbcdc82a914d
 00-0035629,WillJo10,,Jonah Williams,jonah williams,1997-11-17,,YAMP_bbce94138b2b
 ,,,Frank Chesley,frank chesley,1955-07-14,,YAMP_bbd0852abfd0
 ,,,Keith Tinsley,keith tinsley,1965-03-31,,YAMP_bbd0bc3350dc
@@ -31931,7 +31926,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Lennie High,lennie high,1895-02-17,,YAMP_bc8791159258
 00-0011022,McNaDo00,3866,Donovan McNabb,donovan mcnabb,1976-11-25,Syracuse,YAMP_bc8b7992dee6
 ,LauvSh20,,Shawn Lauvao,shawn lauvao,,Arizona State,YAMP_bc8d905cd0c2
-00-0032828,WillBr01,,Brandon Williams,brandon williams,,,YAMP_bc8f1aa8c104
 ,,,Ed Ryan,ed ryan,1925-12-29,,YAMP_bc8f2385db2c
 00-0021153,WalkJa00,6528,Javon Walker,javon walker,1978-10-14,Florida State,YAMP_bc91188b73d8
 ,,,Jim Martin,jim martin,1924-04-08,,YAMP_bc915f2608dd
@@ -32229,7 +32223,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0032665,,,Derek Keaton,derek keaton,,,YAMP_be6a7a0896f2
 ,ZandCa20,,Carl Zander,carl zander,,Tennessee,YAMP_be6bc0a4f0bc
 ,,,Sam Francis,sam francis,1913-10-26,,YAMP_be6c163917f4
-00-0019890,ClarKe22,,Kenny Clark,kenny clark,1978-05-14,,YAMP_be6c1be53652
 00-0024297,HagaDe00,8323,Derek Hagan,derek hagan,1984-09-21,Arizona State,YAMP_be6de6c1f621
 ,,5334,Tony Martin,tony martin,,Middle Tennessee Sta,YAMP_be6df63f9fac
 ,,,Javon Green,javon green,,Colorado,YAMP_be6e380bd960
@@ -32447,6 +32440,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0039764,ChatEl00,16875,Elijah Chatman,elijah chatman,2000-12-05,SMU,YAMP_bfa6a19bbccb
 00-0030691,ButlJe01,11932,Jeremy Butler,jeremy butler,1991-04-22,Tennessee-Martin,YAMP_bfa712a3e804
 ,,,Marc Zeno,marc zeno,,Tulane,YAMP_bfa92c64d61b
+,,,Chris Brown,chris brown,1963-07-16,,YAMP_bfa969e1ee17
 ,,,Bob Margarita,bob margarita,1920-11-03,,YAMP_bfac8cf4494b
 00-0034900,,,Ja'Quan Gardner,ja'quan gardner,,,YAMP_bfaee247f384
 ,GelbSt00,,Stan Gelbaugh,stan gelbaugh,,Maryland,YAMP_bfb2b932bf4d
@@ -33151,6 +33145,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0033208,WilsTr00,,Travis Wilson,travis wilson,1993-12-14,,YAMP_c3e86ee16642
 00-0031119,,,Carrington Byndom,carrington byndom,1992-07-07,,YAMP_c3e8b6d29549
 ,SkorPe00,,Peter Skoronski,peter skoronski,,Northwestern,YAMP_c3e9b758f060
+00-0034306,,,Ryan Smith,ryan smith,,,YAMP_c3eb6ec3897a
 00-0018230,,,Sean Woodson,sean woodson,1974-08-27,,YAMP_c3ebeeb46ca9
 00-0031158,AtkiGe01,11923,George Atkinson,george atkinson,1992-11-29,Notre Dame,YAMP_c3ec6bf0ed78
 ,,,Tom Flynn,tom flynn,1962-03-24,,YAMP_c3eda92b8615
@@ -33184,7 +33179,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0035732,,,Jackson Harris,jackson harris,,,YAMP_c4161b192e04
 00-0037568,HansAa00,,Aaron Hansford,aaron hansford,,,YAMP_c41e79b6c0f0
 ,PearEr20,,Erik Pears,erik pears,,Colorado State,YAMP_c41efc252b99
-,ColeBr02,,Brandon Coleman,brandon coleman,,TCU,YAMP_c42130a2e910
 ,EnglEr20,,Eric England,eric england,,Texas A&M,YAMP_c421604890ea
 00-0027895,ThomKe99,9926,Kevin Thomas,kevin thomas,1986-09-20,USC,YAMP_c421ccbe3a40
 00-0002919,ChavCo00,3318,Corey Chavous,corey chavous,1976-01-05,Vanderbilt,YAMP_c422df6296ec
@@ -33235,8 +33229,8 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0031879,,,Quinterrius Eatmon,quinterrius eatmon,,,YAMP_c46faf49c5aa
 00-0024303,AndeJa21,8329,James Anderson,james anderson,1983-09-26,Virginia Tech,YAMP_c4711b76c8ad
 ,,,Mike Jones,mike jones,,Tulane,YAMP_c4713322517c
-,,,Mike Jones,mike jones,,North Carolina A&T,YAMP_c4713322517c
 ,,,Mike Jones,mike jones,,Iowa,YAMP_c4713322517c
+,,,Mike Jones,mike jones,,North Carolina A&T,YAMP_c4713322517c
 00-0036293,ChinJe00,14927,Jeremy Chinn,jeremy chinn,1998-02-26,Southern Illinois,YAMP_c471f1af2197
 00-0039730,,16830,Isaiah Wooden,isaiah wooden,2000-02-03,Southern Utah,YAMP_c472ea912c69
 00-0020449,GreeMo20,4991,Morlon Greenwood,morlon greenwood,1978-07-17,Syracuse,YAMP_c4757c1e777f
@@ -33490,7 +33484,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0009398,,,Tim Kohn,tim kohn,1973-12-06,,YAMP_c60865de4e88
 00-0032820,SmitTe04,13045,Terrance Smith,terrance smith,1993-03-03,Florida State,YAMP_c6088b42af82
 00-0034350,NwosUc00,13704,Uchenna Nwosu,uchenna nwosu,1996-12-28,USC,YAMP_c609d6123821
-,BellMa20,552,Marcus Bell,marcus bell,,,YAMP_c60c6cc86aca
 00-0017867,,,Lee Williams,lee williams,1962-10-15,,YAMP_c60ece65b665
 ,WhitRi00,,Ricky Whittle,ricky whittle,,Oregon,YAMP_c611360ab4d9
 ,,,Ray Ogden,ray ogden,1942-09-02,,YAMP_c61250037cc3
@@ -34206,6 +34199,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0039436,HarrJa05,16800,Jaylen Harrell,jaylen harrell,2002-05-01,Michigan,YAMP_ca00c534c33d
 ,DeGeCh20,,Chris DeGeare,chris degeare,,Wake Forest,YAMP_ca0534f2166d
 ,,,Lyons Killiher,lyons killiher,1903-01-01,,YAMP_ca05e363b8a5
+00-0027895,ThomKe99,,Kevin Thomas,kevin thomas,1964-07-27,,YAMP_ca07bed9d404
 ,PeguWi20,,Willis Peguese,willis peguese,,Miami (FL),YAMP_ca09ff2674a1
 00-0022109,MacKMa20,,Malaefou MacKenzie,malaefou mackenzie,1979-07-24,,YAMP_ca0dbfc0047c
 ,,,John Naioti,john naioti,1921-11-06,,YAMP_ca0dd8c37ccf
@@ -34455,6 +34449,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Jimmy Turner,jimmy turner,1959-06-15,,YAMP_cb5870d2ce03
 ,,,Brice Abrams,brice abrams,,Michigan St.,YAMP_cb5a9d46574a
 ,,,Bernie Buzyniski,bernie buzyniski,1938-05-03,,YAMP_cb5c63b3315b
+00-0040151,,,Charles Grant,charles grant,2002-03-22,,YAMP_cb5da4a4e516
 ,,,Barry Hill,barry hill,1953-01-26,,YAMP_cb5e4b386365
 ,,,Ken Gray,ken gray,1936-03-10,,YAMP_cb5ff639c048
 00-0037540,MondSm00,,Smoke Monday,smoke monday,1999-02-19,,YAMP_cb6082d29464
@@ -34543,6 +34538,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Arnold Brown,arnold brown,1962-08-27,,YAMP_cbbb59a23218
 00-0032852,,,Tani Tupou,tani tupou,1992-12-13,,YAMP_cbbbd8c81cc8
 00-0002143,,,Keif Bryant,keif bryant,1973-03-12,,YAMP_cbbd844883c3
+00-0034608,,,Austin Allen,austin allen,,,YAMP_cbbe0809e502
 00-0029576,WalsBl00,10872,Blair Walsh,blair walsh,1990-01-08,Georgia,YAMP_cbbf30b77909
 00-0003920,,,Charles Davenport,charles davenport,1968-11-22,,YAMP_cbc0aa7a39c8
 00-0033414,SmitEr22,,Eric Smith,eric smith,1995-09-02,,YAMP_cbc1891d37a5
@@ -35164,6 +35160,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Jerry Hill,jerry hill,,North Alabama,YAMP_cf6446ae1474
 ,PaulCh01,,Chris Paul Jr.,chris paul,,Mississippi,YAMP_cf651c32b792
 ,,,Mike Walker,mike walker,1949-10-18,,YAMP_cf672b2133a8
+,WillJa01,,James Williams,james williams,,North Carolina A&T,YAMP_cf689ddf833c
 00-0035525,BushDe01,1338,Devin Bush,devin bush,,Purdue,YAMP_cf6aa16844d3
 00-0039529,,16808,Nathaniel Peat,nathaniel peat,2000-08-23,Missouri,YAMP_cf6db3d70c46
 00-0034318,MondHe00,15159,Henry Mondeaux,henry mondeaux,1995-09-19,Oregon,YAMP_cf6ebcb97a82
@@ -35255,7 +35252,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,John Schneller,john schneller,1911-11-01,,YAMP_cff0f15918c5
 ,,,Cullen Bryant,cullen bryant,1951-05-20,,YAMP_cff2937c0cf2
 ,,,Dan DeRose,dan derose,1962-01-25,,YAMP_cff550bafbab
-,DaviAn24,,Anthony Davis,anthony davis,1952-09-08,,YAMP_cff6b082cf61
 ,,,Red Dunn,red dunn,1901-06-21,,YAMP_cff79ce773d5
 00-0039955,,,Camron Peterson,camron peterson,1999-09-13,,YAMP_cff79fb962c7
 ,,,Corey Gaines,corey gaines,,Tennessee,YAMP_cff7fa39df3e
@@ -36061,8 +36057,8 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Hoss Johnson,hoss johnson,1963-06-08,,YAMP_d4819fb8e711
 ,JeffTo20,,Tony Jeffery,tony jeffery,,TCU,YAMP_d48333523e4e
 00-0039801,LearDe00,16591,Devin Leary,devin leary,1999-09-10,Kentucky,YAMP_d4845c56a33c
-,,,Mike Collins,mike collins,,Wake Forest,YAMP_d485f0d8f945
 ,,,Mike Collins,mike collins,,Ohio State,YAMP_d485f0d8f945
+,,,Mike Collins,mike collins,,Wake Forest,YAMP_d485f0d8f945
 ,,,Wilbur Summers,wilbur summers,1954-08-06,,YAMP_d48743fa865b
 00-0033377,,,Maurquice Shakir,maurquice shakir,1993-10-14,,YAMP_d48babd47716
 ,,,Scott Eaton,scott eaton,1944-08-20,,YAMP_d48bb6ed09dd
@@ -36230,8 +36226,8 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Don Gillis,don gillis,1935-03-31,,YAMP_d55bafbd693a
 00-0032434,AlleBr00,12621,Brandon Allen,brandon allen,1992-09-05,Arkansas,YAMP_d55ccb9c9ebb
 00-0035012,,,Nate Harvey,nate harvey,,,YAMP_d55df92e32ae
-,,,Tony Smith,tony smith,,San Jose St.,YAMP_d561d5cf85c0
 ,,,Tony Smith,tony smith,,Notre Dame,YAMP_d561d5cf85c0
+,,,Tony Smith,tony smith,,San Jose St.,YAMP_d561d5cf85c0
 00-0017846,,,K.D. Williams,k.d. williams,1973-04-22,,YAMP_d56617e235db
 00-0031399,,,Demetrius Rhaney,demetrius rhaney,1992-06-22,,YAMP_d569c2cc3a22
 00-0033420,PaynDo00,13461,Donald Payne,donald payne,1994-07-12,Stetson,YAMP_d56a874257c0
@@ -36762,7 +36758,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Leo Jensvold,leo jensvold,1908-03-29,,YAMP_d87eb2916a85
 00-0035897,BilaAs00,15099,Asmar Bilal,asmar bilal,1997-04-12,Notre Dame,YAMP_d8818ee565ed
 ,,,Saville Crowther,saville crowther,1901-07-10,,YAMP_d8832de9d303
-,,8876,Ryan Smith,ryan smith,1985-07-17,Florida,YAMP_d88429baf8ac
 ,,,Andy Stynchula,andy stynchula,1939-01-07,,YAMP_d8844c863644
 ,TenuLu00,,Luke Tenuta,luke tenuta,,Virginia Tech,YAMP_d8846e336d54
 ,,,Bill Troup,bill troup,1951-04-02,,YAMP_d884848397e7
@@ -36770,6 +36765,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0039709,,16857,Ty James,ty james,2001-04-06,Mercer,YAMP_d884f86cece6
 00-0027732,HoomMi00,9946,Michael Hoomanawanui,michael hoomanawanui,1988-07-04,Illinois,YAMP_d886281592e3
 ,MaddLu00,,Luther Maddy,luther maddy,,Virginia Tech,YAMP_d886376a8d4d
+00-0028750,SmitBr07,,Brandon Smith,brandon smith,1987-02-23,,YAMP_d888410ef9a4
 00-0028830,AaitIs00,10073,Isaako Aaitui,isaako aaitui,1987-01-25,UNLV,YAMP_d8886458365b
 ,MoorAl00,,Alvin Moore,alvin moore,,Arizona St.,YAMP_d88f17379ba8
 00-0026366,SchiCh00,9271,Chaz Schilens,chaz schilens,1985-11-07,San Diego State,YAMP_d88f3f21ff2b
@@ -36906,8 +36902,8 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0034165,GossCo00,,Colby Gossett,colby gossett,1995-06-23,,YAMP_d98524e742ee
 00-0029239,BoldBr00,10932,Brandon Bolden,brandon bolden,1990-01-26,Mississippi,YAMP_d98587a04880
 ,,,Earnest Adams,earnest adams,1959-03-12,,YAMP_d9874bc291bd
-,GilbMa00,,Marcus Gilbert,marcus gilbert,,Florida,YAMP_d98852fc87b3
 ,GilbMa00,,Marcus Gilbert,marcus gilbert,,TCU,YAMP_d98852fc87b3
+,GilbMa00,,Marcus Gilbert,marcus gilbert,,Florida,YAMP_d98852fc87b3
 ,,,Todd Eckerson,todd eckerson,,North Carolina St.,YAMP_d98a9cbb921c
 00-0033305,DuprMa01,13160,Malachi Dupre,malachi dupre,1995-10-12,LSU,YAMP_d98cb45eadba
 00-0037320,LeonDe00,15944,Deane Leonard,deane leonard,1999-11-20,Ole Miss,YAMP_d98d04c982e9
@@ -37037,7 +37033,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,McMaJi00,,Jim McMahon,jim mcmahon,,BYU,YAMP_da530a016675
 00-0021897,,7142,Keith Wright,keith wright,1980-06-08,Missouri,YAMP_da536191df82
 ,,,Derrick Kelson,derrick kelson,1968-05-14,,YAMP_da545821acba
-00-0032762,JoneCh09,,Chris Jones,chris jones,1964-06-26,,YAMP_da551261e366
 ,WilsIs00,,Isaiah Wilson,isaiah wilson,,Georgia,YAMP_da55a8d61608
 ,EdwaKa00,,Kadeem Edwards,kadeem edwards,,Tennessee State,YAMP_da5762a92c07
 ,ColtGe20,,George Colton,george colton,,Maryland,YAMP_da5db540a329
@@ -37141,7 +37136,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0027657,HousLa99,9903,Lamarr Houston,lamarr houston,1987-06-24,Texas,YAMP_dafbe6c67073
 00-0032204,GreeCh02,,Chaz Green,chaz green,1992-04-08,,YAMP_dafbff532967
 00-0005760,GardDa20,2847,Daryl Gardener,daryl gardener,1973-02-25,Baylor,YAMP_daff5cdcfcfd
-00-0025794,DaviCh24,8995,Chris Davis,chris davis,1983-12-01,Wake Forest,YAMP_db011fdaf208
 ,,,Joe Restic,joe restic,1927-07-21,,YAMP_db038aa5174d
 ,,,Frank Williams,frank williams,1932-05-09,,YAMP_db04de572c64
 ,NoonDa20,,Danny Noonan,danny noonan,,Nebraska,YAMP_db061f7b3dc1
@@ -37420,6 +37414,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0021679,SmitSh20,7317,Shaun Smith,shaun smith,1981-08-19,South Carolina,YAMP_dca9316baf9f
 ,,780,Will Blackwell,will blackwell,,,YAMP_dcab84887fc2
 00-0014329,,,Glenell Sanders,glenell sanders,1966-11-04,,YAMP_dcac1dd83e3f
+00-0035870,MurpKy00,,Kyle Murphy,kyle murphy,1998-05-18,,YAMP_dcac6b3a8bc0
 00-0025955,YounAl01,9711,Albert Young,albert young,1985-02-25,Iowa,YAMP_dcb0595571e8
 ,,,Matt Spanos,matt spanos,,USC,YAMP_dcb1061f4863
 00-0010522,,,Le'Shai Maston,le'shai maston,1970-10-07,,YAMP_dcb3245a0a55
@@ -37670,6 +37665,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0017549,,,Leon White,leon white,1963-10-04,,YAMP_de1b65a3e548
 00-0021290,RogeNi20,6685,Nick Rogers,nick rogers,1979-05-31,Georgia Tech,YAMP_de1d4d2866a5
 00-0039041,HiggEl00,16333,Elijah Higgins,elijah higgins,2000-10-27,Stanford,YAMP_de1f7d965195
+00-0035502,,,Tyler Jones,tyler jones,1995-10-27,,YAMP_de1fb4129b99
 ,HarmRo00,,Ronnie Harmon,ronnie harmon,,Iowa,YAMP_de211b8b4220
 00-0036446,,,Matt Leo,matt leo,1992-05-08,,YAMP_de23293c03d5
 00-0030700,OrrxZa00,11984,Zachary Orr,zachary orr,1992-06-09,North Texas,YAMP_de2474ffb3cd
@@ -37765,6 +37761,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0036581,,,Xavier Kelly,xavier kelly,,,YAMP_dec0f67062c2
 ,GrubBo20,,Bob Gruber,bob gruber,,Pittsburgh,YAMP_dec2b2c5c026
 ,,,George Sutch,george sutch,1921-08-28,,YAMP_deca9a29d600
+00-0039904,MorgJo02,,Jordan Morgan,jordan morgan,2001-08-04,,YAMP_decb086f4d8a
 ,,,Jack Oliver,jack oliver,1962-02-03,,YAMP_decdd033eb11
 ,,,Sims Stokes,sims stokes,1944-04-18,,YAMP_decebfc5922f
 00-0035676,BrowAJ00,14104,A.J. Brown,a.j. brown,1997-06-30,Mississippi,YAMP_ded114fd316c
@@ -38420,7 +38417,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0006428,,,Chris Griffin,chris griffin,1974-07-26,,YAMP_e2d8c3f1d11c
 ,,,Ivory Sully,ivory sully,1957-06-20,,YAMP_e2db426f3dcd
 ,,,David Taylor,david taylor,1949-10-17,,YAMP_e2dc0101bb0a
-,BrowCh03,,Chris Brown,chris brown,1963-07-16,,YAMP_e2de044fc5bd
 ,,8643,Joe Sykes,joe sykes,1982-10-22,Southern University,YAMP_e2deb1c6f7ef
 ,KellLe21,,Lewis Kelly,lewis kelly,,South Carolina St.,YAMP_e2dfb3ea5f21
 ,,12732,Terron Beckham,terron beckham,,,YAMP_e2e07995fc4f
@@ -38511,7 +38507,6 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Tiny Feather,tiny feather,1902-02-23,,YAMP_e35fce9493d5
 ,KitsSy20,,Syd Kitson,syd kitson,,Wake Forest,YAMP_e3623cbedec4
 00-0017027,,,Derrick Walker,derrick walker,1967-06-22,,YAMP_e363bb71d0af
-00-0027702,WillMi07,,Mike Williams,mike williams,,Tulsa,YAMP_e364d0fc934c
 00-0033815,DaviRe01,13436,Reggie Davis,reggie davis,1995-11-22,Georgia,YAMP_e367f872e180
 ,,,Sterling Johnson,sterling johnson,,Coastal Carolina,YAMP_e3686910643b
 ,,,Ken Lambiotte,ken lambiotte,,William & Mary,YAMP_e368e89c00b1
@@ -38610,6 +38605,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Pete Mills,pete mills,1942-05-29,,YAMP_e3f3eef77e1b
 00-0020402,TafoJo20,5148,Joe Tafoya,joe tafoya,1978-09-06,Arizona,YAMP_e3f46eddf457
 ,,,Al Nesser,al nesser,1893-06-06,,YAMP_e3f482d222d8
+00-0027863,DaviAn27,,Anthony Davis,anthony davis,1952-09-08,,YAMP_e3f4944b6621
 ,,,Clyde Johnson,clyde johnson,1917-08-22,,YAMP_e3f4dfb3a85f
 ,,,Pat Haden,pat haden,1953-01-23,,YAMP_e3f518a8e893
 ,,,Conway Hayman,conway hayman,1949-01-09,,YAMP_e3f8575631ed
@@ -38769,6 +38765,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Rich Stotter,rich stotter,1945-04-05,,YAMP_e4f8a2dedde7
 ,,,Sam DeLuca,sam deluca,1936-05-02,,YAMP_e4f8db653350
 00-0002602,,,Sheldon Canley,sheldon canley,1968-04-19,,YAMP_e4faf3c9f932
+00-0020489,CartAn20,1479,Andre Carter,andre carter,,Tennessee,YAMP_e5004f6e95dc
 00-0006612,,,Mike Haight,mike haight,1962-10-06,,YAMP_e500a7ed5894
 00-0040193,,,Miles Frazier,miles frazier,2001-09-12,,YAMP_e501a3037125
 00-0026505,WilsJo01,9720,John Parker Wilson,john parker wilson,1985-10-17,Alabama,YAMP_e503deb2d225
@@ -38867,9 +38864,8 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,,Elmer Barbour,elmer barbour,1919-02-02,,YAMP_e59a9b368578
 ,,,Andy Bolton,andy bolton,1954-05-23,,YAMP_e59d77f26f92
 00-0036430,DaviKh00,14987,Khalil Davis,khalil davis,1996-08-22,Nebraska,YAMP_e59fe5ed0f9b
-00-0039430,WillJa15,,James Williams,james williams,,North Carolina A&T,YAMP_e5a0fb43edab
-00-0039430,WillJa15,,James Williams,james williams,,Memphis,YAMP_e5a0fb43edab
 00-0039430,WillJa15,,James Williams,james williams,,Wyoming,YAMP_e5a0fb43edab
+00-0039430,WillJa15,,James Williams,james williams,,Memphis,YAMP_e5a0fb43edab
 00-0039727,,,Anthony Sao,anthony sao,,,YAMP_e5a19493a116
 00-0034489,TollJa00,14015,Jalen Tolliver,jalen tolliver,1995-12-30,Arkansas-Monticello,YAMP_e5a221955ac5
 00-0034400,WilkJo01,13789,Jordan Wilkins,jordan wilkins,1994-07-18,Mississippi,YAMP_e5a26503a260
@@ -39046,6 +39042,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 00-0029280,BrooRo01,10836,Ron Brooks,ron brooks,1988-10-16,LSU,YAMP_e6a2666dab97
 ,,1749,Charlie Clemons,charlie clemons,,Michigan State,YAMP_e6a52172c2d4
 ,RogeKe00,,Kendrick Rogers,kendrick rogers,,Texas A&M,YAMP_e6a89372fb14
+,RogeKe00,,Kendrick Rogers,kendrick rogers,,Central Missouri State,YAMP_e6a89372fb14
 00-0032480,YarbEd01,13410,Eddie Yarbrough,eddie yarbrough,1993-04-24,Wyoming,YAMP_e6aab9876d78
 ,,,Billy Howard,billy howard,1951-07-17,,YAMP_e6ac73dd8d6c
 ,BrowEl20,,Elton Brown,elton brown,,Virginia,YAMP_e6ad03bc2963
@@ -39209,6 +39206,7 @@ JON157260,JoneCh07,11896,Chandler Jones,chandler jones,1991-11-28,San Jose State
 ,,6036,Adrian Murrell,adrian murrell,,Southern California,YAMP_e78e114536e0
 00-0036527,TurnDJ00,15995,DJ Turner,dj turner,1997-01-18,Pittsburgh,YAMP_e79114e0d2dd
 00-0022073,WillKe00,1726,Kevin Williams,kevin williams,1971-01-25,Miami (Fla.),YAMP_e79505e54413
+00-0032762,JoneCh09,,Chris Jones,chris jones,,Clemson,YAMP_e796dc084fa9
 ,,,Carl Williams,carl williams,,Texas Southern,YAMP_e79740145b7b
 00-0026519,,10231,DJ Johnson,dj johnson,1985-11-07,Jackson State,YAMP_e799ec46adc1
 ,,,Roland Harper,roland harper,1953-02-28,,YAMP_e79a603bddaf
@@ -39857,7 +39855,6 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0021214,AyodAk20,6597,Akinola Ayodele,akinola ayodele,1979-09-17,Purdue,YAMP_ebb48baf74bc
 ,JohnKe26,,Kenny Johnson,kenny johnson,,Mississippi St.,YAMP_ebb868f744dd
 00-0034192,KeizNi00,14356,Nick Keizer,nick keizer,1995-05-02,Grand Valley State,YAMP_ebba42f0325b
-00-0035694,LittGr00,,Greg Little,greg little,1997-11-04,,YAMP_ebbd4a4ab92c
 ,,,Matthew Rice,matthew rice,,Penn State,YAMP_ebbfb7e34ce8
 00-0014060,,2873,Jermaine Ross,jermaine ross,1971-04-27,Purdue,YAMP_ebc17e1f7d13
 ,JoneJo00,,John Jones,john jones,1952-04-16,,YAMP_ebc3d457c115
@@ -39879,7 +39876,6 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 ,,,Clarence Bailey,clarence bailey,1963-03-07,,YAMP_ebd7c37f75df
 ,,,Bob Haas,bob haas,1906-05-25,,YAMP_ebda4434a676
 00-0036678,BootDi00,15536,DiCaprio Bootle,dicaprio bootle,1997-09-17,Nebraska,YAMP_ebdd86ea6791
-00-0035502,JoneTy02,,Tyler Jones,tyler jones,1995-10-27,,YAMP_ebddb2f8fbc3
 00-0015495,SpriSh00,2910,Shawn Springs,shawn springs,1975-03-11,Ohio State,YAMP_ebde3c341f71
 00-0014942,,,Carl Simpson,carl simpson,1970-04-18,,YAMP_ebe080f8c0b8
 ,,,Mike Reid,mike reid,1970-11-24,,YAMP_ebe5da658d11
@@ -39929,6 +39925,7 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0021161,SimmKe20,,Kendall Simmons,kendall simmons,1979-03-11,,YAMP_ec2a461730da
 ,,,Rich Moore,rich moore,1947-04-26,,YAMP_ec2d566d7f57
 ,DaviC.20,,C.J. Davis,c.j. davis,,Pittsburgh,YAMP_ec31477f3fd0
+00-0033467,AlleBr02,,Brian Allen,brian allen,,Michigan State,YAMP_ec3195550588
 ,,,Terrence McCaskey,terrence mccaskey,,Mississippi State,YAMP_ec328b11ec8f
 ,HaywTr20,,Tracy Hayworth,tracy hayworth,,Tennessee,YAMP_ec349df4237c
 00-0008339,JenkDe20,2676,Deron Jenkins,deron jenkins,1973-11-14,Tennessee,YAMP_ec377de2a574
@@ -40349,8 +40346,8 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 ,BrowKe04,,Keenen Brown,keenen brown,,Texas State,YAMP_eea32a2b648c
 ,,11238,Roy Roundtree,roy roundtree,1989-03-07,Michigan,YAMP_eea334a761c6
 ,,,Jerry Leggett,jerry leggett,,Cal State-Fullerton,YAMP_eea55d5bef33
-,,,E.J. Whitley,e.j. whitley,,Texas Tech,YAMP_eea586096b6b
 ,,,E.J. Whitley,e.j. whitley,,UNLV,YAMP_eea586096b6b
+,,,E.J. Whitley,e.j. whitley,,Texas Tech,YAMP_eea586096b6b
 00-0019991,,,Joe Walker,joe walker,1977-03-19,,YAMP_eea6db58b024
 ,,,John Rogers,john rogers,1910-01-18,,YAMP_eea83979819a
 ,,,Charlie Davis,charlie davis,1952-01-06,,YAMP_eeaa2b0a396e
@@ -40583,7 +40580,6 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0001011,,,Chuck Belin,chuck belin,1970-10-27,,YAMP_effc8f075c87
 ,GlovKe00,,Kevin Glover,kevin glover,,Maryland,YAMP_effd31b1f9c6
 ,,,Rube Juster,rube juster,1923-09-09,,YAMP_f000f0738acc
-,,4494,Anthony Johnson,anthony johnson,,Virginia Tech,YAMP_f0029bc34ac2
 ,BartKi20,,Kirk Barton,kirk barton,,Ohio State,YAMP_f002a7f3411a
 00-0039444,,,DaRon Gilbert,daron gilbert,2001-05-26,,YAMP_f0084361859a
 ,,,Lee Roy Selmon,lee roy selmon,1954-10-20,,YAMP_f00849302990
@@ -40751,7 +40747,6 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0024312,SmitEr22,8338,Eric Smith,eric smith,1983-03-17,Michigan State,YAMP_f0e9e45141bb
 ,,,Greg Gantt,greg gantt,1951-10-30,,YAMP_f0eb33d76df1
 ,,,Vern Huffman,vern huffman,1914-12-18,,YAMP_f0eccc0d0f66
-00-0027669,,,Charles Brown,charles brown,,,YAMP_f0f0043f9a18
 ,,,Carl Roaches,carl roaches,1953-10-02,,YAMP_f0f10e5f9fe0
 ,,,Benny Johnson,benny johnson,1948-06-29,,YAMP_f0f205a402a3
 00-0027925,DeveJa00,11101,James Develin,james develin,1988-07-23,Brown,YAMP_f0f288864032
@@ -40963,9 +40958,9 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0028755,,,Mason Brodine,mason brodine,1988-02-18,,YAMP_f2481f9aa1e0
 00-0001842,BrooMa00,3009,Macey Brooks,macey brooks,1975-02-02,James Madison,YAMP_f24acb6df44e
 ,,,Gene Hamlin,gene hamlin,1946-07-26,,YAMP_f24b658e568b
-,HuntRo01,,Robert Hunt,robert hunt,,Virginia,YAMP_f24f6a83616b
-,HuntRo01,,Robert Hunt,robert hunt,,North Dakota St.,YAMP_f24f6a83616b
 ,HuntRo01,,Robert Hunt,robert hunt,,Louisiana-Lafayette,YAMP_f24f6a83616b
+,HuntRo01,,Robert Hunt,robert hunt,,North Dakota St.,YAMP_f24f6a83616b
+,HuntRo01,,Robert Hunt,robert hunt,,Virginia,YAMP_f24f6a83616b
 ,,,Mike Swistowicz,mike swistowicz,1927-04-22,,YAMP_f25163b6c7e6
 00-0029575,BlanRo00,10848,Robert Blanton,robert blanton,1989-09-07,Notre Dame,YAMP_f25348397857
 00-0033742,SwooTy00,13411,Tyrone Swoopes,tyrone swoopes,1994-11-14,Texas,YAMP_f253d4e3db51
@@ -41458,6 +41453,7 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0037355,SandBr00,15775,Braylon Sanders,braylon sanders,1999-01-21,Mississippi,YAMP_f5233355a7b3
 00-0031000,ReilTr00,11869,Trevor Reilly,trevor reilly,1988-01-17,Utah,YAMP_f52548fb841c
 00-0039357,RichDe01,16720,Decamerion Richardson,decamerion richardson,2001-03-16,Mississippi State,YAMP_f52a31db3eb7
+,,,Tyler Jones,tyler jones,,Boise State,YAMP_f52aee288c65
 ,,,Mike Guman,mike guman,1958-04-21,,YAMP_f52b14fd63dd
 00-0015971,,,Michael Swift,michael swift,1974-02-28,,YAMP_f52dc863201d
 00-0030198,LawrCa01,11575,Cameron Lawrence,cameron lawrence,1991-01-20,Mississippi State,YAMP_f52dc8dcb7c4
@@ -41568,8 +41564,8 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0033056,JameCo00,12820,Cory James,cory james,1993-05-22,Colorado State,YAMP_f5c001d06900
 ,,,Scott Long,scott long,,Louisville,YAMP_f5c073e7c0f6
 ,,,Frank Wydo,frank wydo,1924-06-15,,YAMP_f5c7538e6c2d
-,,,Josh Davis,josh davis,,Nebraska,YAMP_f5c7683835de
 ,,,Josh Davis,josh davis,,Georgia,YAMP_f5c7683835de
+,,,Josh Davis,josh davis,,Nebraska,YAMP_f5c7683835de
 ,,,Andrew McGee,andrew mcgee,,Oklahoma State,YAMP_f5c85e063c50
 00-0033669,,,Anthony Nash,anthony nash,,,YAMP_f5c956edf9e5
 ,PickNi00,,Nick Pickett,nick pickett,,Oregon,YAMP_f5ca592d88d3
@@ -41637,6 +41633,7 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 ,MaxwVe20,,Vernon Maxwell,vernon maxwell,,Arizona St.,YAMP_f626a505b177
 ,,,Napoleon McCallum,napoleon mccallum,1963-10-06,,YAMP_f626fc61292d
 ,HughDa01,,David Hughes,david hughes,,Boise St.,YAMP_f6283be9fac2
+00-0001040,BellMi00,,Mike Bell,mike bell,1957-08-30,,YAMP_f628c08078b7
 ,,,Hubie Oliver,hubie oliver,1957-11-12,,YAMP_f62931cfbe9f
 ,MoteEr20,,Eric Moten,eric moten,,Michigan St.,YAMP_f62a443634bb
 ,,,Doug Kellermeyer,doug kellermeyer,1961-06-01,,YAMP_f62ad2483688
@@ -41795,6 +41792,7 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 ,,,Michael Harper,michael harper,1961-05-11,,YAMP_f73331d187b5
 00-0030112,BohaTo00,11408,Tommy Bohanon,tommy bohanon,1990-09-10,Wake Forest,YAMP_f733bf75ab88
 00-0017128,,,Michael Walter,michael walter,1960-11-30,,YAMP_f733c2c868bb
+00-0019673,,,Paul Smith,paul smith,1978-01-31,,YAMP_f733d3f866a0
 00-0011042,,,Bruce McNorton,bruce mcnorton,1959-02-28,,YAMP_f735961d281f
 00-0036024,,,Darrin Paulo,darrin paulo,1997-03-05,,YAMP_f737ed0ed6b5
 00-0024711,,8943,Marcus Freeman,marcus freeman,1983-10-24,Notre Dame,YAMP_f739208e31ab
@@ -41991,6 +41989,7 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0035084,NijmYo01,,Yosh Nijman,yosh nijman,1996-01-02,,YAMP_f873dd9fc147
 ,,,Bob DeMarco,bob demarco,1938-09-16,,YAMP_f874c2a5f111
 00-0036120,,,Armani Taylor-Prioleau,armani taylor-prioleau,1997-04-21,,YAMP_f8754e7def4a
+,WillJi22,,Jimmy Williams,jimmy williams,1960-11-15,,YAMP_f875a81440c6
 00-0023643,,,Calvin Armstrong,calvin armstrong,1982-03-31,,YAMP_f8767e2c6d2f
 00-0032916,WillTr05,13022,Trevor Williams,trevor williams,1993-09-15,Penn State,YAMP_f87758d12bec
 ,GordSt20,,Steve Gordon,steve gordon,,California,YAMP_f87eeb65b4d2
@@ -42535,7 +42534,6 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0035925,WillJa09,15197,Jarren Williams,jarren williams,1997-07-18,"Albany, N.Y.",YAMP_fbda598e4644
 00-0039235,KaneSa00,16798,Sanoussi Kane,sanoussi kane,2001-10-06,Purdue,YAMP_fbdd3317f2b7
 ,,,John Small,john small,1946-11-20,,YAMP_fbe1d071db10
-,ThomKe22,,Kevin Thomas,kevin thomas,1964-07-27,,YAMP_fbe716660709
 ,,,Jim Johnson,jim johnson,,Michigan St.,YAMP_fbe7a08a8cc4
 ,,,Bubba Smith,bubba smith,1945-02-28,,YAMP_fbe7f57dc41b
 00-0020383,StonMi20,4948,Michael Stone,michael stone,1978-02-13,Memphis,YAMP_fbe8f5298e82
@@ -42543,6 +42541,7 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0038403,HawkTr00,16341,Tre Hawkins,tre hawkins,2000-08-01,Old Dominion,YAMP_fbec76f727c6
 ,,,Bob Sebring,bob sebring,,Illinois,YAMP_fbf069e3922f
 00-0025438,SmitSt00,,Steve Smith,steve smith,,Penn St.,YAMP_fbf2294c8277
+00-0025794,DaviCh05,8995,Chris Davis,chris davis,1983-12-01,Wake Forest,YAMP_fbf3b29b8ce3
 ,,,Albert Means,albert means,,Memphis,YAMP_fbf6219b8a81
 ,,,Charlie Diehl,charlie diehl,1905-01-13,,YAMP_fbf62e540df9
 ,,,Bob Jewett,bob jewett,1934-11-14,,YAMP_fbf7cf473378
@@ -42832,6 +42831,7 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 ,,564,Jay Bellamy,jay bellamy,,,YAMP_fd8b0341da84
 ,FielAn21,,Angelo Fields,angelo fields,,Michigan St.,YAMP_fd8b7da9ef0d
 ,,,George Murphy,george murphy,1927-05-10,,YAMP_fd8c51e755ef
+00-0027669,,,Charles Brown,charles brown,1987-04-10,,YAMP_fd8c534cf626
 00-0033302,ColbAd00,13351,Adrian Colbert,adrian colbert,1993-10-06,Miami (FL),YAMP_fd8f21fb3b8a
 00-0023602,HangGe20,,Geoff Hangartner,geoff hangartner,1982-04-22,,YAMP_fd8f2ef5b478
 ,,,Cliff Brooks,cliff brooks,1949-06-21,,YAMP_fd9063d8482c
@@ -42949,7 +42949,6 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 ,,,Josh Hubner,josh hubner,,Arizona State,YAMP_fe450b1b88fa
 ,,,Vern Vanoy,vern vanoy,1946-12-31,,YAMP_fe45e105c720
 00-0020394,,,Than Merrill,than merrill,1977-12-22,,YAMP_fe45ffcd6849
-,GreeMi00,,Mike Green,mike green,1961-06-29,,YAMP_fe46822677f0
 00-0028445,ParkRo01,10610,Ron Parker,ron parker,1987-08-17,Newberry,YAMP_fe46fb632c25
 00-0039851,MayeDr00,16580,Drake Maye,drake maye,2002-08-30,North Carolina,YAMP_fe4815acd8d8
 00-0035172,TaylSh00,14720,Shakial Taylor,shakial taylor,1996-12-27,Kansas,YAMP_fe4bd0a9ec55
@@ -43079,6 +43078,7 @@ HAR447512,HarrJo24,5968,Johnnie Harris,johnnie harris,1972-08-21,Mississippi Sta
 00-0035720,,,Olive Sagapolu,olive sagapolu,1997-02-16,,YAMP_ff1e81a32d15
 00-0023518,HenrCh00,7895,Chris Henry,chris henry,1983-05-17,West Virginia,YAMP_ff1febb8458c
 ,,,Warren Wells,warren wells,1942-11-14,,YAMP_ff205fd6683e
+00-0030833,AlleJo02,,Josh Allen,josh allen,,,YAMP_ff206efbd70a
 ,,,Robert Pennywell,robert pennywell,1954-11-06,,YAMP_ff2157c7cb5e
 ,,,Jim Gibbons,jim gibbons,1936-09-26,,YAMP_ff223d7b13ab
 00-0023638,,,Johnathan Goddard,johnathan goddard,1981-05-11,,YAMP_ff23fcd8265b
