@@ -4,6 +4,8 @@
 
 This script creates a deduplicated unified_players table using SQL-based entity
 resolution, then generates yamplayer_id hashes and applies them back to all datasets.
+Not the DRY-est implementation ever made, but it does make it straightforward to add
+another data source or adjust loader logic.
 
 Strategy:
 1. Build unified_players table from 5 source datasets
@@ -13,12 +15,13 @@ Strategy:
 5. Apply back to all datasets via LEFT JOIN
 
 TODO:  Change docstring style to reST
-TODO:  Handle duplicate rows (use left join right now, can that cause dups on fuzzy matches?)
 """
 
 import argparse
 import hashlib
+import re
 import sys
+import pandas as pd
 from pathlib import Path
 
 import duckdb
@@ -313,6 +316,8 @@ def hydrate_combine(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     - TIER 1: pfr_id match (when pfr_id IS NOT NULL AND pfr_id != '')
     - TIER 2: Normalized name + normalized college match
 
+    Uses ROW_NUMBER() tie-breaking to ensure 1:1 mapping (no row explosion).
+
     Args:
         con: DuckDB connection with unified_players table loaded
         df: Polars/Pandas DataFrame of combine.csv data
@@ -320,22 +325,36 @@ def hydrate_combine(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     Returns:
         DataFrame with yamplayer_id column added
     """
+    # Add explicit row ID for partitioning
+    df['_row_id'] = range(len(df))
+
     result = con.execute(f"""
-        SELECT DISTINCT
-            d.*,
-            u.yamplayer_id
-        FROM df d
-        LEFT JOIN unified_players u ON (
-            -- TIER 1: ID match
-            (d.pfr_id IS NOT NULL AND d.pfr_id != '' AND u.pfr_id = d.pfr_id)
-            -- TIER 2: Name + college match
-            OR (
-                LOWER(REGEXP_REPLACE(TRIM(d.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) = u.merge_name
-                AND d.school IS NOT NULL AND d.school != ''
-                AND u.college IS NOT NULL
-                AND u.college = {normalize_college_sql('d.school')}
+        WITH ranked_matches AS (
+            SELECT
+                d.*,
+                u.yamplayer_id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY d._row_id
+                    ORDER BY
+                        CASE WHEN d.pfr_id IS NOT NULL AND d.pfr_id != '' AND u.pfr_id = d.pfr_id THEN 1 ELSE 2 END,
+                        CASE WHEN d.school IS NOT NULL AND u.college = {normalize_college_sql('d.school')} THEN 1 ELSE 2 END
+                ) as rn
+            FROM df d
+            LEFT JOIN unified_players u ON (
+                -- TIER 1: ID match
+                (d.pfr_id IS NOT NULL AND d.pfr_id != '' AND u.pfr_id = d.pfr_id)
+                -- TIER 2: Name + college match
+                OR (
+                    LOWER(REGEXP_REPLACE(TRIM(d.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) = u.merge_name
+                    AND d.school IS NOT NULL AND d.school != ''
+                    AND u.college IS NOT NULL
+                    AND u.college = {normalize_college_sql('d.school')}
+                )
             )
         )
+        SELECT * EXCLUDE (rn, _row_id)
+        FROM ranked_matches
+        WHERE rn = 1
     """).df()
     return result
 
@@ -348,6 +367,8 @@ def hydrate_rosters(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     - TIER 2: pfr_id match (when pfr_id IS NOT NULL AND pfr_id != '')
     - TIER 3: birthdate + normalized name match
 
+    Uses ROW_NUMBER() tie-breaking to ensure 1:1 mapping (no row explosion).
+
     Args:
         con: DuckDB connection with unified_players table loaded
         df: Polars/Pandas DataFrame of rosters.csv data
@@ -355,23 +376,39 @@ def hydrate_rosters(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     Returns:
         DataFrame with yamplayer_id column added
     """
+    # Add explicit row ID for partitioning
+    df['_row_id'] = range(len(df))
+
     result = con.execute("""
-        SELECT DISTINCT
-            d.*,
-            u.yamplayer_id
-        FROM df d
-        LEFT JOIN unified_players u ON (
-            -- TIER 1: gsis_id match
-            (d.gsis_id IS NOT NULL AND d.gsis_id != '' AND u.gsis_id = d.gsis_id)
-            -- TIER 2: pfr_id match
-            OR (d.pfr_id IS NOT NULL AND d.pfr_id != '' AND u.pfr_id = d.pfr_id)
-            -- TIER 3: birthdate + name match
-            OR (
-                d.birth_date IS NOT NULL AND d.birth_date != ''
-                AND u.birthdate = CAST(d.birth_date AS VARCHAR)
-                AND LOWER(REGEXP_REPLACE(TRIM(d.full_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) = u.merge_name
+        WITH ranked_matches AS (
+            SELECT
+                d.*,
+                u.yamplayer_id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY d._row_id
+                    ORDER BY
+                        CASE WHEN d.gsis_id IS NOT NULL AND d.gsis_id != '' AND u.gsis_id = d.gsis_id THEN 1
+                             WHEN d.pfr_id IS NOT NULL AND d.pfr_id != '' AND u.pfr_id = d.pfr_id THEN 2
+                             WHEN d.birth_date IS NOT NULL AND u.birthdate = CAST(d.birth_date AS VARCHAR) THEN 3
+                             ELSE 4 END
+                ) as rn
+            FROM df d
+            LEFT JOIN unified_players u ON (
+                -- TIER 1: gsis_id match
+                (d.gsis_id IS NOT NULL AND d.gsis_id != '' AND u.gsis_id = d.gsis_id)
+                -- TIER 2: pfr_id match
+                OR (d.pfr_id IS NOT NULL AND d.pfr_id != '' AND u.pfr_id = d.pfr_id)
+                -- TIER 3: birthdate + name match
+                OR (
+                    d.birth_date IS NOT NULL AND d.birth_date != ''
+                    AND u.birthdate = CAST(d.birth_date AS VARCHAR)
+                    AND LOWER(REGEXP_REPLACE(TRIM(d.full_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) = u.merge_name
+                )
             )
         )
+        SELECT * EXCLUDE (rn, _row_id)
+        FROM ranked_matches
+        WHERE rn = 1
     """).df()
     return result
 
@@ -384,6 +421,7 @@ def hydrate_draft_picks(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     - TIER 2: Normalized name + normalized college match
 
     Note: Maps pfr_player_id -> pfr_id in unified_players
+    Uses ROW_NUMBER() tie-breaking to ensure 1:1 mapping (no row explosion).
 
     Args:
         con: DuckDB connection with unified_players table loaded
@@ -392,22 +430,36 @@ def hydrate_draft_picks(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     Returns:
         DataFrame with yamplayer_id column added
     """
+    # Add explicit row ID for partitioning
+    df['_row_id'] = range(len(df))
+
     result = con.execute(f"""
-        SELECT DISTINCT
-            d.*,
-            u.yamplayer_id
-        FROM df d
-        LEFT JOIN unified_players u ON (
-            -- TIER 1: pfr_player_id match (maps to pfr_id in unified_players)
-            (d.pfr_player_id IS NOT NULL AND d.pfr_player_id != '' AND u.pfr_id = d.pfr_player_id)
-            -- TIER 2: Name + college match
-            OR (
-                LOWER(REGEXP_REPLACE(TRIM(d.pfr_player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) = u.merge_name
-                AND d.college IS NOT NULL AND d.college != ''
-                AND u.college IS NOT NULL
-                AND u.college = {normalize_college_sql('d.college')}
+        WITH ranked_matches AS (
+            SELECT
+                d.*,
+                u.yamplayer_id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY d._row_id
+                    ORDER BY
+                        CASE WHEN d.pfr_player_id IS NOT NULL AND d.pfr_player_id != '' AND u.pfr_id = d.pfr_player_id THEN 1 ELSE 2 END,
+                        CASE WHEN d.college IS NOT NULL AND u.college = {normalize_college_sql('d.college')} THEN 1 ELSE 2 END
+                ) as rn
+            FROM df d
+            LEFT JOIN unified_players u ON (
+                -- TIER 1: pfr_player_id match (maps to pfr_id in unified_players)
+                (d.pfr_player_id IS NOT NULL AND d.pfr_player_id != '' AND u.pfr_id = d.pfr_player_id)
+                -- TIER 2: Name + college match
+                OR (
+                    LOWER(REGEXP_REPLACE(TRIM(d.pfr_player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) = u.merge_name
+                    AND d.college IS NOT NULL AND d.college != ''
+                    AND u.college IS NOT NULL
+                    AND u.college = {normalize_college_sql('d.college')}
+                )
             )
         )
+        SELECT * EXCLUDE (rn, _row_id)
+        FROM ranked_matches
+        WHERE rn = 1
     """).df()
     return result
 
@@ -428,8 +480,6 @@ def hydrate_player_stats(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     Returns:
         DataFrame with yamplayer_id column added
     """
-    import pandas as pd
-
     # Build lookup dicts from unified_players
     unified = con.execute("SELECT gsis_id, merge_name, yamplayer_id FROM unified_players").df()
 
@@ -445,7 +495,6 @@ def hydrate_player_stats(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
         """Normalize name to match unified_players.merge_name format."""
         if pd.isna(name) or name == '':
             return None
-        import re
         name = str(name).strip()
         name = re.sub(r' (jr\.?|sr\.?|ii|iii|iv|v)$', '', name, flags=re.IGNORECASE)
         return name.lower()
@@ -487,7 +536,6 @@ def hydrate_injuries(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     Returns:
         DataFrame with yamplayer_id column added
     """
-    import pandas as pd
 
     # Build lookup dicts from unified_players
     unified = con.execute("SELECT gsis_id, merge_name, yamplayer_id FROM unified_players").df()
@@ -504,7 +552,6 @@ def hydrate_injuries(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
         """Normalize name to match unified_players.merge_name format."""
         if pd.isna(name) or name == '':
             return None
-        import re
         name = str(name).strip()
         name = re.sub(r' (jr\.?|sr\.?|ii|iii|iv|v)$', '', name, flags=re.IGNORECASE)
         return name.lower()
@@ -523,6 +570,39 @@ def hydrate_injuries(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
         if normalized_name:
             return name_lookup.get(normalized_name)
 
+        return None
+
+    # Apply lookup to all rows
+    df['yamplayer_id'] = df.apply(get_yamplayer_id, axis=1)
+    return df
+
+
+def hydrate_depth_charts(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
+    """Hydrate depth_charts (legacy/modern) with yamplayer_ids using strict gsis_id-only matching.
+
+    Matching strategy (STRICT - ID only):
+    - ONLY match on gsis_id
+    - No name fallback (conservative approach for depth charts)
+
+    Note: Uses Python dict lookups for performance (O(n))
+    Works for both depth_charts_legacy.csv and depth_charts_modern.csv
+
+    Args:
+        con: DuckDB connection with unified_players table loaded
+        df: Polars/Pandas DataFrame of depth_charts data
+
+    Returns:
+        DataFrame with yamplayer_id column added
+    """
+    # Build lookup dict from unified_players (gsis_id only)
+    unified = con.execute("SELECT gsis_id, yamplayer_id FROM unified_players WHERE gsis_id IS NOT NULL").df()
+    gsis_lookup = unified.set_index('gsis_id')['yamplayer_id'].to_dict()
+
+    def get_yamplayer_id(row):
+        """Get yamplayer_id - gsis_id match ONLY (strict)."""
+        gsis_id = row.get('gsis_id')
+        if pd.notna(gsis_id) and gsis_id != '':
+            return gsis_lookup.get(gsis_id)
         return None
 
     # Apply lookup to all rows
@@ -556,7 +636,8 @@ def apply_yamplayer_ids_to_datasets(
         'draft_picks.csv': hydrate_draft_picks,
         'player_stats.csv': hydrate_player_stats,
         'injuries.csv': hydrate_injuries,
-        # 'depth_charts.csv': hydrate_depth_charts,  # TODO: Add after splitting depth_charts
+        'depth_charts_legacy.csv': hydrate_depth_charts,
+        'depth_charts_modern.csv': hydrate_depth_charts,
     }
 
     # List of datasets to process
@@ -566,7 +647,8 @@ def apply_yamplayer_ids_to_datasets(
         nflverse_dir / 'draft_picks.csv',
         nflverse_dir / 'player_stats.csv',
         nflverse_dir / 'injuries.csv',
-        # nflverse_dir / 'depth_charts.csv',  # TODO: Add after splitting
+        nflverse_dir / 'depth_charts_legacy.csv',
+        nflverse_dir / 'depth_charts_modern.csv',
     ]
 
     for file_path in datasets:
