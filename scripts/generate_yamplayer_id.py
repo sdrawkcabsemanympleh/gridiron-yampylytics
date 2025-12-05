@@ -413,13 +413,13 @@ def hydrate_draft_picks(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
 
 
 def hydrate_player_stats(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
-    """Hydrate player_stats.csv with yamplayer_ids using player_stats-specific matching logic.
+    """Hydrate player_stats.csv with yamplayer_ids using fast Python dict lookups.
 
     Matching strategy:
-    - TIER 1: player_id match (maps to gsis_id in unified_players)
-    - TIER 2: Normalized name match (no college in player_stats)
+    - TIER 1: player_id match (maps to gsis_id in unified_players) - ALWAYS prefer
+    - TIER 2: Normalized name match (no college available) - Only if unique match
 
-    Note: player_id column aliases to gsis_id
+    Note: Uses Python dict lookups instead of SQL JOIN for performance (O(n) vs O(n*m))
 
     Args:
         con: DuckDB connection with unified_players table loaded
@@ -428,29 +428,57 @@ def hydrate_player_stats(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     Returns:
         DataFrame with yamplayer_id column added
     """
-    result = con.execute("""
-        SELECT DISTINCT
-            d.*,
-            u.yamplayer_id
-        FROM df d
-        LEFT JOIN unified_players u ON (
-            -- TIER 1: player_id match (maps to gsis_id)
-            (d.player_id IS NOT NULL AND d.player_id != '' AND u.gsis_id = d.player_id)
-            -- TIER 2: Name match (no college available)
-            OR (
-                LOWER(REGEXP_REPLACE(TRIM(d.player_display_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) = u.merge_name
-            )
-        )
-    """).df()
-    return result
+    import pandas as pd
+
+    # Build lookup dicts from unified_players
+    unified = con.execute("SELECT gsis_id, merge_name, yamplayer_id FROM unified_players").df()
+
+    # TIER 1: gsis_id -> yamplayer_id (1-to-1 mapping)
+    gsis_lookup = unified[unified['gsis_id'].notna()].set_index('gsis_id')['yamplayer_id'].to_dict()
+
+    # TIER 2: merge_name -> yamplayer_id (but only for unique names to avoid ambiguity)
+    name_counts = unified['merge_name'].value_counts()
+    unique_names = name_counts[name_counts == 1].index
+    name_lookup = unified[unified['merge_name'].isin(unique_names)].set_index('merge_name')['yamplayer_id'].to_dict()
+
+    def normalize_name(name):
+        """Normalize name to match unified_players.merge_name format."""
+        if pd.isna(name) or name == '':
+            return None
+        import re
+        name = str(name).strip()
+        name = re.sub(r' (jr\.?|sr\.?|ii|iii|iv|v)$', '', name, flags=re.IGNORECASE)
+        return name.lower()
+
+    def get_yamplayer_id(row):
+        """Get yamplayer_id with tie-breaking: ID first, then unique name match."""
+        # TIER 1: Try gsis_id (player_id) first
+        player_id = row.get('player_id')
+        if pd.notna(player_id) and player_id != '':
+            yamplayer_id = gsis_lookup.get(player_id)
+            if yamplayer_id:
+                return yamplayer_id
+
+        # TIER 2: Try normalized name (only if unique)
+        normalized_name = normalize_name(row.get('player_display_name'))
+        if normalized_name:
+            return name_lookup.get(normalized_name)
+
+        return None
+
+    # Apply lookup to all rows
+    df['yamplayer_id'] = df.apply(get_yamplayer_id, axis=1)
+    return df
 
 
 def hydrate_injuries(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
-    """Hydrate injuries.csv with yamplayer_ids using injuries-specific matching logic.
+    """Hydrate injuries.csv with yamplayer_ids using fast Python dict lookups.
 
     Matching strategy:
-    - TIER 1: gsis_id match (when gsis_id IS NOT NULL AND gsis_id != '')
-    - TIER 2: Normalized name match (no college in injuries)
+    - TIER 1: gsis_id match - ALWAYS prefer
+    - TIER 2: Normalized name match (no college available) - Only if unique match
+
+    Note: Uses Python dict lookups instead of SQL JOIN for performance (O(n) vs O(n*m))
 
     Args:
         con: DuckDB connection with unified_players table loaded
@@ -459,21 +487,47 @@ def hydrate_injuries(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     Returns:
         DataFrame with yamplayer_id column added
     """
-    result = con.execute("""
-        SELECT DISTINCT
-            d.*,
-            u.yamplayer_id
-        FROM df d
-        LEFT JOIN unified_players u ON (
-            -- TIER 1: gsis_id match
-            (d.gsis_id IS NOT NULL AND d.gsis_id != '' AND u.gsis_id = d.gsis_id)
-            -- TIER 2: Name match (no college available)
-            OR (
-                LOWER(REGEXP_REPLACE(TRIM(d.full_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) = u.merge_name
-            )
-        )
-    """).df()
-    return result
+    import pandas as pd
+
+    # Build lookup dicts from unified_players
+    unified = con.execute("SELECT gsis_id, merge_name, yamplayer_id FROM unified_players").df()
+
+    # TIER 1: gsis_id -> yamplayer_id (1-to-1 mapping)
+    gsis_lookup = unified[unified['gsis_id'].notna()].set_index('gsis_id')['yamplayer_id'].to_dict()
+
+    # TIER 2: merge_name -> yamplayer_id (but only for unique names to avoid ambiguity)
+    name_counts = unified['merge_name'].value_counts()
+    unique_names = name_counts[name_counts == 1].index
+    name_lookup = unified[unified['merge_name'].isin(unique_names)].set_index('merge_name')['yamplayer_id'].to_dict()
+
+    def normalize_name(name):
+        """Normalize name to match unified_players.merge_name format."""
+        if pd.isna(name) or name == '':
+            return None
+        import re
+        name = str(name).strip()
+        name = re.sub(r' (jr\.?|sr\.?|ii|iii|iv|v)$', '', name, flags=re.IGNORECASE)
+        return name.lower()
+
+    def get_yamplayer_id(row):
+        """Get yamplayer_id with tie-breaking: ID first, then unique name match."""
+        # TIER 1: Try gsis_id first
+        gsis_id = row.get('gsis_id')
+        if pd.notna(gsis_id) and gsis_id != '':
+            yamplayer_id = gsis_lookup.get(gsis_id)
+            if yamplayer_id:
+                return yamplayer_id
+
+        # TIER 2: Try normalized name (only if unique)
+        normalized_name = normalize_name(row.get('full_name'))
+        if normalized_name:
+            return name_lookup.get(normalized_name)
+
+        return None
+
+    # Apply lookup to all rows
+    df['yamplayer_id'] = df.apply(get_yamplayer_id, axis=1)
+    return df
 
 
 def apply_yamplayer_ids_to_datasets(
