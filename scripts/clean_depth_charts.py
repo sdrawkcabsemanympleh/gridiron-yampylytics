@@ -158,7 +158,7 @@ def main() -> None:
         print()
         print("Data is now ready for DuckDB/Harlequin!")
         print()
-        print("Example DuckDB queries:")
+        print("Example DuckDB draft_pick_value_comparison.sql:")
         print()
         print("  -- Load legacy data")
         print("  CREATE TABLE depth_legacy AS")

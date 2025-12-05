@@ -58,7 +58,7 @@ class PercentileCalculator:
     Uses blue-green heap swapping to avoid re-sorting.
 
     :param metric_name: Name of the metric (e.g., 'forty', 'vertical')
-    :param lower_is_better: If True, use max heap (negate values)
+    :param lower_is_better: If True, use max heap (negative values)
     """
 
     def __init__(self, metric_name: str, lower_is_better: bool = False):
@@ -234,13 +234,13 @@ def create_position_mapping() -> dict[str, set[str]]:
         'WR': {'WR', 'FL', 'SE'},
         'TE': {'TE'},
         'OT': {'OT', 'LT', 'RT'},
-        'OG': {'OG', 'LG', 'RG'},
+        'OG': {'OG', 'LG', 'RG', 'OL'},
         'C': {'C'},
-        'DT': {'DT', 'NT', 'LDT', 'RDT'},
-        'DE': {'DE', 'LDE', 'RDE'},
+        'DT': {'DT', 'NT', 'LDT', 'RDT', 'DL'},
+        'DE': {'DE', 'LDE', 'RDE', 'EDGE'},
         'LB': {'LB', 'OLB', 'ILB', 'MLB', 'WLB', 'SLB'},
-        'CB': {'CB', 'LCB', 'RCB'},
-        'S': {'S', 'SS', 'FS'},
+        'CB': {'CB', 'LCB', 'RCB', 'CB/WR'},  # Calculate Travis Hunter as CB
+        'S': {'S', 'SS', 'FS', 'SAF'},
         'K': {'K', 'PK'},
         'P': {'P'},
         'LS': {'LS'}
