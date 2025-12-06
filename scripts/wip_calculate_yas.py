@@ -5,30 +5,8 @@ from dataclasses import dataclass
 from enum import Enum
 
 
-YAS_QUERY = """
-SELECT
-    draft_year
-    , yamplayer_id
-    , pos as draft_position
-    , player_name
-    , forty
-    , bench
-   --, forty_historical
-   --, forty_current
-    , 2025 as calculation_year
-    , ROW_NUMBER() OVER (ORDER BY forty ASC) as forty_ranking
-    , ROW_NUMBER() OVER (ORDER BY bench ASC) as bench_ranking
-FROM 
-    nflverse.combine
-WHERE 
-    pos in %s
-ORDER BY 
-    forty_ranking, bench_ranking   
-"""
-
-
 # For each position we calculate, we may need to include others, due to it being a superset, naming, nomenclature
-# Ideally a player which contributes to more than one of these will
+# Ideally a player which contributes to more than one of these will have an entry for where they lie in each.
 contributing_positions = {
     'QB': {'QB'},
     'RB': {'RB'},
@@ -87,7 +65,7 @@ def standardize_position(position: str) -> str:
     :param str position: position code to standardize
     :return: standardized position code
     """
-    if position in {'T','LT', 'RT', 'T'}:
+    if position in {'T','LT', 'RT'}:
         return 'OT'
     if position in {'LG', 'RG', 'G'}:
         return 'OG'
@@ -101,13 +79,13 @@ def standardize_position(position: str) -> str:
 
 
 def get_percentiles(connection: duckdb.DuckDBPyConnection, position: str, measurable: CombineMeasurables,
-                    calcuation_year: int,  return_previous_classes: bool = False):
+                    calculation_year: int,  return_previous_classes: bool = False):
     """Queries DuckDB to get the percentile rank for a given position and measurable.  Uses the contributing_positions
     mapping to map to all positions to be queried for.
 
     :param str position: position code the calculation will be made for
     :param measurable: measureable to get data for
-    :param calcuation_year: calculates the percentile based on all players in this draft class or before
+    :param calculation_year: calculates the percentile based on all players in this draft class or before
     :param return_previous_classes: returns players of previous draft classes for calculating current YAS
     """
     ordering = 'DESC' if higher_is_better(measurable) else 'ASC'
@@ -119,7 +97,7 @@ def get_percentiles(connection: duckdb.DuckDBPyConnection, position: str, measur
             , {position} as calculation_position
             , {standardize_position(position)} as yas_position
             , draft_year as draft_year
-            , {calcuation_year} as calcuation_year
+            , {calculation_year} as calculation_year
             , {measurable.value}
             , 100 * PERCENT_RANK() OVER (ORDER BY {measurable.value} {ordering}) as {measurable.value}_percentile
         FROM
@@ -127,22 +105,21 @@ def get_percentiles(connection: duckdb.DuckDBPyConnection, position: str, measur
         WHERE
             {measurable.value} IS NOT NULL
             AND pos in {contributing_positions[position]}
-            AND draft_year <= {calcuation_year}
+            AND draft_year <= {calculation_year}
         """
     if not return_previous_classes:
-        query_string = f'SELECT * FROM ({query_string}) WHERE draft_year = {calcuation_year}'
+        query_string = f'SELECT * FROM ({query_string}) WHERE draft_year = {calculation_year}'
     df = connection.execute(query_string).df()
     return df
 
 
-def calculate_position_yas_scores(connection: duckdb.DuckDBPyConnection, position: str, calcuation_year: int,
+def calculate_position_yas_scores(connection: duckdb.DuckDBPyConnection, position: str, calculation_year: int,
                                   return_previous_classes: bool = True):
     """Queries DuckDB to get the percentile rank for a given position.  Uses the contributing_positions mapping to
     map to all positions to be queried for.
 
     :param str position: position code the calculation will be made for
-    :param measurable: measureable to get data for
-    :param calcuation_year: calculates the percentile based on all players in this draft class or before
+    :param calculation_year: calculates the percentile based on all players in this draft class or before
     :param return_previous_classes: returns players of previous draft classes for calculating current YAS
     """
     yas_merged = pd.DataFrame({
@@ -151,14 +128,14 @@ def calculate_position_yas_scores(connection: duckdb.DuckDBPyConnection, positio
         'drafted_position': [],
         'calculation_position': [],
         'yas_position': [],
-        'calcuation_year': [],
+        'calculation_year': [],
     })
     yas_merged = yas_merged.set_index(['yamplayer_id', 'calculation_position', 'calculation_year'])
     columns_to_average = [f'{measurable.value}_percentile' for measurable in CombineMeasurables]
     for measurable in CombineMeasurables:
         yas_merged = pd.merge(
             yas_merged,
-            get_percentiles(connection, position, measurable, calcuation_year, return_previous_classes),
+            get_percentiles(connection, position, measurable, calculation_year, return_previous_classes),
             left_index=True,
             right_on=['yamplayer_id', 'calculation_position', 'calculation_year'],
             how='outer'
@@ -168,7 +145,7 @@ def calculate_position_yas_scores(connection: duckdb.DuckDBPyConnection, positio
     return yas_merged
 
 
-def calculate_year_yas(connection: duckdb.DuckDBPyConnection, calcuation_year: int | None = None,
+def calculate_year_yas(connection: duckdb.DuckDBPyConnection, calculation_year: int | None = None,
                               yas_calc_type: YasCalcType = YasCalcType.HISTORICAL):
     """Calculates YAS for a given year for all positions.  If historical is requested, only the players in the draft
     for that year are included, yielding the score compared to all players that year and before, like RAS.  If current,
@@ -177,26 +154,26 @@ def calculate_year_yas(connection: duckdb.DuckDBPyConnection, calcuation_year: i
 
     :param str position: position code the calculation will be made for
     :param measurable: measureable to get data for
-    :param calcuation_year: calculates the percentile based on all players in this draft class or before
+    :param calculation_year: calculates the percentile based on all players in this draft class or before
     :param yas_calc_type: determines whether players of previous draft classes should be returned or not
     :return: Dataframe of the draft class YAS scores
     """
-    if calcuation_year is None:
-        calcuation_year = datetime.datetime.now().year
+    if calculation_year is None:
+        calculation_year = datetime.datetime.now().year
     yas_merged = pd.DataFrame({
         'yamplayer_id': [],
         'player_name': [],
         'drafted_position': [],
         'calculation_position': [],
         'yas_position': [],
-        'calcuation_year': [],
+        'calculation_year': [],
     })
-    yas_merged = yas_merged.set_index(['yamplayer_id', 'calculation_position', 'calculation_year'])
+    yas_merged = yas_merged.set_index(['yamplayer_id', 'calculation_position', 'calculation_year', 'calculation_type'])
     for position in contributing_positions.keys():
         position_yas = calculate_position_yas_scores(
             connection=connection,
             position=position,
-            calcuation_year=calcuation_year,
+            calculation_year=calculation_year,
             return_previous_classes=True if yas_calc_type == YasCalcType.CURRENT else False,
         )
         yas_merged = pd.merge(
@@ -207,6 +184,8 @@ def calculate_year_yas(connection: duckdb.DuckDBPyConnection, calcuation_year: i
             right_index=True,
             how='outer'
         )
+    yas_merged['calculation_type'] = yas_calc_type.value
+    yas_merged = yas_merged.set_index('calculation_type', append=True)
     return yas_merged
 
 
@@ -217,20 +196,20 @@ def calculate_all_yas(connection: duckdb.DuckDBPyConnection):
 
     :param connection: duckdb.DuckDB connection object
     """
-    calcuation_year = datetime.datetime.now().year
-    historical_years = list(range(2000, calcuation_year + 1))
+    calculation_year = datetime.datetime.now().year
+    historical_years = list(range(2000, calculation_year + 1))
     yas_merged = pd.DataFrame({
         'yamplayer_id': [],
         'player_name': [],
         'drafted_position': [],
         'calculation_position': [],
         'yas_position': [],
-        'calcuation_year': [],
+        'calculation_year': [],
         'calculation_type': []
     })
     yas_merged = yas_merged.set_index(['yamplayer_id', 'calculation_position', 'calculation_year', 'calculation_type'])
     for year in historical_years:
-        yas_scores = calculate_year_yas(connection=connection, calcuation_year=year)
+        yas_scores = calculate_year_yas(connection=connection, calculation_year=year)
         yas_merged = pd.merge(
             yas_merged,
             yas_scores,
@@ -239,19 +218,17 @@ def calculate_all_yas(connection: duckdb.DuckDBPyConnection):
             right_index=True,
             how='outer'
         )
-    yas_merged['calculation_type'] = YasCalcType.HISTORICAL.value
-    current_yas = calculate_year_yas(connection=connection, calcuation_year=calcuation_year,
+    current_yas = calculate_year_yas(connection=connection, calculation_year=calculation_year,
                                      yas_calc_type=YasCalcType.CURRENT)
-    current_yas['calculation_type'] = YasCalcType.CURRENT.value
     yas_merged = pd.merge(
         yas_merged,
         current_yas,
         left_index=True,
-        right_on=['yamplayer_id', 'calculation_position', 'calculation_year', 'calculation_type'],
+        right_index=True,
+        #right_on=['yamplayer_id', 'calculation_position', 'calculation_year', 'calculation_type'],
         how='outer'
     )
     return yas_merged
-
 
 
 @dataclass
