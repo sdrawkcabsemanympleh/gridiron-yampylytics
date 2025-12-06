@@ -18,20 +18,11 @@ TODO:  Change docstring style to reST
 """
 
 import argparse
+import duckdb
 import hashlib
 import re
-import sys
 import pandas as pd
 from pathlib import Path
-
-import duckdb
-
-# Configure UTF-8 output for Windows console
-# NOTE: Commenting out reconfigure - it was causing the script to hang/break stdout
-# print("DEBUG: Configuring UTF-8...")
-# if sys.platform == 'win32':
-#     sys.stdout.reconfigure(encoding='utf-8')
-print("DEBUG: Skipped UTF-8 reconfigure to avoid stdout issues")
 
 
 def normalize_name_sql() -> str:

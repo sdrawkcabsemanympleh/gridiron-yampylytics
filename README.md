@@ -91,6 +91,11 @@ If you encounter a timezone formatting issue on Windows, add `--no-download-tzda
 uv run harlequin gridiron_yampylytics.db --no-download-tzdata
 ```
 
+## References
+
+### nflverse data
+See the data dictionary for the [nflverse data here](https://nflreadr.nflverse.com/articles/index.html)
+
 ## Development
 
 **Run tests:**
