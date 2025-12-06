@@ -19,6 +19,7 @@ There's a quirk about RAS data; it isn't recomputed every year.  The idea is tha
 ### Other Notes
 On depth charts, you'll notice there's a legacy and modern.  The schema in `nflreadpy` changed after the 2024 year for some reason, and is now completely different.  I have them as different datasets.  I may attempt to reconcilethem at some point, but at time of writing, have not.  It might be worth double checking whether I did since writing this, since it's easy to forget updating a readme.
 
+Large datasets like Play-by-Play (PBP) are not included by default are available if explicitly requested.  You will want to check the invoke args for that in `tasks.py`.
 
 ## Quick Start
 
