@@ -47,11 +47,11 @@ uv run python -m scripts.clean_depth_charts
 # Combine GM data into single table
 uv run python -m scripts.combine_gm_data
 
-# Calculate Yampy Athletic Scores (YAS) from combine data
-uv run python -m scripts.calculate_yas
-
 # Generate unified player IDs (yamplayer_id) across all datasets
 uv run python -m scripts.generate_yamplayer_id
+
+# Calculate Yampy Athletic Scores (YAS) from combine data - NOTE: Requires yamplayer_ids to run!
+uv run python -m scripts.calculate_yas
 ```
 
 **4. Explore data with SQL:**
