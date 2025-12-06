@@ -324,63 +324,24 @@ def main() -> None:
     print("YAS (ATHLETIC SCORES)")
     print("=" * 80)
 
-    # yas.yas_2025 (PRIMARY KEY: yamplayer_id, season)
-    yas_2025_file = data_dir / "yas" / "yas_2025.csv"
-    if yas_2025_file.exists():
+    # yas.yas_complete (PRIMARY KEY: yamplayer_id, calculation_position, calculation_type)
+    yas_complete_file = data_dir / "yas" / "yas_complete.csv"
+    if yas_complete_file.exists():
         create_table_with_indexes(
             con,
             "yas",
-            "yas_2025",
-            yas_2025_file,
-            primary_key="yamplayer_id, season",
+            "yas_complete",
+            yas_complete_file,
+            primary_key="yamplayer_id, calculation_position, calculation_type",
             indexes=[
-                ("idx_yas2025_yamplayer", "yamplayer_id"),
-                ("idx_yas2025_gsis", "gsis_id"),
-                ("idx_yas2025_pfr", "pfr_id"),
-                ("idx_yas2025_season_pos", "season, calculated_position"),
-                ("idx_yas2025_score", "yas_score"),
+                ("idx_yascomplete_yamplayer", "yamplayer_id"),
+                ("idx_yascomplete_drafted_position", "drafted_position"),
+                ("idx_yascomplete_yas_position", "yas_position"),
+                ("idx_yascomplete_calculation_position", "calculation_position"),
+                ("idx_yascomplete_draft_year", "draft_year"),
+                ("idx_yascomplete_score", "yas_score"),
             ],
         )
-
-    # yas.yas_historical (PRIMARY KEY: yamplayer_id, season)
-    yas_hist_file = data_dir / "yas" / "yas_historical.csv"
-    if yas_hist_file.exists():
-        create_table_with_indexes(
-            con,
-            "yas",
-            "yas_historical",
-            yas_hist_file,
-            primary_key="yamplayer_id, season",
-            indexes=[
-                ("idx_yashist_yamplayer", "yamplayer_id"),
-                ("idx_yashist_gsis", "gsis_id"),
-                ("idx_yashist_pfr", "pfr_id"),
-                ("idx_yashist_season_pos", "season, calculated_position"),
-                ("idx_yashist_score", "yas_score"),
-            ],
-        )
-
-    print("\n" + "=" * 80)
-    print("RAW EXECUTIVE DATA")
-    print("=" * 80)
-
-    # Load all team executive CSV files
-    exec_dir = data_dir / "raw" / "executives"
-    if exec_dir.exists():
-        exec_files = sorted(exec_dir.glob("*_executives.csv"))
-        print(f"Loading {len(exec_files)} team executive files...")
-        for exec_file in exec_files:
-            team_code = exec_file.stem.replace("_executives", "")
-            create_table_with_indexes(
-                con,
-                "raw_executives",
-                f"{team_code}_executives",
-                exec_file,
-                primary_key=None,
-                indexes=None,
-            )
-
-    con.close()
 
     # Get final database size
     db_size_mb = db_path.stat().st_size / (1024 * 1024)
@@ -397,7 +358,7 @@ def main() -> None:
     print(f"\n📖 Query examples:")
     print(f"   SELECT * FROM reference.yamplayer_mapping LIMIT 10;")
     print(f"   SELECT * FROM nflverse.player_stats WHERE season = 2023;")
-    print(f"   SELECT * FROM yas.yas_2025 ORDER BY yas_score DESC LIMIT 10;")
+    print(f"   SELECT * FROM yas.yas_complete ORDER BY yas_score DESC LIMIT 10;")
 
 
 if __name__ == "__main__":
