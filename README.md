@@ -79,7 +79,7 @@ uv run harlequin gridiron_yampylytics.db
 uv run python -m scripts.create_duckdb_views
 
 # Launch interactive SQL explorer (Harlequin)
-uv run harlequin gridiron_yampylytics_views.db
+uv run harlequin gridiron_yampylytics.db
 ```
 - Minimal disk space (just view definitions)
 - Slower queries (re-reads CSVs each time)
