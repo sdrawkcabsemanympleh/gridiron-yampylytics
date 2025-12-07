@@ -1,21 +1,27 @@
-"""This file implements the various console commands so that you don't have to memorize lengthy uv commands and such"""
+"""Invoke tasks for gridiron-yampylytics - simplified NFL data analysis toolkit.
+
+Use these commands to download, process, and analyze NFL data without memorizing
+lengthy uv commands.
+
+Quick start:
+    inv setup              # Default setup (reasonable datasets, ~10 min)
+    inv status             # See what data you have
+    inv sql                # Open Harlequin SQL explorer
+"""
 
 
 from invoke import task
 from typing import List, Optional
 
-@task(help={
-    'all_datasets': 'Will load all datasets if supplied, including very large ones.',
-    'data_sets': 'Allows you to specify which datasets to load.  Pass list as comma separated string: my_set1,my_set2'
-})
-def load_data(c, all_datasets: bool = False, data_sets: Optional[List[str]] = None):
-    """Used to load datasets.  By default, will load a number of reasonably sized datasets."""
-    if all_datasets:  # TODO:  Implement these flags in load_all_data or make a modular script for loading each
-        c.run('uv run python -m scripts.load_all_data --all_datasets')
-    elif data_sets:
-        c.run(f'uv run python -m scripts.load_all_data --data_sets={data_sets}')
-    else:
-        c.run('uv run python -m scripts.load_all_data')
+@task
+def load_data(c):
+    """Download all NFL data sources (nflverse + GM executives).
+
+    This is a simple wrapper that calls both data loaders sequentially.
+    For more control over what gets downloaded, use the individual tasks or
+    call scripts/cache_nflreadpy_data.py directly with its options.
+    """
+    c.run('uv run python -m scripts.load_all_data')
 
 
 @task
@@ -51,26 +57,33 @@ def calculate_yas(c):
 
 
 @task(help={
-    'all_datasets': 'Will load all datasets if supplied, including very large ones.',
+    'include_large': 'Include large datasets like pbp in yamplayer_id processing',
 })
-def process_data(c, all_datasets: bool = False):
-    """Process the raw data gathered from load_data, including operations like cleaning depth chart data, injecting
-    universal yamplayer_id's into tables, and processing GM scrape data.
+def process_data(c, include_large=False):
+    """Process raw data: clean depth charts, combine GM data, inject yamplayer_ids, calculate YAS.
+
+    Steps:
+    1. clean_depth_charts - Split 2024+ schema from legacy depth charts
+    2. combine_gm_data - Merge scraped GM executive CSVs into unified file
+    3. generate_yamplayer_id - Inject universal player IDs into all datasets
+    4. calculate_yas - Calculate Yampylytics Athletic Score (YAS) from combine data
     """
-    c.invoke(clean_depth_charts, all_datasets=all_datasets)
-    c.invoke(combine_gm_data, all_datasets=all_datasets)
-    c.invoke(generate_yamplayer_id, all_datasets=all_datasets)
-    c.invoke(calculate_yas, all_datasets=all_datasets)
+    c.invoke(clean_depth_charts)
+    c.invoke(combine_gm_data)
+    c.invoke(generate_yamplayer_id, all_datasets=include_large)
+    c.invoke(calculate_yas)
 
 @task(help={
-    'all_datasets': 'Will load all datasets if supplied, including very large ones.',
-    'as_tables': 'If true, CSVs are loaded as tables indexes, otherwise as lighterweight views.',
-    'include_pbp':  'Includes one particular large dataset, Play-by-Play data.  Only applies when loading as table.'
+    'all_datasets': 'Include all datasets including very large ones',
+    'as_tables': 'Load as tables with indexes (uses disk space) instead of lightweight views',
+    'include_pbp': 'Include play-by-play data (only applies when as_tables=True)'
 })
-def create_duckdb(c, all_datasets: bool = False, include_pbp: bool = False, as_tables: bool = False):
-    """Creates a local DuckDB with the loaded data.  CSV's loaded as views as default, but can be loaded as tables
-    which include useful indexes at the cost of taking up disk space.  Also note that tables do not change when the
-    source CSV's do."""
+def create_duckdb(c, all_datasets=False, include_pbp=False, as_tables=False):
+    """Create a local DuckDB database with the loaded data.
+
+    Views (default): Lightweight, no disk space, always reflects current CSVs
+    Tables (--as-tables): Faster queries with indexes, uses disk space, snapshot of CSVs
+    """
     if as_tables:
         if all_datasets:
             suffix = ' --all_datasets'
@@ -84,19 +97,32 @@ def create_duckdb(c, all_datasets: bool = False, include_pbp: bool = False, as_t
 
 
 @task(help={
-    'unix':  'Denotes that this is a unix system so that --no-download-tzdata is not supplied.'
+    'unix':  'Set this flag on Unix/Linux systems to avoid timezone data compatibility issues'
 })
 def sql(c, unix=False):
-    """Starts Harlequin command line SQL explorer.  Uses --no-download-tzdata unless overridden for compatibility
-    with Windows."""
-    suffix = ' --no-download-tzdata' if unix else ''
+    """Start Harlequin SQL explorer for interactive data analysis.
+
+    Opens an interactive SQL terminal (like DBeaver/DataGrip but in your terminal)
+    for exploring the gridiron_yampylytics.db database.
+
+    On Windows: Uses --no-download-tzdata flag for compatibility
+    On Unix/Linux: Omit --no-download-tzdata (set unix=True)
+    """
+    suffix = '' if unix else ' --no-download-tzdata'
     c.run(f'uv run harlequin gridiron_yampylytics.db{suffix}')
 
 
 @task
 def setup(c):
-    """Completes all setup steps with default settings, including fetching all data, processing, and database
-    creation using .  This may take some time depending on your system and internet connection."""
+    """Complete setup: download data, process it, and create database.
+
+    This runs all setup steps with sensible defaults:
+    - Downloads all NFL data (nflverse + GM executives)
+    - Processes and enriches data (yamplayer_id, YAS scores, etc.)
+    - Creates DuckDB with lightweight views
+
+    Grab a coffee - this will take a bit depending on your network speed.
+    """
     c.invoke(load_data)
     c.invoke(process_data)
     c.invoke(create_duckdb)
@@ -104,7 +130,11 @@ def setup(c):
 
 @task
 def yampy_setup(c):
-    """Setup with Yampy option set for maximum yampage."""
+    """Maximum yampage setup: full data + performance optimizations.
+
+    Like setup, but with tables instead of views for faster queries.
+    Assumes you have disk space and want maximum performance.
+    """
     c.invoke(load_data)
     c.invoke(process_data)
     c.invoke(create_duckdb, as_tables=True)
