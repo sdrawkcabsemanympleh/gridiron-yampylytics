@@ -59,6 +59,7 @@ def process_data(c, all_datasets: bool = False):
     c.invoke(clean_depth_charts, all_datasets=all_datasets)
     c.invoke(combine_gm_data, all_datasets=all_datasets)
     c.invoke(generate_yamplayer_id, all_datasets=all_datasets)
+    c.iinvoke(calculate_yas, all_datasets=all_datasets)
 
 @task(help={
     'all_datasets': 'Will load all datasets if supplied, including very large ones.',
@@ -89,3 +90,20 @@ def sql(c, unix=False):
     with Windows."""
     suffix = ' --no-download-tzdata' if unix else ''
     c.run(f'uv run harlequin gridiron_yampylytics.db{suffix}')
+
+
+@task
+def setup(c):
+    """Completes all setup steps with default settings, including fetching all data, processing, and database
+    creation using .  This may take some time depending on your system and internet connection."""
+    c.invoke(load_data)
+    c.invoke(process_data)
+    c.invoke(create_duckdb)
+
+
+@task
+def yampy_setup(c):
+    """Setup with Yampy option set for maximum yampage."""
+    c.invoke(load_data)
+    c.invoke(process_data)
+    c.invoke(create_duckdb, as_tables=True)
