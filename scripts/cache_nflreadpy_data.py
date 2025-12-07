@@ -300,9 +300,7 @@ NO_SEASON_DATASETS = {
 }
 
 # Datasets that are very large and are omitted during standard setup
-LARGE_DATASETS = {
-    "pbp", cache_pbp
-}
+LARGE_DATASETS = {"pbp"}
 
 
 def main() -> None:

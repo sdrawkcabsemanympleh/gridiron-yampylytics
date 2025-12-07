@@ -40,7 +40,8 @@ def generate_yamplayer_id(c, all_datasets=False):
     default."""
     if all_datasets:
         c.run('uv run python -m scripts.generate_yamplayer_id --all_datasets')
-    c.run('uv run python -m scripts.generate_yamplayer_id')
+    else:
+        c.run('uv run python -m scripts.generate_yamplayer_id')
 
 
 @task
@@ -59,7 +60,7 @@ def process_data(c, all_datasets: bool = False):
     c.invoke(clean_depth_charts, all_datasets=all_datasets)
     c.invoke(combine_gm_data, all_datasets=all_datasets)
     c.invoke(generate_yamplayer_id, all_datasets=all_datasets)
-    c.iinvoke(calculate_yas, all_datasets=all_datasets)
+    c.invoke(calculate_yas, all_datasets=all_datasets)
 
 @task(help={
     'all_datasets': 'Will load all datasets if supplied, including very large ones.',
