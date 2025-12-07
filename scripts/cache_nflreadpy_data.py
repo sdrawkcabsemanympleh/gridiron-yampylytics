@@ -299,6 +299,11 @@ NO_SEASON_DATASETS = {
     "ids": cache_ids,
 }
 
+# Datasets that are very large and are omitted during standard setup
+LARGE_DATASETS = {
+    "pbp", cache_pbp
+}
+
 
 def main() -> None:
     """Main entry point for caching nflreadpy data."""

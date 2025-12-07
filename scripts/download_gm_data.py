@@ -149,10 +149,6 @@ def main() -> None:
         except Exception as e:
             print(f"  ⚠ Warning: Could not update manifest: {e}")
 
-        print("\nNext steps:")
-        print("  1. Combine individual team CSVs into single dataset")
-        print("  2. Extract GM tenure ranges (start year, end year)")
-        print("  3. Standardize team codes to match nflverse format")
 
 if __name__ == "__main__":
     main()
