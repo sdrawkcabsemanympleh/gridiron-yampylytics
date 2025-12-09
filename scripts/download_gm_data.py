@@ -15,7 +15,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from gridiron_yampylytics.manifest import update_gm_data
+from src.gridiron_yampylytics.manifest import update_gm_data
 
 # Team abbreviations used by PFR
 PFR_TEAMS = [

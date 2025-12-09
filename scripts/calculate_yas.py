@@ -227,6 +227,8 @@ def main() -> None:
     """
     import sys
     from pathlib import Path
+    from datetime import datetime
+    from src.gridiron_yampylytics.manifest import update_transformation_script
 
     # Configure UTF-8 output
     sys.stdout.reconfigure(encoding='utf-8')
@@ -294,6 +296,42 @@ def main() -> None:
     print("=" * 80)
     print("✅ YAS CALCULATION COMPLETE")
     print("=" * 80)
+
+    # Update manifest with processing metadata
+    print()
+    print("=" * 80)
+    print("UPDATING MANIFEST")
+    print("=" * 80)
+    try:
+        # Get file size
+        file_size = output_file.stat().st_size if output_file.exists() else 0
+
+        # Calculate stats from the YAS dataframe
+        unique_players = yas_df.index.get_level_values('yamplayer_id').nunique()
+        total_rows = len(yas_df)
+        num_positions = yas_df.index.get_level_values('calculation_position').nunique()
+        year_range_start = yas_df.index.get_level_values('calculation_year').min()
+        year_range_end = yas_df.index.get_level_values('calculation_year').max()
+
+        # Update manifest
+        update_transformation_script("calculate_yas", {
+            "last_processed": datetime.now().strftime("%Y-%m-%d"),
+            "file_size_bytes": file_size,
+            "total_rows": total_rows,
+            "unique_players": unique_players,
+            "positions_covered": num_positions,
+            "year_range": f"{year_range_start}-{year_range_end}"
+        })
+        print(f"\n[OK] Manifest updated with processing metadata:")
+        print(f"  • Last processed: {datetime.now().strftime('%Y-%m-%d')}")
+        print(f"  • Total rows: {total_rows:,}")
+        print(f"  • Unique players: {unique_players:,}")
+        print(f"  • Positions covered: {num_positions}")
+        print(f"  • Year range: {year_range_start}-{year_range_end}")
+    except Exception as e:
+        # Don't fail the whole script if manifest update fails
+        print(f"\n[WARNING] Could not update manifest: {e}")
+
     print()
     print(f"Output: {output_file}")
 

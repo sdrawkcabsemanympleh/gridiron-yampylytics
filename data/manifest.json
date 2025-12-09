@@ -156,12 +156,12 @@
       "acquisition_method": "Selenium scraper",
       "access_pattern": "uv run python -m scripts.download_gm_data",
       "script": "scripts/download_gm_data.py",
-      "last_updated": "2025-10-31",
+      "last_updated": "2025-12-08",
       "location": "data/raw/executives/",
       "processed_location": "data/reference/gm_tenures.csv",
       "processing_script": "scripts/combine_gm_data.py",
       "format": "CSV",
-      "files": 32,
+      "files": 4,
       "coverage": {
         "years": "1960-2025",
         "teams": 32,
@@ -361,7 +361,13 @@
       ],
       "status": "complete",
       "records": "8,649",
-      "description": "Calculate Yampy Athletic Scores (YAS) from combine data - 8 of 10 metrics, position-normalized 0-10 scale"
+      "description": "Calculate Yampy Athletic Scores (YAS) from combine data - 8 of 10 metrics, position-normalized 0-10 scale",
+      "last_processed": "2025-12-08",
+      "file_size_bytes": 4160941,
+      "total_rows": 17586,
+      "unique_players": 5201,
+      "positions_covered": 20,
+      "year_range": "2000-2025"
     },
     "generate_yamplayer_id": {
       "script": "scripts/generate_yamplayer_id.py",

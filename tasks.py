@@ -25,6 +25,40 @@ def load_data(c):
 
 
 @task
+def download_gm(c):
+    """Download GM/executive data from Pro Football Reference for all 32 teams.
+
+    Uses Selenium to scrape executive data (takes ~3 minutes with delays).
+    Outputs to data/raw/executives/*.csv
+    """
+    c.run('uv run python -m scripts.download_gm_data')
+
+
+@task(help={
+    'dataset': 'Which dataset to cache (pbp, player_stats, rosters, etc.). Default: all',
+    'seasons': 'Specific season(s) to cache (e.g., "2023 2024"). Omit for current season.',
+    'all_seasons': 'Cache all available seasons for the dataset',
+})
+def cache_nflverse(c, dataset='all', seasons=None, all_seasons=False):
+    """Download and cache nflverse data locally.
+
+    Examples:
+        inv cache-nflverse                           # Cache all datasets (current season)
+        inv cache-nflverse --all-seasons             # Cache all datasets (all seasons)
+        inv cache-nflverse --dataset=pbp --seasons="2023 2024"
+        inv cache-nflverse --dataset=combine --all-seasons
+    """
+    cmd = 'uv run python -m scripts.cache_nflreadpy_data'
+    if dataset != 'all':
+        cmd += f' --dataset={dataset}'
+    if all_seasons:
+        cmd += ' --all'
+    elif seasons:
+        cmd += f' --seasons {seasons}'
+    c.run(cmd)
+
+
+@task
 def clean_depth_charts(c):
     """The depth charts change schema in 2024-2025 and need to be separated into legacy and modern datasets to be
     usable.  This completes that operation.
@@ -126,15 +160,57 @@ def status(c):
 
 
 @task
-def setup(c):
-    """Complete setup: download data, process it, and create database.
+def setup_quick(c):
+    """Quick setup: essentials only for fast start.
+
+    Downloads minimal datasets for quick exploration:
+    - Combine data (current prospects)
+    - Draft picks (historical)
+    - Rosters (current season)
+    - GM data (all teams)
+
+    Processes and creates DuckDB views. Fast setup (~1-2 min).
+    """
+    # Download essential datasets only
+    c.invoke(cache_nflverse, dataset='combine', all_seasons=True)
+    c.invoke(cache_nflverse, dataset='draft_picks', all_seasons=True)
+    c.invoke(cache_nflverse, dataset='rosters')  # Current season
+    c.invoke(download_gm)
+    c.invoke(process_data)
+    c.invoke(create_duckdb)
+
+
+@task
+def setup_analysis(c):
+    """Analysis-ready setup: omits largest tables.
+
+    Downloads comprehensive datasets for analysis:
+    - All nflverse data EXCEPT pbp (which is huge)
+    - Includes: rosters, stats, combine, draft, contracts, schedules, etc.
+    - GM executive data
+
+    Processes and creates DuckDB views. Moderate setup time (~5-10 min).
+    """
+    # Download all datasets except pbp
+    datasets = ['player_stats', 'rosters', 'schedules', 'injuries',
+                'depth_charts', 'draft_picks', 'combine', 'contracts', 'ids']
+    for dataset in datasets:
+        c.invoke(cache_nflverse, dataset=dataset, all_seasons=True)
+    c.invoke(download_gm)
+    c.invoke(process_data)
+    c.invoke(create_duckdb)
+
+
+@task
+def full_setup(c):
+    """Complete setup: download all datasets, process it, and create database.
 
     This runs all setup steps with sensible defaults:
     - Downloads all NFL data (nflverse + GM executives)
     - Processes and enriches data (yamplayer_id, YAS scores, etc.)
     - Creates DuckDB with lightweight views
 
-    Grab a coffee - this will take a bit depending on your network speed.
+    Grab a coffee - this could potentially take a bit depending on your network speed.
     """
     c.invoke(load_data)
     c.invoke(process_data)
