@@ -51,7 +51,9 @@ import sys
 import argparse
 from pathlib import Path
 from typing import Any
+from datetime import datetime
 import nflreadpy as nfl
+from src.gridiron_yampylytics.manifest import update_dataset
 
 
 def setup_cache_dirs() -> dict[str, Path]:
@@ -416,6 +418,31 @@ def main() -> None:
     print("\n" + "="*80)
     print(f"Data cached in: data/nflverse/")
     print("You can now import these CSVs into your SQL tool of choice.")
+
+    # Update manifest for successfully cached datasets
+    if successful:
+        print("\nUpdating manifest...")
+        for dataset_name in successful:
+            try:
+                # Find the cached file(s) for this dataset
+                dataset_dir = cache_dirs[dataset_name]
+                files = list(dataset_dir.glob(f"{dataset_name}.*"))
+
+                if files:
+                    # Get total size of all files for this dataset
+                    total_size = sum(f.stat().st_size for f in files)
+
+                    # Update manifest with last_downloaded timestamp and size
+                    update_dataset(dataset_name, {
+                        "last_downloaded": datetime.now().strftime("%Y-%m-%d"),
+                        "file_size_bytes": total_size,
+                        "files": len(files)
+                    })
+            except Exception as e:
+                # Don't fail the whole script if manifest update fails
+                print(f"  ⚠️  Warning: Could not update manifest for {dataset_name}: {e}")
+
+        print("  ✓ Manifest updated")
 
     if failed and not successful:
         sys.exit(1)  # Exit with error if everything failed

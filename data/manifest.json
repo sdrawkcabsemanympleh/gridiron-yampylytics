@@ -1,8 +1,8 @@
 {
   "metadata": {
     "created": "2025-10-31",
-    "last_updated": "2025-11-19",
-    "version": "2.0.0",
+    "last_updated": "2025-12-08",
+    "version": "3.0.0",
     "description": "Data inventory for gridiron-yampylytics NFL analytics project"
   },
   "acquisition_categories": {
@@ -10,22 +10,145 @@
       "description": "Data loaded on-demand via Python package functions",
       "access_pattern": "import nflreadpy as nfl; data = nfl.load_**()",
       "update_method": "Automatic (package handles downloads)",
-      "datasets": ["nflreadpy"]
+      "datasets": [
+        "pbp",
+        "player_stats",
+        "rosters",
+        "draft_picks",
+        "combine",
+        "contracts",
+        "player_ids",
+        "schedules",
+        "injuries",
+        "depth_charts"
+      ]
     },
     "active_scrape": {
       "description": "Data acquired by running scraper scripts (slow, respectful delays)",
       "access_pattern": "uv run python -m scripts.download_*",
       "update_method": "Manual script execution",
-      "datasets": ["gm_executives"]
+      "datasets": [
+        "gm_executives"
+      ]
     },
     "reference_data": {
       "description": "Static reference data (value charts, lookup tables)",
       "access_pattern": "pd.read_csv('data/reference/...')",
       "update_method": "Static (manually updated as needed)",
-      "datasets": ["draft_value_charts"]
+      "datasets": [
+        "draft_value_charts"
+      ]
     }
   },
   "datasets": {
+    "pbp": {
+      "source": "nflreadpy (nflverse)",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "description": "Play-by-play data",
+      "coverage": "1999-2025",
+      "location": "data/nflverse/pbp.csv",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
+      "format": "CSV"
+    },
+    "player_stats": {
+      "source": "nflreadpy (nflverse)",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "description": "Weekly/seasonal player statistics",
+      "coverage": "2012-2025",
+      "location": "data/nflverse/player_stats.csv",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
+      "format": "CSV"
+    },
+    "rosters": {
+      "source": "nflreadpy (nflverse)",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "description": "Weekly rosters",
+      "coverage": "2006-2025",
+      "location": "data/nflverse/rosters.csv",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
+      "format": "CSV"
+    },
+    "draft_picks": {
+      "source": "nflreadpy (nflverse)",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "description": "Draft history",
+      "coverage": "1967-2025",
+      "location": "data/nflverse/draft_picks.csv",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
+      "format": "CSV"
+    },
+    "combine": {
+      "source": "nflreadpy (nflverse)",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "description": "NFL Combine results",
+      "coverage": "2000-2024",
+      "location": "data/nflverse/combine.csv",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
+      "format": "CSV",
+      "last_downloaded": "2025-12-08",
+      "file_size_bytes": 940418,
+      "files": 1
+    },
+    "contracts": {
+      "source": "nflreadpy (nflverse)",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "description": "Player contracts (48K contracts)",
+      "coverage": "2000s-2025",
+      "location": "data/nflverse/contracts.parquet",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
+      "format": "Parquet"
+    },
+    "player_ids": {
+      "source": "nflreadpy (nflverse)",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "description": "Player ID mappings (gsis_id, pfr_id, espn_id)",
+      "coverage": "all",
+      "location": "data/nflverse/player_ids.csv",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
+      "format": "CSV"
+    },
+    "schedules": {
+      "source": "nflreadpy (nflverse)",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "description": "Game schedules",
+      "coverage": "1999-2025",
+      "location": "data/nflverse/schedules.csv",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
+      "format": "CSV"
+    },
+    "injuries": {
+      "source": "nflreadpy (nflverse)",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "description": "Injury reports",
+      "coverage": "2009-2025",
+      "location": "data/nflverse/injuries.csv",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
+      "format": "CSV"
+    },
+    "depth_charts": {
+      "source": "nflreadpy (nflverse)",
+      "source_url": "https://github.com/nflverse/nflreadpy",
+      "acquisition_category": "python_package",
+      "description": "Team depth charts",
+      "coverage": "2017-2025",
+      "location": "data/nflverse/depth_charts.csv",
+      "caching_script": "scripts/cache_nflreadpy_data.py",
+      "format": "CSV",
+      "processing_script": "scripts/clean_depth_charts.py",
+      "processed_outputs": [
+        "data/nflverse/depth_charts_legacy.csv",
+        "data/nflverse/depth_charts_modern.csv"
+      ]
+    },
     "gm_executives": {
       "source": "Pro Football Reference",
       "source_url": "https://www.pro-football-reference.com/teams/{team}/executives.htm",
@@ -44,65 +167,15 @@
         "teams": 32,
         "verified": true
       },
-      "fields": ["Person", "Teams", "From", "To", "Titles", "Notes"],
+      "fields": [
+        "Person",
+        "Teams",
+        "From",
+        "To",
+        "Titles",
+        "Notes"
+      ],
       "notes": "General Manager and executive tenure data for all 32 NFL teams. Script runs ~3 min with Selenium."
-    },
-    "nflreadpy": {
-      "source": "nflreadpy Python package",
-      "source_url": "https://github.com/nflverse/nflreadpy",
-      "acquisition_category": "python_package",
-      "acquisition_method": "Python package (uv add nflreadpy)",
-      "access_pattern": "import nflreadpy as nfl; data = nfl.load_*()",
-      "format": "Polars DataFrame",
-      "cached_location": "data/nflverse/",
-      "caching_script": "scripts/cache_nflreadpy_data.py",
-      "last_updated": "daily (automated)",
-      "coverage": {
-        "verified": true
-      },
-      "functions": {
-        "load_pbp": {
-          "description": "Play-by-play data",
-          "coverage": "1999-2025"
-        },
-        "load_player_stats": {
-          "description": "Weekly/seasonal player statistics",
-          "coverage": "2012-2025"
-        },
-        "load_rosters": {
-          "description": "Weekly rosters",
-          "coverage": "2006-2025"
-        },
-        "load_draft_picks": {
-          "description": "Draft history",
-          "coverage": "1967-2025"
-        },
-        "load_combine": {
-          "description": "NFL Combine results",
-          "coverage": "2000-2024"
-        },
-        "load_contracts": {
-          "description": "Player contracts (48K contracts)",
-          "coverage": "2000s-2025"
-        },
-        "load_ids": {
-          "description": "Player ID mappings (gsis_id, pfr_id, espn_id)",
-          "coverage": "all"
-        },
-        "load_schedules": {
-          "description": "Game schedules",
-          "coverage": "1999-2025"
-        },
-        "load_injuries": {
-          "description": "Injury reports",
-          "coverage": "recent"
-        },
-        "load_depth_charts": {
-          "description": "Team depth charts",
-          "coverage": "2017-2025"
-        }
-      },
-      "notes": "Primary data source - professionally maintained with daily automated updates"
     },
     "draft_value_charts": {
       "source": "Rich Hill's Draft Value Chart",
@@ -118,7 +191,10 @@
         "picks": "1-256 (all draft picks)",
         "verified": true
       },
-      "fields": ["pick", "value"],
+      "fields": [
+        "pick",
+        "value"
+      ],
       "notes": "Four draft value charts available for comparison/analysis: (1) Jimmy Johnson (classic, most widely used), (2) Rich Hill (modern update), (3) Fitzgerald-Spielberger (highest valuations), (4) Harvard (empirically derived). Different methodologies and scales allow for robust trade analysis.",
       "charts": {
         "jimmy_johnson": {
@@ -129,7 +205,7 @@
         },
         "rich_hill": {
           "file": "draft_values_rich_hill.csv",
-          "pick_1_value": 1000.00,
+          "pick_1_value": 1000.0,
           "coverage_picks": 256,
           "description": "Rich Hill's updated draft value chart - modern recalibration"
         },
@@ -213,10 +289,36 @@
       "raw": "Raw scraped data (32 team executive files)"
     },
     "duckdb_schemas": {
-      "nflverse": ["pbp", "player_stats", "rosters", "schedules", "injuries", "depth_charts", "depth_charts_legacy", "depth_charts_modern", "draft_picks", "combine", "contracts", "player_ids"],
-      "reference": ["gm_tenures", "team_code_mapping", "draft_values_jimmy_johnson", "draft_values_rich_hill", "draft_values_fitzgerald_spielberger", "draft_values_harvard", "yamplayer_mapping"],
-      "yas": ["yas_2025", "yas_historical"],
-      "raw_executives": ["32 team files (atl_executives, buf_executives, etc.)"]
+      "nflverse": [
+        "pbp",
+        "player_stats",
+        "rosters",
+        "schedules",
+        "injuries",
+        "depth_charts",
+        "depth_charts_legacy",
+        "depth_charts_modern",
+        "draft_picks",
+        "combine",
+        "contracts",
+        "player_ids"
+      ],
+      "reference": [
+        "gm_tenures",
+        "team_code_mapping",
+        "draft_values_jimmy_johnson",
+        "draft_values_rich_hill",
+        "draft_values_fitzgerald_spielberger",
+        "draft_values_harvard",
+        "yamplayer_mapping"
+      ],
+      "yas": [
+        "yas_2025",
+        "yas_historical"
+      ],
+      "raw_executives": [
+        "32 team files (atl_executives, buf_executives, etc.)"
+      ]
     }
   },
   "transformation_scripts": {
@@ -230,21 +332,33 @@
     "clean_depth_charts": {
       "script": "scripts/clean_depth_charts.py",
       "input": "data/nflverse/depth_charts.csv",
-      "output": ["data/nflverse/depth_charts_legacy.csv", "data/nflverse/depth_charts_modern.csv"],
+      "output": [
+        "data/nflverse/depth_charts_legacy.csv",
+        "data/nflverse/depth_charts_modern.csv"
+      ],
       "status": "complete",
       "records": "869,185 legacy + 223,875 modern"
     },
     "calculate_yas": {
       "script": "scripts/calculate_yas.py",
       "input": "data/nflverse/combine.csv",
-      "output": ["data/yas/yas_2025.csv", "data/yas/yas_historical.csv"],
+      "output": [
+        "data/yas/yas_2025.csv",
+        "data/yas/yas_historical.csv"
+      ],
       "status": "complete",
       "records": "8,649",
       "description": "Calculate Yampy Athletic Scores (YAS) from combine data - 8 of 10 metrics, position-normalized 0-10 scale"
     },
     "generate_yamplayer_id": {
       "script": "scripts/generate_yamplayer_id.py",
-      "input": ["data/nflverse/player_ids.csv", "data/nflverse/combine.csv", "data/nflverse/rosters.csv", "data/nflverse/draft_picks.csv", "data/yas/yas_2025.csv"],
+      "input": [
+        "data/nflverse/player_ids.csv",
+        "data/nflverse/combine.csv",
+        "data/nflverse/rosters.csv",
+        "data/nflverse/draft_picks.csv",
+        "data/yas/yas_2025.csv"
+      ],
       "output": "data/reference/yamplayer_mapping.csv",
       "status": "complete",
       "unique_players": 43086,
