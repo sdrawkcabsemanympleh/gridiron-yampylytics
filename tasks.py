@@ -12,6 +12,7 @@ Quick start:
 
 from invoke import task
 from typing import List, Optional
+from src.gridiron_yampylytics.config import ESSENTIAL_DATASETS, ANALYSIS_DATASETS
 
 @task
 def load_data(c):
@@ -172,9 +173,8 @@ def setup_quick(c):
     Processes and creates DuckDB views. Fast setup (~1-2 min).
     """
     # Download essential datasets only
-    c.invoke(cache_nflverse, dataset='combine', all_seasons=True)
-    c.invoke(cache_nflverse, dataset='draft_picks', all_seasons=True)
-    c.invoke(cache_nflverse, dataset='rosters')  # Current season
+    for dataset in ESSENTIAL_DATASETS:
+        c.invoke(cache_nflverse, dataset=dataset, all_seasons=True)
     c.invoke(download_gm)
     c.invoke(process_data)
     c.invoke(create_duckdb)
@@ -191,10 +191,8 @@ def setup_analysis(c):
 
     Processes and creates DuckDB views. Moderate setup time (~5-10 min).
     """
-    # Download all datasets except pbp
-    datasets = ['player_stats', 'rosters', 'schedules', 'injuries',
-                'depth_charts', 'draft_picks', 'combine', 'contracts', 'ids']
-    for dataset in datasets:
+    # Download all analysis datasets (excludes pbp)
+    for dataset in ANALYSIS_DATASETS:
         c.invoke(cache_nflverse, dataset=dataset, all_seasons=True)
     c.invoke(download_gm)
     c.invoke(process_data)

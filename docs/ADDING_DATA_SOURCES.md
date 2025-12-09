@@ -6,6 +6,8 @@ Last updated: 11/25/2025
 - **Schema Check:** The schema in DuckDB autogenerates based on path, so think about where you're going to put it.  Make sure that it's being properly loaded to the database formed.  That does mean firing up Harlequin and making sure your data works there.
 - **yamplayer_id Injection:**  There's a script which generates and injects a universal, unique player ID to make joining easy across data sources.  You'll need to make sure your data is added there.
 - **Indexes:**  Add the set to the indexing script with desired indexes
+- **Invoke:** Add to relevant places in invoke
+  - Likely this just means adding to the pertinent datasets in the configuration
 - **Checks**
   - Make sure you check any other main scripts or tasks.
   - Any other universal ID's
