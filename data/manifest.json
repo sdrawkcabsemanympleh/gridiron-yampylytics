@@ -327,7 +327,13 @@
       "input": "data/raw/executives/*.csv (32 files)",
       "output": "data/reference/gm_tenures.csv",
       "status": "complete",
-      "records": 369
+      "records": 369,
+      "last_processed": "2025-12-08",
+      "file_size_bytes": 36254,
+      "total_records": 369,
+      "teams": 32,
+      "date_range": "1925-2025",
+      "current_positions": 0
     },
     "clean_depth_charts": {
       "script": "scripts/clean_depth_charts.py",
@@ -337,7 +343,14 @@
         "data/nflverse/depth_charts_modern.csv"
       ],
       "status": "complete",
-      "records": "869,185 legacy + 223,875 modern"
+      "records": "869,185 legacy + 223,875 modern",
+      "last_processed": "2025-12-08",
+      "legacy_rows": 869185,
+      "modern_rows": 297750,
+      "total_rows": 1166935,
+      "legacy_size_bytes": 78679461,
+      "modern_size_bytes": 28422686,
+      "total_size_bytes": 107102147
     },
     "calculate_yas": {
       "script": "scripts/calculate_yas.py",

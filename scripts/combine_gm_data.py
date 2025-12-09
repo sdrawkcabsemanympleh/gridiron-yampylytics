@@ -12,6 +12,8 @@ Output:
 import sys
 from pathlib import Path
 import pandas as pd
+from datetime import datetime
+from src.gridiron_yampylytics.manifest import update_transformation_script
 
 
 def load_team_code_mapping() -> pd.DataFrame:
@@ -190,6 +192,41 @@ def main() -> None:
     print()
     print("Summary by team:")
     print(cleaned_df.groupby('team_name').size().sort_values(ascending=False).to_string())
+
+    # Update manifest with processing metadata
+    print()
+    print("=" * 80)
+    print("UPDATING MANIFEST")
+    print("=" * 80)
+    try:
+        # Get file size
+        file_size = output_file.stat().st_size if output_file.exists() else 0
+
+        # Calculate stats
+        num_teams = cleaned_df['nflverse_code'].nunique()
+        total_records = len(cleaned_df)
+        date_from = int(cleaned_df['From'].min())
+        date_to = int(cleaned_df['To'].max()) if pd.notna(cleaned_df['To'].max()) else datetime.now().year
+        current_positions = int(cleaned_df['is_current'].sum())
+
+        # Update manifest
+        update_transformation_script("combine_gm_data", {
+            "last_processed": datetime.now().strftime("%Y-%m-%d"),
+            "file_size_bytes": file_size,
+            "total_records": total_records,
+            "teams": num_teams,
+            "date_range": f"{date_from}-{date_to}",
+            "current_positions": current_positions
+        })
+        print(f"\n[OK] Manifest updated with processing metadata:")
+        print(f"  • Last processed: {datetime.now().strftime('%Y-%m-%d')}")
+        print(f"  • Total records: {total_records:,}")
+        print(f"  • Teams: {num_teams}")
+        print(f"  • Date range: {date_from}-{date_to}")
+        print(f"  • Current positions: {current_positions}")
+    except Exception as e:
+        # Don't fail the whole script if manifest update fails
+        print(f"\n[WARNING] Could not update manifest: {e}")
 
 
 if __name__ == "__main__":

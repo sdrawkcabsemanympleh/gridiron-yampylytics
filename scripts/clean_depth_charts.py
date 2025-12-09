@@ -18,6 +18,8 @@ Output:
 import sys
 import csv
 from pathlib import Path
+from datetime import datetime
+from src.gridiron_yampylytics.manifest import update_transformation_script
 
 
 def clean_depth_charts() -> tuple[int, int]:
@@ -174,6 +176,40 @@ def main() -> None:
         print("  UNION ALL")
         print("  SELECT YEAR(dt::TIMESTAMP) as season, team, pos_name as position, gsis_id")
         print("  FROM depth_modern;")
+
+        # Update manifest with processing metadata
+        print()
+        print("=" * 80)
+        print("UPDATING MANIFEST")
+        print("=" * 80)
+        try:
+            # Get file sizes
+            base_dir = Path(__file__).parent.parent
+            legacy_file = base_dir / "data" / "nflverse" / "depth_charts_legacy.csv"
+            modern_file = base_dir / "data" / "nflverse" / "depth_charts_modern.csv"
+
+            legacy_size = legacy_file.stat().st_size if legacy_file.exists() else 0
+            modern_size = modern_file.stat().st_size if modern_file.exists() else 0
+            total_size = legacy_size + modern_size
+
+            # Update manifest
+            update_transformation_script("clean_depth_charts", {
+                "last_processed": datetime.now().strftime("%Y-%m-%d"),
+                "legacy_rows": legacy_count,
+                "modern_rows": modern_count,
+                "total_rows": legacy_count + modern_count,
+                "legacy_size_bytes": legacy_size,
+                "modern_size_bytes": modern_size,
+                "total_size_bytes": total_size
+            })
+            print(f"\n[OK] Manifest updated with processing metadata:")
+            print(f"  • Last processed: {datetime.now().strftime('%Y-%m-%d')}")
+            print(f"  • Legacy rows: {legacy_count:,}")
+            print(f"  • Modern rows: {modern_count:,}")
+            print(f"  • Total rows: {legacy_count + modern_count:,}")
+        except Exception as e:
+            # Don't fail the whole script if manifest update fails
+            print(f"\n[WARNING] Could not update manifest: {e}")
 
     except Exception as e:
         print()
