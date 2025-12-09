@@ -1,7 +1,7 @@
 {
   "metadata": {
     "created": "2025-10-31",
-    "last_updated": "2025-12-08",
+    "last_updated": "2025-12-09",
     "version": "3.0.0",
     "description": "Data inventory for gridiron-yampylytics NFL analytics project"
   },
@@ -344,7 +344,7 @@
       ],
       "status": "complete",
       "records": "869,185 legacy + 223,875 modern",
-      "last_processed": "2025-12-08",
+      "last_processed": "2025-12-09",
       "legacy_rows": 869185,
       "modern_rows": 297750,
       "total_rows": 1166935,
