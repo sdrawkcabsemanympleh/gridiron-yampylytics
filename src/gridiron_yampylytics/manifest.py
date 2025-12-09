@@ -107,3 +107,21 @@ def get_unverified_datasets() -> list[str]:
         if "coverage" in data and not data["coverage"].get("verified", False):
             unverified.append(name)
     return unverified
+
+def update_transformation_script(script_name: str, updates: dict[str, Any]) -> None:
+    """Update a specific transformation script's metadata in the manifest.
+
+    :param script_name: Key name of the transformation script in manifest
+    :param updates: Dictionary of fields to update
+    """
+    manifest = read_manifest()
+    if "transformation_scripts" not in manifest:
+        raise KeyError("transformation_scripts section not found in manifest")
+    if script_name not in manifest["transformation_scripts"]:
+        raise KeyError(f"Transformation script '{script_name}' not found in manifest")
+    for key, value in updates.items():
+        if isinstance(value, dict) and key in manifest["transformation_scripts"][script_name]:
+            manifest["transformation_scripts"][script_name][key].update(value)
+        else:
+            manifest["transformation_scripts"][script_name][key] = value
+    write_manifest(manifest)

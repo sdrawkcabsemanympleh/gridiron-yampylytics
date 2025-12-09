@@ -23,6 +23,8 @@ import hashlib
 import re
 import pandas as pd
 from pathlib import Path
+from datetime import datetime
+from src.gridiron_yampylytics.manifest import update_transformation_script
 
 
 def normalize_name_sql() -> str:
@@ -740,6 +742,42 @@ def main() -> None:
 
         # Step 4: Save mapping file
         save_mapping_file(con, base_dir, dry_run=args.dry_run)
+
+        # Step 5: Update manifest with processing metadata
+        if not args.dry_run:
+            print("\n" + "="*80)
+            print("UPDATING MANIFEST")
+            print("="*80)
+            try:
+                # Get stats from unified_players table
+                unique_players = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
+
+                # Get file size
+                mapping_file = base_dir / 'data' / 'reference' / 'yamplayer_mapping.csv'
+                file_size = mapping_file.stat().st_size if mapping_file.exists() else 0
+
+                # Get row count from saved file
+                total_rows = con.execute(f"SELECT COUNT(*) FROM read_csv_auto('{mapping_file}')").fetchone()[0]
+
+                # Calculate duplicate rate
+                duplicate_rate = f"{((total_rows - unique_players) / total_rows * 100):.1f}%" if total_rows > 0 else "0.0%"
+
+                # Update manifest
+                update_transformation_script("generate_yamplayer_id", {
+                    "last_processed": datetime.now().strftime("%Y-%m-%d"),
+                    "file_size_bytes": file_size,
+                    "unique_players": unique_players,
+                    "total_rows": total_rows,
+                    "duplicate_rate": duplicate_rate
+                })
+                print(f"\n[OK] Manifest updated with processing metadata:")
+                print(f"  • Last processed: {datetime.now().strftime('%Y-%m-%d')}")
+                print(f"  • Unique players: {unique_players:,}")
+                print(f"  • Total rows: {total_rows:,}")
+                print(f"  • Duplicate rate: {duplicate_rate}")
+            except Exception as e:
+                # Don't fail the whole script if manifest update fails
+                print(f"\n[WARNING] Could not update manifest: {e}")
 
         print("\n" + "="*80)
         print("[OK] COMPLETE!")

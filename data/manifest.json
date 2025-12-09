@@ -361,10 +361,12 @@
       ],
       "output": "data/reference/yamplayer_mapping.csv",
       "status": "complete",
-      "unique_players": 43086,
-      "total_rows": 43129,
-      "duplicate_rate": "0.1%",
-      "description": "Generate unified yamplayer_id across all datasets using SQL-based entity resolution with tiered matching (ID → name+birthdate → name+college)"
+      "unique_players": 43107,
+      "total_rows": 43107,
+      "duplicate_rate": "0.0%",
+      "description": "Generate unified yamplayer_id across all datasets using SQL-based entity resolution with tiered matching (ID → name+birthdate → name+college)",
+      "last_processed": "2025-12-08",
+      "file_size_bytes": 3063365
     },
     "add_yamplayer_id": {
       "script": "scripts/add_yamplayer_id.py",
