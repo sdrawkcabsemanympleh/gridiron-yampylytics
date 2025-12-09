@@ -4,7 +4,7 @@ Use these commands to download, process, and analyze NFL data without memorizing
 lengthy uv commands.
 
 Quick start:
-    inv setup              # Default setup (reasonable datasets, ~10 min)
+    inv setup              # Default setup
     inv status             # See what data you have
     inv sql                # Open Harlequin SQL explorer
 """
@@ -110,6 +110,19 @@ def sql(c, unix=False):
     """
     suffix = '' if unix else ' --no-download-tzdata'
     c.run(f'uv run harlequin gridiron_yampylytics.db{suffix}')
+
+
+@task
+def status(c):
+    """Show status of downloaded data and database.
+
+    Displays:
+    - What nflverse datasets are downloaded (with sizes)
+    - GM/executive data status
+    - DuckDB database status
+    - Quick start recommendations based on what's missing
+    """
+    c.run('uv run python -m scripts.show_status')
 
 
 @task
