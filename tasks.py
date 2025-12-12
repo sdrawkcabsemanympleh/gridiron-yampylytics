@@ -12,7 +12,6 @@ import sys
 from invoke import task
 from typing import List, Optional
 from src.gridiron_yampylytics.config import ESSENTIAL_DATASETS, ANALYSIS_DATASETS
-from src.gridiron_yampylytics.processors.depth_charts import clean_depth_charts as clean_depth_charts_fn
 
 # Configure UTF-8 output for all invoke tasks (emojis and unicode support)
 sys.stdout.reconfigure(encoding='utf-8')
@@ -67,7 +66,7 @@ def clean_depth_charts(c):
     """The depth charts change schema in 2024-2025 and need to be separated into legacy and modern datasets to be
     usable.  This completes that operation.
     """
-    clean_depth_charts_fn()
+    c.run('uv run python -m scripts.clean_depth_charts')
 
 
 @task
