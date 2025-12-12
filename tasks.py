@@ -133,19 +133,17 @@ def create_duckdb(c, all_datasets=False, include_pbp=False, as_tables=False):
         c.run('uv run python -m scripts.create_duckdb_views')
 
 
-@task(help={
-    'unix':  'Set this flag on Unix/Linux systems to avoid timezone data compatibility issues'
-})
-def sql(c, unix=False):
+@task
+def sql(c):
     """Start Harlequin SQL explorer for interactive data analysis.
 
     Opens an interactive SQL terminal (like DBeaver/DataGrip but in your terminal)
     for exploring the gridiron_yampylytics.db database.
 
-    On Windows: Uses --no-download-tzdata flag for compatibility
-    On Unix/Linux: Omit --no-download-tzdata (set unix=True)
+    Automatically detects Windows and adds --no-download-tzdata flag for compatibility.
     """
-    suffix = '' if unix else ' --no-download-tzdata'
+    import os
+    suffix = ' --no-download-tzdata' if os.name == 'nt' else ''
     c.run(f'uv run harlequin gridiron_yampylytics.db{suffix}')
 
 

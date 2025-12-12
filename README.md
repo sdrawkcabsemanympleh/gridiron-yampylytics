@@ -23,73 +23,32 @@ Large datasets like Play-by-Play (PBP) are not included by default are available
 
 ## Quick Start
 
-**1. Install dependencies:**
+**Get up and running in 4 commands:**
+
 ```bash
+# 1. Install dependencies
 uv sync
-```
-This installs all required packages including `nflreadpy`, `pandas`, `harlequin`, and `duckdb`.
 
-**2. Load all NFL data:**
-```bash
-uv run python -m scripts.load_all_data
-```
-Downloads ~3M+ rows of NFL data:
-- nflreadpy datasets (play-by-play, player stats, rosters, combine, etc.)
-- GM/executive data for all 32 teams (1960-2025)
+# 2. Load all NFL data (~10-15 minutes)
+inv load-data
 
-Runtime: ~10-15 minutes
+# 3. Process and create database
+inv process-data
+inv create-duckdb
 
-**3. Process and transform data:**
-```bash
-# Clean depth charts (fixes schema changes between 2024/2025)
-uv run python -m scripts.clean_depth_charts
-
-# Combine GM data into single table
-uv run python -m scripts.combine_gm_data
-
-# Generate unified player IDs (yamplayer_id) across all datasets
-uv run python -m scripts.generate_yamplayer_id
-
-# Calculate Yampy Athletic Scores (YAS) from combine data - NOTE: Requires yamplayer_ids to run!
-uv run python -m scripts.calculate_yas
+# 4. Explore with SQL
+inv sql
 ```
 
-**4. Explore data with SQL:**
+That's it! You now have ~3M+ rows of NFL data (1999-2025) ready to query.
 
-Choose between two database options:
+**Want more control?** Run `inv -l` to see all available commands for:
+- Selective loading (specific datasets or seasons)
+- Database options (views vs tables, include/exclude PBP)
+- Individual processing steps
+- Status checks and more
 
-**Option A: Materialized Tables (Recommended for analysis)**
-```bash
-# Create DuckDB database with materialized tables and indexes (~580 MB)
-uv run python -m scripts.create_duckdb_tables
-
-# Include play-by-play data (adds ~2.6 GB)
-uv run python -m scripts.create_duckdb_tables --include-pbp
-
-# Launch interactive SQL explorer (Harlequin)
-uv run harlequin gridiron_yampylytics.db
-```
-- Fast query performance (data materialized with indexes)
-- Larger disk space (~580 MB default, ~3.2 GB with pbp)
-- Best for: interactive analysis, repeated queries, joins
-
-**Option B: CSV Views (Lightweight)**
-```bash
-# Create DuckDB database with CSV views (~few MB)
-uv run python -m scripts.create_duckdb_views
-
-# Launch interactive SQL explorer (Harlequin)
-uv run harlequin gridiron_yampylytics.db
-```
-- Minimal disk space (just view definitions)
-- Slower queries (re-reads CSVs each time)
-- Best for: exploration, one-off queries, limited disk space
-
-**Windows timezone fix:**
-If you encounter a timezone formatting issue on Windows, add `--no-download-tzdata`:
-```bash
-uv run harlequin gridiron_yampylytics.db --no-download-tzdata
-```
+Check the [Key Scripts](#key-scripts) section for details on what each command does.
 
 ## References
 
