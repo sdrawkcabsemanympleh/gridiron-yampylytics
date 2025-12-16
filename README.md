@@ -29,7 +29,7 @@ Large datasets like Play-by-Play (PBP) are not included by default are available
 # 1. Install dependencies
 uv sync
 
-# 2. Load all NFL data (~10-15 minutes)
+# 2. Load all NFL data
 inv load-data
 
 # 3. Process and create database
@@ -44,11 +44,10 @@ That's it! You now have ~3M+ rows of NFL data (1999-2025) ready to query.
 
 **Want more control?** Run `inv -l` to see all available commands for:
 - Selective loading (specific datasets or seasons)
-- Database options (views vs tables, include/exclude PBP)
+- Database options (views vs tables, include/exclude large datasets)
 - Individual processing steps
 - Status checks and more
 
-Check the [Key Scripts](#key-scripts) section for details on what each command does.
 
 ## References
 
@@ -123,20 +122,4 @@ gridiron-yampylytics/
 └── tests/                 # Test files
 ```
 
-## Key Scripts
 
-**Data Acquisition:**
-- `load_all_data.py` - Download all data sources (one command to rule them all)
-- `cache_nflreadpy_data.py` - Cache nflreadpy datasets locally
-- `download_gm_data.py` - Scrape GM/executive data from Pro Football Reference
-
-**Data Processing:**
-- `combine_gm_data.py` - Merge 32 team GM files into single table
-- `clean_depth_charts.py` - Fix depth chart schema changes and newline issues
-- `calculate_yas.py` - Calculate Yampy Athletic Scores from combine data
-- `generate_yamplayer_id.py` - Generate unified player IDs across all datasets (43K unique players)
-- `add_yamplayer_id.py` - Apply yamplayer_id to all datasets
-
-**Database:**
-- `create_duckdb_tables.py` - Generate DuckDB database with materialized tables and indexes (~580 MB, or ~3.2 GB with --include-pbp)
-- `create_duckdb_views.py` - Generate lightweight DuckDB database with CSV views (~few MB)
