@@ -22,6 +22,61 @@ On depth charts, you'll notice there's a legacy and modern.  The schema in `nflr
 
 Large datasets like Play-by-Play (PBP) are not included by default are available if explicitly requested.  You will want to check the invoke args for that in `tasks.py`.
 
+## Installation
+
+**New to command-line tools? No worries!** Here's everything you need:
+
+### Prerequisites
+
+**1. Git** - For downloading the project
+- **Download:** https://git-scm.com/downloads
+- Click through the installer (defaults are fine)
+- This also installs "Git Bash" - a good terminal option for Windows
+
+**2. UV** - Python package manager (handles Python installation automatically!)
+You can download and install or run a simple terminal command below
+
+- **Download:** https://docs.astral.sh/uv/getting-started/installation/
+- **Command Line:**
+  - **Windows:** Download the installer or run in PowerShell:
+    ```powershell
+    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
+  - **Mac:** Download the installer or run in Terminal:
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+  - **Linux:** Run in terminal:
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+**That's it!** UV will automatically install Python when you run the project.
+
+### Getting the Code
+
+**Option 1: GitHub Desktop (Easiest for beginners)**
+1. Download GitHub Desktop: https://desktop.github.com/
+2. Go to the project page on GitHub
+3. Click the green **"Code"** button → **"Open with GitHub Desktop"**
+4. Choose where to save it on your computer
+5. Done! GitHub Desktop handles everything
+
+**Option 2: Command Line**
+```bash
+# Clone the repository
+git clone https://github.com/YOUR-USERNAME/gridiron-yampylytics.git
+
+# Navigate into the folder
+cd gridiron-yampylytics
+```
+
+### Which Terminal Should I Use?
+
+- **Windows:** PowerShell (built-in) or Git Bash (comes with Git)
+- **Mac:** Terminal (built-in)
+- **Linux:** Any terminal
+
 ## Quick Start
 
 **Get up and running in 4 commands:**

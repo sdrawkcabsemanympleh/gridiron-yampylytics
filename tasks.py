@@ -8,9 +8,9 @@ Quick start:
     inv status             # See what data you have
     inv sql                # Open Harlequin SQL explorer
 """
+import os
 import sys
 from invoke import task
-from typing import List, Optional
 from src.gridiron_yampylytics.config import ESSENTIAL_DATASETS, ANALYSIS_DATASETS
 
 # Configure UTF-8 output for all invoke tasks (emojis and unicode support)
@@ -142,7 +142,6 @@ def sql(c):
 
     Automatically detects Windows and adds --no-download-tzdata flag for compatibility.
     """
-    import os
     suffix = ' --no-download-tzdata' if os.name == 'nt' else ''
     c.run(f'uv run harlequin gridiron_yampylytics.db{suffix}')
 
