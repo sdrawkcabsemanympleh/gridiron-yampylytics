@@ -9,15 +9,14 @@ For programmatic use:
     result = calculate_yas()
 
 The calculation process:
-1. Loads combine data into in-memory DuckDB
-2. Calculates percentiles for each measurable by position group
+1. Loads combine data into pandas DataFrame
+2. Uses vectorized groupby operations to calculate percentiles by position group
 3. Averages percentiles to create YAS scores
 4. Generates both historical (draft class) and current (all-time) scores
 """
 import datetime
-import duckdb
 import pandas as pd
-from dataclasses import dataclass
+import time
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -96,145 +95,247 @@ def standardize_position(position: str) -> str:
     return position
 
 
-def get_percentiles(connection: duckdb.DuckDBPyConnection, position: str, measurable: CombineMeasurables,
-                    calculation_year: int,  return_previous_classes: bool = False):
-    """Queries DuckDB to get the percentile rank for a given position and measurable.  Uses the contributing_positions
-    mapping to map to all positions to be queried for.
+class YasCalculator:
+    """Calculator for Yampylytics Athletic Score (YAS).
 
-    :param str position: position code the calculation will be made for
-    :param measurable: measureable to get data for
-    :param calculation_year: calculates the percentile based on all players in this draft class or before
-    :param return_previous_classes: returns players of previous draft classes for calculating current YAS
+    Provides methods to calculate athletic scores similar to RAS (Relative Athletic Score)
+    for NFL prospects based on combine measurables. Uses pure pandas operations instead of
+    DuckDB for improved performance. Caches combine data and results for reusability.
+
+    Usage:
+        calculator = YasCalculator()
+        combine_df = YasCalculator.get_combine_data(path_to_csv)
+        yas_df = calculator.calculate_all_yas(combine_df)
     """
-    ordering = 'DESC' if higher_is_better(measurable) else 'ASC'
-    positions_list = ', '.join(f"'{p}'" for p in contributing_positions[position])
-    query_string = f"""
-        SELECT
-            yamplayer_id
-            , player_name
-            , pos as drafted_position
-            , '{position}' as calculation_position
-            --, '{standardize_position(position)}' as yas_position
-            , draft_year as draft_year
-            , {calculation_year} as calculation_year
-            , {measurable.value}
-        FROM
-            nflverse.combine
-        WHERE
-            pos IN ({positions_list})
-            AND draft_year <= {calculation_year}
+
+    _combine_data: pd.DataFrame | None = None
+    _yas_historical: pd.DataFrame | None = None
+    _yas_current: pd.DataFrame | None = None
+
+    @classmethod
+    def get_combine_data(cls, csv_path: Path | None = None, refresh: bool = False) -> pd.DataFrame:
+        """Get combine data DataFrame with lazy loading and caching.
+
+        Loads combine CSV on first call and caches for subsequent calls. Returns a copy
+        for thread safety. Use refresh=True to force reload from disk.
+
+        :param csv_path: Path to combine.csv file (required on first call or when refresh=True)
+        :param refresh: Force reload from CSV even if already cached
+        :return: Copy of combine DataFrame (thread-safe)
+        :raises ValueError: If csv_path is None and data not already loaded
         """
-    if not return_previous_classes:
-        query_string = f'SELECT * FROM ({query_string}) WHERE draft_year = {calculation_year}'
-    df = connection.execute(query_string).df()
-    df[f'{measurable.value}_percentile'] = df[measurable.value].rank(
-        pct=True, ascending=higher_is_better(measurable)) * 10
-    df['yas_position'] = df['drafted_position'].apply(standardize_position)
-    return df
+        if cls._combine_data is None or refresh:
+            if csv_path is None:
+                raise ValueError("csv_path required for initial load or refresh")
+            cls._combine_data = pd.read_csv(csv_path)
+        return cls._combine_data.copy()
 
+    @classmethod
+    def refresh_combine_data(cls, csv_path: Path) -> None:
+        """Force reload combine data from CSV and clear cached results.
 
-def calculate_position_yas_scores(connection: duckdb.DuckDBPyConnection, position: str, calculation_year: int,
-                                  return_previous_classes: bool = True):
-    """Queries DuckDB to get the percentile rank for a given position.  Uses the contributing_positions mapping to
-    map to all positions to be queried for.
+        :param csv_path: Path to combine.csv file
+        """
+        cls._combine_data = pd.read_csv(csv_path)
+        cls._yas_historical = None
+        cls._yas_current = None
 
-    :param str position: position code the calculation will be made for
-    :param calculation_year: calculates the percentile based on all players in this draft class or before
-    :param return_previous_classes: returns players of previous draft classes for calculating current YAS
-    """
-    columns_to_average = [f'{measurable.value}_percentile' for measurable in CombineMeasurables]
-    yas_merged = None
-    for measurable in CombineMeasurables:
-        percentiles_df = get_percentiles(connection, position, measurable, calculation_year, return_previous_classes)
-        percentiles_df = percentiles_df.set_index(['yamplayer_id', 'calculation_position', 'calculation_year'])
-        if yas_merged is None:
-            yas_merged = percentiles_df
-        else:
-            cols_to_drop = ['player_name', 'drafted_position', 'yas_position', 'draft_year']
-            percentiles_df = percentiles_df.drop(columns=cols_to_drop)
-            yas_merged = pd.merge(
-                yas_merged,
-                percentiles_df,
-                left_index=True,
-                right_index=True,
-                how='outer'
-            )
-    yas_merged['yas_score_unnormallized'] = yas_merged[columns_to_average].mean(axis=1)
-    yas_merged['measurables_present'] = yas_merged[columns_to_average].count(axis=1)
-    yas_merged['yas_score'] = yas_merged['yas_score_unnormallized'].rank(pct=True) * 10
-    return yas_merged
+    def calculate_position_yas_scores(
+        self,
+        combine_df: pd.DataFrame,
+        position: str,
+        calculation_year: int,
+        return_previous_classes: bool = True,
+        profile: dict[str, float] | None = None
+    ) -> pd.DataFrame:
+        """Calculate YAS scores for a single position using DataFrame operations.
 
+        Replaces the previous DuckDB-based approach with pure pandas operations.
+        Filters the combine DataFrame once and calculates all percentiles in a single pass,
+        eliminating expensive query and merge operations.
 
-def calculate_year_yas(connection: duckdb.DuckDBPyConnection, calculation_year: int | None = None,
-                              yas_calc_type: YasCalcType = YasCalcType.HISTORICAL):
-    """Calculates YAS for a given year for all positions.  If historical is requested, only the players in the draft
-    for that year are included, yielding the score compared to all players that year and before, like RAS.  If current,
-    scores are calculated for all players in that year and before.  Defaults to this year so current need not have
-    a year supplied.
+        :param combine_df: Combined combine data as pandas DataFrame
+        :param position: Position code to calculate for (e.g., 'QB', 'WR')
+        :param calculation_year: Calculate percentiles based on players in this year and prior
+        :param return_previous_classes: If True, return all previous draft classes; if False, only calculation_year
+        :param profile: Optional dict to accumulate timing data for profiling
+        :return: DataFrame with YAS scores and percentile data
+        """
+        # Profile: DataFrame filtering (replaces DuckDB queries)
+        if profile is not None:
+            filter_start = time.time()
 
-    :param calculation_year: calculates the percentile based on all players in this draft class or before
-    :param yas_calc_type: determines whether players of previous draft classes should be returned or not
-    :return: Dataframe of the draft class YAS scores
-    """
-    if calculation_year is None:
-        calculation_year = datetime.datetime.now().year
-    yas_merged = None
-    for position in contributing_positions.keys():
-        position_yas = calculate_position_yas_scores(
-            connection=connection,
-            position=position,
-            calculation_year=calculation_year,
-            return_previous_classes=True if yas_calc_type == YasCalcType.CURRENT else False,
+        # Single filter operation (replaces 8 DuckDB queries!)
+        positions_list = contributing_positions[position]
+        mask = (
+            combine_df['pos'].isin(positions_list) &
+            (combine_df['draft_year'] <= calculation_year)
         )
-        if yas_merged is None:
-            yas_merged = position_yas
-        else:
-            yas_merged = pd.concat([yas_merged, position_yas])
-    yas_merged['calculation_type'] = yas_calc_type.value
-    yas_merged = yas_merged.set_index('calculation_type', append=True)
-    return yas_merged
+        if not return_previous_classes:
+            mask &= (combine_df['draft_year'] == calculation_year)
 
+        df = combine_df[mask].copy()
 
-def calculate_all_yas(connection: duckdb.DuckDBPyConnection):
-    """Generates all historical YAS data for all years from 2000 forward to now as well as the current years'.  It
-    does have the inefficiency of querying for all combine data from 2000 to the calculation year at each iteration,
-    which we can optimize by querying only for the new data each iteration and more integration of dataframe indexing.
+        # Add metadata columns
+        df['calculation_position'] = position
+        df['calculation_year'] = calculation_year
+        df['yas_position'] = df['pos'].apply(standardize_position)
 
-    :param connection: duckdb.DuckDB connection object
-    """
-    calculation_year = datetime.datetime.now().year
-    historical_years = list(range(2000, calculation_year + 1))
-    total_years = len(historical_years)
-    yas_merged = None
-    print(f"Processing {total_years} historical years (2000-{calculation_year})...")
-    for i, year in enumerate(historical_years, 1):
-        print(f"  [{i}/{total_years}] Calculating historical YAS for {year}...", end='', flush=True)
-        yas_scores = calculate_year_yas(connection=connection, calculation_year=year)
-        if yas_merged is None:
-            yas_merged = yas_scores
-        else:
-            yas_merged = pd.concat([yas_merged, yas_scores])
-        print(f" ✓ ({len(yas_scores):,} rows)")
-    print(f"\nCalculating current YAS for {calculation_year} (all players)...", end='', flush=True)
-    current_yas = calculate_year_yas(connection=connection, calculation_year=calculation_year,
-                                yas_calc_type=YasCalcType.CURRENT)
-    yas_merged = pd.concat([yas_merged, current_yas])
-    print(f" ✓ ({len(current_yas):,} rows)")
-    return yas_merged
+        if profile is not None:
+            profile['dataframe_filter_time'] = profile.get('dataframe_filter_time', 0) + (time.time() - filter_start)
 
+        # Profile: Percentile calculations
+        if profile is not None:
+            calc_start = time.time()
 
-@dataclass
-class YasPlayerScore:  # TODO:  Expand this for all combine attributes and make script to generate these
-    """Will eventually change to pydantic model and move out, but can be used for fun coding bidness"""
-    yamplayer_id: str
-    draft_position: str
-    draft_year: int
-    calculated_position: str
-    calculated_year: int
-    combine_test: str
-    combine_value: float
-    yas_overall_current: float
-    yas_overall_historical: float
+        # Calculate ALL percentiles in one pass (no merging needed!)
+        percentile_cols = []
+        for measurable in CombineMeasurables:
+            col_name = f'{measurable.value}_percentile'
+            percentile_cols.append(col_name)
+            df[col_name] = df[measurable.value].rank(
+                pct=True,
+                ascending=higher_is_better(measurable)
+            ) * 10
+
+        if profile is not None:
+            profile['percentile_calc_time'] = profile.get('percentile_calc_time', 0) + (time.time() - calc_start)
+
+        # Profile: Final score calculation
+        if profile is not None:
+            final_start = time.time()
+
+        # Calculate YAS score
+        df['yas_score_unnormallized'] = df[percentile_cols].mean(axis=1)
+        df['measurables_present'] = df[percentile_cols].count(axis=1)
+        df['yas_score'] = df['yas_score_unnormallized'].rank(pct=True) * 10
+
+        if profile is not None:
+            profile['final_score_calc_time'] = profile.get('final_score_calc_time', 0) + (time.time() - final_start)
+
+        # Set index to match expected format
+        df = df.set_index(['yamplayer_id', 'calculation_position', 'calculation_year'])
+
+        return df
+
+    def calculate_year_yas(
+        self,
+        combine_df: pd.DataFrame,
+        calculation_year: int | None = None,
+        yas_calc_type: YasCalcType = YasCalcType.HISTORICAL
+    ) -> pd.DataFrame:
+        """Calculate YAS for a given year for all positions using vectorized groupby operations.
+
+        If historical is requested, only the players in the draft for that year are included,
+        yielding the score compared to all players that year and before, like RAS. If current,
+        scores are calculated for all players in that year and before.
+
+        Uses pandas groupby to calculate all positions in one pass instead of looping.
+
+        :param combine_df: Combined combine data as pandas DataFrame
+        :param calculation_year: Calculate percentiles based on players in this year and prior
+        :param yas_calc_type: Determines whether players of previous draft classes should be returned
+        :return: DataFrame of the draft class YAS scores
+        """
+        if calculation_year is None:
+            calculation_year = datetime.datetime.now().year
+
+        # Filter ONCE for the year (not per position!)
+        mask = (combine_df['draft_year'] <= calculation_year)
+        if yas_calc_type == YasCalcType.HISTORICAL:
+            mask &= (combine_df['draft_year'] == calculation_year)
+
+        df = combine_df[mask].copy()
+
+        # Expand rows: each player appears once per calculation_position they contribute to
+        # (e.g., 'CB/WR' contributes to both 'CB' and 'WR' calculations)
+        rows_to_add = []
+        for calc_pos, raw_positions in contributing_positions.items():
+            # Filter for positions that contribute to this calc_pos
+            pos_mask = df['pos'].isin(raw_positions)
+            pos_df = df[pos_mask].copy()
+            pos_df['calculation_position'] = calc_pos
+            pos_df['calculation_year'] = calculation_year
+            pos_df['yas_position'] = pos_df['pos'].apply(standardize_position)
+            rows_to_add.append(pos_df)
+
+        df_expanded = pd.concat(rows_to_add, ignore_index=True)
+
+        # Calculate ALL percentiles using groupby (vectorized!)
+        percentile_cols = []
+        for measurable in CombineMeasurables:
+            col_name = f'{measurable.value}_percentile'
+            percentile_cols.append(col_name)
+            df_expanded[col_name] = (
+                df_expanded.groupby('calculation_position')[measurable.value]
+                .rank(pct=True, ascending=higher_is_better(measurable)) * 10
+            )
+
+        # Calculate YAS scores
+        df_expanded['yas_score_unnormallized'] = df_expanded[percentile_cols].mean(axis=1)
+        df_expanded['measurables_present'] = df_expanded[percentile_cols].count(axis=1)
+        df_expanded['yas_score'] = (
+            df_expanded.groupby('calculation_position')['yas_score_unnormallized']
+            .rank(pct=True) * 10
+        )
+
+        # Set index and add calculation_type
+        df_expanded['calculation_type'] = yas_calc_type.value
+        df_expanded = df_expanded.set_index(['yamplayer_id', 'calculation_position', 'calculation_year', 'calculation_type'])
+
+        return df_expanded
+
+    def calculate_all_yas(self, combine_df: pd.DataFrame) -> pd.DataFrame:
+        """Generate all historical YAS data for all years from 2000 forward to now plus current.
+
+        Processes all years sequentially with progress updates.
+
+        :param combine_df: Combined combine data as pandas DataFrame
+        :return: DataFrame with all YAS scores (historical + current)
+        """
+        calculation_year = datetime.datetime.now().year
+        historical_years = list(range(2000, calculation_year + 1))
+        total_years = len(historical_years)
+        yas_merged = None
+        total_time = 0
+
+        print(f"Processing {total_years} historical years (2000-{calculation_year})...")
+        print()
+
+        for i, year in enumerate(historical_years, 1):
+            print(f"  [{i}/{total_years}] Calculating historical YAS for {year}...", end='', flush=True)
+
+            year_start = time.time()
+            yas_scores = self.calculate_year_yas(
+                combine_df=combine_df,
+                calculation_year=year
+            )
+            year_elapsed = time.time() - year_start
+            total_time += year_elapsed
+
+            if yas_merged is None:
+                yas_merged = yas_scores
+            else:
+                yas_merged = pd.concat([yas_merged, yas_scores])
+            print(f" ✓ ({len(yas_scores):,} rows, {year_elapsed:.2f}s)")
+
+        print(f"\nCalculating current YAS for {calculation_year} (all players)...", end='', flush=True)
+        current_start = time.time()
+        current_yas = self.calculate_year_yas(
+            combine_df=combine_df,
+            calculation_year=calculation_year,
+            yas_calc_type=YasCalcType.CURRENT
+        )
+        current_elapsed = time.time() - current_start
+        total_time += current_elapsed
+        yas_merged = pd.concat([yas_merged, current_yas])
+        print(f" ✓ ({len(current_yas):,} rows, {current_elapsed:.2f}s)")
+
+        print(f"\n✅ Total processing time: {total_time:.2f}s")
+        print()
+
+        return yas_merged
+
 
 
 def calculate_yas(
@@ -244,9 +345,9 @@ def calculate_yas(
 ) -> dict[str, Any]:
     """Calculate YAS scores for all combine data and save to CSV.
 
-    Loads combine data from CSV into in-memory DuckDB, calculates YAS scores
-    for all historical years (2000-present) plus current all-time scores,
-    and saves results to CSV.
+    Uses DataFrame-based approach for improved performance (no DuckDB queries).
+    Calculates YAS scores for all historical years (2000-present) plus current
+    all-time scores, and saves results to CSV.
 
     :param combine_csv: Path to combine.csv file (default: data/nflverse/combine.csv)
     :param output_file: Path for output CSV (default: data/yas/yas_complete.csv)
@@ -264,7 +365,7 @@ def calculate_yas(
         output_file = base_dir / "data" / "yas" / "yas_complete.csv"
 
     print("=" * 80)
-    print("YAS CALCULATOR - yamplayer_id Version")
+    print("YAS CALCULATOR - DataFrame-Based (Optimized)")
     print("=" * 80)
     print()
 
@@ -274,27 +375,19 @@ def calculate_yas(
 
     print(f"📂 Loading combine data from: {combine_csv}")
 
-    # Create in-memory DuckDB connection
-    print("🔧 Creating DuckDB in-memory connection...")
-    con = duckdb.connect(":memory:")
-
-    # Load combine CSV into DuckDB
-    print("📥 Loading combine.csv into DuckDB...")
+    # Load combine CSV into pandas DataFrame
+    print("📥 Loading combine.csv into DataFrame...")
     combine_df = pd.read_csv(combine_csv)
     print(f"   ✓ Loaded {len(combine_df):,} combine records")
-
-    # Register as table in nflverse schema
-    con.execute("CREATE SCHEMA IF NOT EXISTS nflverse")
-    con.execute("CREATE TABLE nflverse.combine AS SELECT * FROM combine_df")
-    print(f"   ✓ Registered as nflverse.combine table")
     print()
 
-    # Calculate YAS scores
+    # Calculate YAS scores using new class-based approach
     print("🧮 Calculating YAS scores (all historical + current)...")
     print("   This will process years 2000-2025 with progress updates")
     print()
 
-    yas_df = calculate_all_yas(con)
+    calculator = YasCalculator()
+    yas_df = calculator.calculate_all_yas(combine_df)
 
     print()
     print(f"✅ Calculation complete! Generated {len(yas_df):,} rows")
@@ -358,8 +451,6 @@ def calculate_yas(
 
     print()
     print(f"Output: {output_file}")
-
-    con.close()
 
     # Return structured data for programmatic use
     return {
