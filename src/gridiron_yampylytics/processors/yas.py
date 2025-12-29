@@ -107,7 +107,6 @@ class YasCalculator:
         combine_df = YasCalculator.get_combine_data(path_to_csv)
         yas_df = calculator.calculate_all_yas(combine_df)
     """
-
     _combine_data: pd.DataFrame | None = None
     _yas_historical: pd.DataFrame | None = None
     _yas_current: pd.DataFrame | None = None
@@ -146,7 +145,6 @@ class YasCalculator:
         position: str,
         calculation_year: int,
         return_previous_classes: bool = True,
-        profile: dict[str, float] | None = None
     ) -> pd.DataFrame:
         """Calculate YAS scores for a single position using DataFrame operations.
 
@@ -161,11 +159,6 @@ class YasCalculator:
         :param profile: Optional dict to accumulate timing data for profiling
         :return: DataFrame with YAS scores and percentile data
         """
-        # Profile: DataFrame filtering (replaces DuckDB queries)
-        if profile is not None:
-            filter_start = time.time()
-
-        # Single filter operation (replaces 8 DuckDB queries!)
         positions_list = contributing_positions[position]
         mask = (
             combine_df['pos'].isin(positions_list) &
@@ -173,22 +166,11 @@ class YasCalculator:
         )
         if not return_previous_classes:
             mask &= (combine_df['draft_year'] == calculation_year)
-
         df = combine_df[mask].copy()
-
         # Add metadata columns
         df['calculation_position'] = position
         df['calculation_year'] = calculation_year
         df['yas_position'] = df['pos'].apply(standardize_position)
-
-        if profile is not None:
-            profile['dataframe_filter_time'] = profile.get('dataframe_filter_time', 0) + (time.time() - filter_start)
-
-        # Profile: Percentile calculations
-        if profile is not None:
-            calc_start = time.time()
-
-        # Calculate ALL percentiles in one pass (no merging needed!)
         percentile_cols = []
         for measurable in CombineMeasurables:
             col_name = f'{measurable.value}_percentile'
@@ -197,25 +179,10 @@ class YasCalculator:
                 pct=True,
                 ascending=higher_is_better(measurable)
             ) * 10
-
-        if profile is not None:
-            profile['percentile_calc_time'] = profile.get('percentile_calc_time', 0) + (time.time() - calc_start)
-
-        # Profile: Final score calculation
-        if profile is not None:
-            final_start = time.time()
-
-        # Calculate YAS score
         df['yas_score_unnormallized'] = df[percentile_cols].mean(axis=1)
         df['measurables_present'] = df[percentile_cols].count(axis=1)
         df['yas_score'] = df['yas_score_unnormallized'].rank(pct=True) * 10
-
-        if profile is not None:
-            profile['final_score_calc_time'] = profile.get('final_score_calc_time', 0) + (time.time() - final_start)
-
-        # Set index to match expected format
         df = df.set_index(['yamplayer_id', 'calculation_position', 'calculation_year'])
-
         return df
 
     def calculate_year_yas(
@@ -239,14 +206,11 @@ class YasCalculator:
         """
         if calculation_year is None:
             calculation_year = datetime.datetime.now().year
-
         # Filter ONCE for the year (not per position!)
         mask = (combine_df['draft_year'] <= calculation_year)
         if yas_calc_type == YasCalcType.HISTORICAL:
             mask &= (combine_df['draft_year'] == calculation_year)
-
         df = combine_df[mask].copy()
-
         # Expand rows: each player appears once per calculation_position they contribute to
         # (e.g., 'CB/WR' contributes to both 'CB' and 'WR' calculations)
         rows_to_add = []
@@ -258,10 +222,7 @@ class YasCalculator:
             pos_df['calculation_year'] = calculation_year
             pos_df['yas_position'] = pos_df['pos'].apply(standardize_position)
             rows_to_add.append(pos_df)
-
         df_expanded = pd.concat(rows_to_add, ignore_index=True)
-
-        # Calculate ALL percentiles using groupby (vectorized!)
         percentile_cols = []
         for measurable in CombineMeasurables:
             col_name = f'{measurable.value}_percentile'
@@ -270,19 +231,14 @@ class YasCalculator:
                 df_expanded.groupby('calculation_position')[measurable.value]
                 .rank(pct=True, ascending=higher_is_better(measurable)) * 10
             )
-
-        # Calculate YAS scores
         df_expanded['yas_score_unnormallized'] = df_expanded[percentile_cols].mean(axis=1)
         df_expanded['measurables_present'] = df_expanded[percentile_cols].count(axis=1)
         df_expanded['yas_score'] = (
             df_expanded.groupby('calculation_position')['yas_score_unnormallized']
             .rank(pct=True) * 10
         )
-
-        # Set index and add calculation_type
         df_expanded['calculation_type'] = yas_calc_type.value
         df_expanded = df_expanded.set_index(['yamplayer_id', 'calculation_position', 'calculation_year', 'calculation_type'])
-
         return df_expanded
 
     def calculate_all_yas(self, combine_df: pd.DataFrame) -> pd.DataFrame:
