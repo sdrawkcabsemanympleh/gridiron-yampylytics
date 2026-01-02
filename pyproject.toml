@@ -19,6 +19,7 @@ dependencies = [
     "harlequin>=2.4.1",
     "duckdb>=1.4.2",
     "invoke>=2.2.1",
+    "rich>=13.7.0",
 ]
 
 default_profile = "my_duckdb_profile"

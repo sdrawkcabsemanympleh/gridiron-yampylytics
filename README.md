@@ -79,24 +79,20 @@ cd gridiron-yampylytics
 
 ## Quick Start
 
-**Get up and running in 4 commands:**
+**Get up and running in 3 commands:**
 
 ```bash
 # 1. Install dependencies
 uv sync
 
-# 2. Load all NFL data
-inv load-data
+# 2. Load and process all NFL data
+inv setup-analysis
 
-# 3. Process and create database
-inv process-data
-inv create-duckdb
-
-# 4. Explore with SQL
+# 3. Explore with SQL
 inv sql
 ```
 
-That's it! You now have ~3M+ rows of NFL data (1999-2025) ready to query.
+That's it! You now have as many as ~3M+ rows of NFL data (1999-2025) ready to query.  See the invoke commands for setup commands with different sets of datasets (quick, analysis, full, yampy)
 
 **Want more control?** Run `inv -l` to see all available commands for:
 - Selective loading (specific datasets or seasons)

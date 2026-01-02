@@ -11,53 +11,67 @@ Quick start:
 import os
 import sys
 from invoke import task
-from src.gridiron_yampylytics.config import ESSENTIAL_DATASETS, ANALYSIS_DATASETS
 
 # Configure UTF-8 output for all invoke tasks (emojis and unicode support)
 sys.stdout.reconfigure(encoding='utf-8')
 
-@task
-def load_data(c):
-    """Download all NFL data sources (nflverse + GM executives).
-
-    This is a simple wrapper that calls both data loaders sequentially.
-    For more control over what gets downloaded, use the individual tasks or
-    call scripts/cache_nflreadpy_data.py directly with its options.
-    """
-    c.run('uv run python -m scripts.load_all_data')
-
-
-@task
-def download_gm(c):
-    """Download GM/executive data from Pro Football Reference for all 32 teams.
-
-    Uses Selenium to scrape executive data (takes ~3 minutes with delays).
-    Outputs to data/raw/executives/*.csv
-    """
-    c.run('uv run python -m scripts.download_gm_data')
-
-
 @task(help={
-    'dataset': 'Which dataset to cache (pbp, player_stats, rosters, etc.). Default: all',
-    'seasons': 'Specific season(s) to cache (e.g., "2023 2024"). Omit for current season.',
-    'all_seasons': 'Cache all available seasons for the dataset',
+    'datasets': 'Specific dataset(s) to download (comma-separated, e.g., "pbp,rosters"). Leave empty for all datasets.',
+    'seasons': 'Specific season(s) to download (space-separated, e.g., "2023 2024"). Omit for current season.',
+    'all_seasons': 'Download all available seasons for each dataset',
+    'no_gm': 'Skip GM data download (faster, GM scraper is slow)',
+    'sequential': 'Use sequential execution instead of parallel (for debugging)',
+    'max_workers': 'Maximum number of parallel workers (default: unlimited)',
 })
-def cache_nflverse(c, dataset='all', seasons=None, all_seasons=False):
-    """Download and cache nflverse data locally.
+def load_data(c, datasets=None, seasons=None, all_seasons=False, no_gm=False, sequential=False, max_workers=None):
+    """Download NFL data sources (nflverse + GM executives) in parallel.
+
+    Flexible data loading with optional granular control over datasets and seasons.
+    For preset workflows, use setup tasks: setup-quick, setup-analysis, full-setup, yampy-setup
 
     Examples:
-        inv cache-nflverse                           # Cache all datasets (current season)
-        inv cache-nflverse --all-seasons             # Cache all datasets (all seasons)
-        inv cache-nflverse --dataset=pbp --seasons="2023 2024"
-        inv cache-nflverse --dataset=combine --all-seasons
+        inv load-data                                    # All datasets, all seasons, with GM (default)
+        inv load-data --no-gm                           # All datasets, all seasons, skip GM scraper
+        inv load-data --datasets=pbp,rosters            # Specific datasets only, all seasons
+        inv load-data --datasets=combine --seasons="2023 2024"  # Specific dataset and seasons
+        inv load-data --all-seasons                     # Explicitly request all seasons
+        inv load-data --sequential                       # Sequential mode for debugging
+        inv load-data --max-workers=4                   # Limit to 4 parallel workers
+
+    :param datasets: Comma-separated dataset names (default: all)
+    :param seasons: Space-separated season years (default: current season)
+    :param all_seasons: Download all available seasons
+    :param no_gm: Skip GM data download (faster, GM scraper is slow)
+    :param sequential: Use sequential execution instead of parallel
+    :param max_workers: Maximum number of parallel workers
     """
-    cmd = 'uv run python -m scripts.cache_nflreadpy_data'
-    if dataset != 'all':
-        cmd += f' --dataset={dataset}'
-    if all_seasons:
+    cmd = 'uv run python -m scripts.download_data'
+
+    # Dataset selection
+    if datasets:
+        # User specified specific datasets (comma-separated -> space-separated)
+        cmd += f' --datasets {datasets.replace(",", " ")}'
+    else:
+        # Default to all datasets
         cmd += ' --all'
+
+    # Season selection
+    if all_seasons:
+        cmd += ' --all-seasons'
     elif seasons:
         cmd += f' --seasons {seasons}'
+    # else: defaults to current season
+
+    # GM data
+    if not no_gm or datasets:
+        cmd += ' --gm'
+
+    # Execution options
+    if sequential:
+        cmd += ' --sequential'
+    if max_workers:
+        cmd += f' --max-workers={max_workers}'
+
     c.run(cmd)
 
 
@@ -105,10 +119,10 @@ def process_data(c, include_large=False):
     3. generate_yamplayer_id - Inject universal player IDs into all datasets
     4. calculate_yas - Calculate Yampylytics Athletic Score (YAS) from combine data
     """
-    c.invoke(clean_depth_charts)
-    c.invoke(combine_gm_data)
-    c.invoke(generate_yamplayer_id, all_datasets=include_large)
-    c.invoke(calculate_yas)
+    clean_depth_charts(c)
+    combine_gm_data(c)
+    generate_yamplayer_id(c, all_datasets=include_large)
+    calculate_yas(c)
 
 @task(help={
     'all_datasets': 'Include all datasets including very large ones',
@@ -160,67 +174,82 @@ def status(c):
 
 
 @task
-def setup_quick(c):
+def setup_quick(c, no_gm=False):
     """Quick setup: essentials only for fast start.
 
-    Downloads minimal datasets for quick exploration:
-    - Combine data (current prospects)
-    - Draft picks (historical)
-    - Rosters (current season)
-    - GM data (all teams)
+    Downloads minimal datasets for quick exploration (in parallel):
+    - Combine data (all years - no season filter)
+    - Draft picks (all years - no season filter)
+    - Rosters (current season only for speed)
+    - GM data (all teams, unless --no-gm)
 
     Processes and creates DuckDB views. Fast setup (~1-2 min).
+
+    :param no_gm: Skip GM data download (faster, GM scraper is slow)
     """
-    # Download essential datasets only
-    for dataset in ESSENTIAL_DATASETS:
-        c.invoke(cache_nflverse, dataset=dataset, all_seasons=True)
-    c.invoke(download_gm)
-    c.invoke(process_data)
-    c.invoke(create_duckdb)
+    cmd = 'uv run python -m scripts.download_data --essential'
+    if not no_gm:
+        cmd += ' --gm'
+    c.run(cmd)
+    process_data(c)
+    create_duckdb(c)
 
 
 @task
-def setup_analysis(c):
+def setup_analysis(c, no_gm=False, as_tables=False):
     """Analysis-ready setup: omits largest tables.
 
-    Downloads comprehensive datasets for analysis:
+    Downloads comprehensive datasets for analysis (in parallel):
     - All nflverse data EXCEPT pbp (which is huge)
     - Includes: rosters, stats, combine, draft, contracts, schedules, etc.
-    - GM executive data
+    - GM executive data (unless --no-gm)
 
     Processes and creates DuckDB views. Moderate setup time (~5-10 min).
+
+    :param no_gm: Skip GM data download (faster, GM scraper is slow)
+    :param as_tables: Creates indexed tables in duckdb
     """
-    # Download all analysis datasets (excludes pbp)
-    for dataset in ANALYSIS_DATASETS:
-        c.invoke(cache_nflverse, dataset=dataset, all_seasons=True)
-    c.invoke(download_gm)
-    c.invoke(process_data)
-    c.invoke(create_duckdb)
+    cmd = 'uv run python -m scripts.download_data --analysis --all-seasons'
+    if not no_gm:
+        cmd += ' --gm'
+    c.run(cmd)
+    process_data(c)
+    create_duckdb(c, as_tables=as_tables)
 
 
 @task
-def full_setup(c):
+def full_setup(c, no_gm=False):
     """Complete setup: download all datasets, process it, and create database.
 
-    This runs all setup steps with sensible defaults:
-    - Downloads all NFL data (nflverse + GM executives)
+    This runs all setup steps with sensible defaults (in parallel):
+    - Downloads all NFL data (nflverse + GM executives unless --no-gm)
     - Processes and enriches data (yamplayer_id, YAS scores, etc.)
     - Creates DuckDB with lightweight views
 
     Grab a coffee - this could potentially take a bit depending on your network speed.
+
+    :param no_gm: Skip GM data download (faster, GM scraper is slow)
     """
-    c.invoke(load_data)
-    c.invoke(process_data)
-    c.invoke(create_duckdb)
+    cmd = 'uv run python -m scripts.download_data --yampy --all-seasons'
+    if not no_gm:
+        cmd += ' --gm'
+    c.run(cmd)
+    process_data(c)
+    create_duckdb(c)
 
 
 @task
-def yampy_setup(c):
+def yampy_setup(c, no_gm=False):
     """Maximum yampage setup: full data + performance optimizations.
 
-    Like setup, but with tables instead of views for faster queries.
+    Like setup, but with tables instead of views for faster queries (in parallel).
     Assumes you have disk space and want maximum performance.
+
+    :param no_gm: Skip GM data download (faster, GM scraper is slow)
     """
-    c.invoke(load_data)
-    c.invoke(process_data)
-    c.invoke(create_duckdb, as_tables=True)
+    cmd = 'uv run python -m scripts.download_data --yampy --all-seasons'
+    if not no_gm:
+        cmd += ' --gm'
+    c.run(cmd)
+    process_data(c)
+    create_duckdb(c, as_tables=True)
