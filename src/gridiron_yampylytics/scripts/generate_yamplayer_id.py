@@ -24,7 +24,9 @@ def main() -> None:
     parser.add_argument('--dry-run', action='store_true', help='Show what would be done without modifying files')
     args = parser.parse_args()
 
-    base_dir = Path(__file__).parent.parent
+    # Use cwd since script is now in package (src/gridiron_yampylytics/scripts/)
+    # and uv run always executes from project root
+    base_dir = Path.cwd()
     generate_yamplayer_id(base_dir=base_dir, dry_run=args.dry_run)
 
 

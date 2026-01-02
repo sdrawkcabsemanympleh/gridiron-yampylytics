@@ -93,6 +93,11 @@ def main() -> None:
         help="Include GM/executive data download"
     )
     parser.add_argument(
+        "--no-gm",
+        action="store_true",
+        help="Exclude GM/executive data download (explicit)"
+    )
+    parser.add_argument(
         "--seasons",
         nargs="+",
         type=int,
@@ -121,6 +126,14 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
+    # Determine whether to include GM data
+    if args.gm:
+        include_gm = True
+    elif args.no_gm:
+        include_gm = False
+    else:
+        include_gm = False  # Default: exclude GM data unless explicitly requested
 
     # Determine which datasets to download
     if args.essential:
@@ -163,7 +176,7 @@ def main() -> None:
                 failed.append((dataset, str(e)))
 
         # Download GM data if requested
-        if args.gm:
+        if include_gm:
             try:
                 download_gm_data()
                 successful.append('gm_data')
@@ -187,7 +200,7 @@ def main() -> None:
         config = {
             "datasets": nflverse_datasets,
             "seasons": seasons,
-            "gm": args.gm,
+            "gm": include_gm,
             "workers": args.max_workers,
         }
 
@@ -195,7 +208,7 @@ def main() -> None:
         with ConsoleUI(mode=mode, config=config) as ui:
             result = download_datasets_parallel(
                 nflverse_datasets=nflverse_datasets,
-                include_gm=args.gm,
+                include_gm=include_gm,
                 seasons=seasons,
                 max_workers=args.max_workers,
                 ui=ui

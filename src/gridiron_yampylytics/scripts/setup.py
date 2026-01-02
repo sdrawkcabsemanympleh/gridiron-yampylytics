@@ -73,7 +73,16 @@ def _run_setup(
     # Step 2: Process data
     print("[2/3] Processing data...")
     print("-" * 80)
-    process_data.main()
+    # Manipulate sys.argv to pass GM flag to process_data.main()
+    original_argv = sys.argv.copy()
+    try:
+        process_args = ['process_data']
+        if not final_include_gm:
+            process_args.append('--no-gm')
+        sys.argv = process_args
+        process_data.main()
+    finally:
+        sys.argv = original_argv
     print()
 
     # Step 3: Create database

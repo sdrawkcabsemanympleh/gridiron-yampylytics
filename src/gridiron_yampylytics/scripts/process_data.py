@@ -27,7 +27,25 @@ def main() -> None:
         action='store_true',
         help='Include large datasets like pbp in yamplayer_id processing'
     )
+    parser.add_argument(
+        '--gm',
+        action='store_true',
+        help='Process GM/executive data'
+    )
+    parser.add_argument(
+        '--no-gm',
+        action='store_true',
+        help='Skip GM/executive data processing'
+    )
     args = parser.parse_args()
+
+    # Determine whether to process GM data
+    if args.gm:
+        process_gm = True
+    elif args.no_gm:
+        process_gm = False
+    else:
+        process_gm = True  # Default: process GM data if available
 
     print("=" * 80)
     print("DATA PROCESSING PIPELINE")
@@ -39,10 +57,14 @@ def main() -> None:
     clean_depth_charts.main()
     print()
 
-    # Step 2: Combine GM data
-    print("[2/4] Combining GM data...")
-    combine_gm_data.main()
-    print()
+    # Step 2: Combine GM data (if requested)
+    if process_gm:
+        print("[2/4] Combining GM data...")
+        combine_gm_data.main()
+        print()
+    else:
+        print("[2/4] Skipping GM data (--no-gm flag)")
+        print()
 
     # Step 3: Generate yamplayer_id
     print("[3/4] Generating yamplayer_id...")
