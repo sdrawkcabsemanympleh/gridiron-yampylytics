@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv('../../data/nflverse/player_ids.csv')
+df = pd.read_csv('../../../data/nflverse/player_ids.csv')
 
 # All ID columns
 id_cols = [

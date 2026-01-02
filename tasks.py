@@ -13,7 +13,73 @@ import sys
 from invoke import task
 
 # Configure UTF-8 output for all invoke tasks (emojis and unicode support)
-sys.stdout.reconfigure(encoding='utf-8')
+# NOTE: Disabled for now - interferes with Rich Console in fancy mode
+# Rich handles UTF-8 automatically, and download_data.py reconfigures for verbose mode
+# sys.stdout.reconfigure(encoding='utf-8')
+
+@task
+def test_tty(c):
+    """Test if direct function call from invoke preserves TTY and Rich formatting.
+
+    This helps us understand if we can call Python functions directly from invoke
+    tasks instead of using subprocess (c.run()), which would allow fancy UI to work.
+    """
+    import sys
+
+    print("=" * 80)
+    print("TTY DETECTION TEST")
+    print("=" * 80)
+    print(f"sys.stdout.isatty() = {sys.stdout.isatty()}")
+    print(f"sys.stdout type: {type(sys.stdout)}")
+    print(f"sys.stderr type: {type(sys.stderr)}")
+    print()
+
+    print("Testing Rich Console formatting...")
+    print("-" * 80)
+
+    try:
+        from rich.console import Console
+        from rich.panel import Panel
+        from rich.table import Table
+
+        console = Console()
+
+        # Test 1: Basic formatting
+        console.print("[bold green]✓ Rich import successful![/bold green]")
+        console.print("[yellow]Testing colored output...[/yellow]")
+
+        # Test 2: Panel
+        console.print()
+        panel = Panel(
+            "[cyan]This is a test panel[/cyan]\nIf you see a box around this text, Rich Panel works!",
+            title="Test Panel",
+            border_style="blue"
+        )
+        console.print(panel)
+
+        # Test 3: Table
+        console.print()
+        table = Table(title="Test Table", show_header=True, header_style="bold magenta")
+        table.add_column("Column 1", style="cyan")
+        table.add_column("Column 2", style="green")
+        table.add_row("Row 1", "Data 1")
+        table.add_row("Row 2", "Data 2")
+        console.print(table)
+
+        print()
+        print("=" * 80)
+        print("TEST COMPLETE")
+        print("=" * 80)
+        print()
+        print("Results:")
+        print(f"  TTY detected: {sys.stdout.isatty()}")
+        print(f"  Rich formatting: {'✓ Working' if sys.stdout.isatty() else '? Check output above'}")
+        print()
+
+    except Exception as e:
+        print(f"❌ Error testing Rich: {e}")
+        import traceback
+        traceback.print_exc()
 
 @task(help={
     'datasets': 'Specific dataset(s) to download (comma-separated, e.g., "pbp,rosters"). Leave empty for all datasets.',
@@ -63,7 +129,7 @@ def load_data(c, datasets=None, seasons=None, all_seasons=False, no_gm=False, se
     # else: defaults to current season
 
     # GM data
-    if not no_gm or datasets:
+    if not no_gm and not datasets:
         cmd += ' --gm'
 
     # Execution options
@@ -72,7 +138,8 @@ def load_data(c, datasets=None, seasons=None, all_seasons=False, no_gm=False, se
     if max_workers:
         cmd += f' --max-workers={max_workers}'
 
-    c.run(cmd)
+    # Use pty=True to allocate pseudo-TTY so fancy UI can work
+    c.run(cmd, pty=True)
 
 
 @task

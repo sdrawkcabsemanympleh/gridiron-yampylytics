@@ -13,6 +13,7 @@ The scraper:
 3. Adds randomized delays (3.5-5.5s) between requests
 4. Saves individual team CSVs to data/raw/executives/
 """
+import logging
 import time
 import random
 from pathlib import Path
@@ -22,6 +23,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+
+logger = logging.getLogger(__name__)
 
 
 # Team abbreviations used by PFR
@@ -72,7 +75,7 @@ def download_team_executives(team_code: str, output_dir: Path, driver: webdriver
     url = f"https://www.pro-football-reference.com/teams/{team_code}/executives.htm"
 
     try:
-        print(f"  Fetching {team_code}... ", end='', flush=True)
+        logger.info(f"  Fetching {team_code}... ")
 
         driver.get(url)
 
@@ -85,7 +88,7 @@ def download_team_executives(team_code: str, output_dir: Path, driver: webdriver
         tables = pd.read_html(page_html)
 
         if not tables:
-            print("❌ No tables found")
+            logger.warning("No tables found")
             return False
 
         # Usually the first table is the executives table
@@ -95,11 +98,11 @@ def download_team_executives(team_code: str, output_dir: Path, driver: webdriver
         output_file = output_dir / f"{team_code}_executives.csv"
         executives_df.to_csv(output_file, index=False)
 
-        print(f"✓ ({len(executives_df)} rows, slept {sleeptime:.2f}s)")
+        logger.info(f"✓ ({len(executives_df)} rows, slept {sleeptime:.2f}s)")
         return True
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.error(f"Error: {e}")
         return False
 
 
@@ -126,12 +129,12 @@ def download_gm_data(
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    print("="*80)
-    print("DOWNLOADING GM/EXECUTIVE DATA FROM PRO FOOTBALL REFERENCE")
-    print("="*80)
-    print(f"\nOutput directory: {output_dir}")
-    print(f"Teams to download: {len(teams)}")
-    print("\nNote: Using Selenium with headless Chrome (3.5-5.5s sleep)\n")
+    logger.info("="*80)
+    logger.info("DOWNLOADING GM/EXECUTIVE DATA FROM PRO FOOTBALL REFERENCE")
+    logger.info("="*80)
+    logger.info(f"\nOutput directory: {output_dir}")
+    logger.info(f"Teams to download: {len(teams)}")
+    logger.info("\nNote: Using Selenium with headless Chrome (3.5-5.5s sleep)\n")
 
     # Set up Selenium with headless Chrome
     chrome_options = Options()
@@ -139,7 +142,7 @@ def download_gm_data(
     chrome_options.add_argument('--disable-gpu')
     chrome_options.add_argument('--no-sandbox')
 
-    print("Starting Chrome WebDriver (downloading ChromeDriver if needed)...")
+    logger.info("Starting Chrome WebDriver (downloading ChromeDriver if needed)...")
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
@@ -148,30 +151,30 @@ def download_gm_data(
 
     try:
         for i, team_code in enumerate(teams, 1):
-            print(f"[{i:2d}/{len(teams)}] ", end='')
+            logger.info(f"[{i:2d}/{len(teams)}] ")
 
             if download_team_executives(team_code, output_dir, driver):
                 successful += 1
             else:
                 failed += 1
     finally:
-        print("\nClosing WebDriver...")
+        logger.info("\nClosing WebDriver...")
         driver.quit()
 
-    print("\n" + "="*80)
-    print("DOWNLOAD COMPLETE")
-    print("="*80)
-    print(f"  ✓ Successful: {successful}")
-    print(f"  ❌ Failed: {failed}")
-    print(f"  📁 Files saved to: {output_dir}")
+    logger.info("\n" + "="*80)
+    logger.info("DOWNLOAD COMPLETE")
+    logger.info("="*80)
+    logger.info(f"  ✓ Successful: {successful}")
+    logger.info(f"  ❌ Failed: {failed}")
+    logger.info(f"  📁 Files saved to: {output_dir}")
 
     if successful > 0:
-        print("\nUpdating manifest...")
+        logger.info("\nUpdating manifest...")
         try:
             update_gm_data(num_files=successful)
-            print("  ✓ Manifest updated")
+            logger.info("  ✓ Manifest updated")
         except Exception as e:
-            print(f"  ⚠ Warning: Could not update manifest: {e}")
+            logger.warning(f"  Warning: Could not update manifest: {e}")
 
     # Return structured data for programmatic use
     return {

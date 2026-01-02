@@ -5,7 +5,7 @@ Coordinates downloads across multiple data sources for efficient setup.
 """
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 from datetime import datetime
 
 from src.gridiron_yampylytics.loaders.nflverse import (
@@ -17,6 +17,14 @@ from src.gridiron_yampylytics.loaders.gm_data import download_gm_data
 from src.gridiron_yampylytics.manifest import update_dataset
 from src.gridiron_yampylytics.utils.parallel import Task, run_tasks_parallel
 
+# Import TYPE_CHECKING to avoid circular imports
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.gridiron_yampylytics.ui import ConsoleUI, TaskStatus, DisplayMode
+else:
+    # Import DisplayMode for runtime checks (it's just an enum, no circular dependency issue)
+    from src.gridiron_yampylytics.ui import DisplayMode
+
 logger = logging.getLogger(__name__)
 
 
@@ -25,7 +33,8 @@ def download_datasets_parallel(
     include_gm: bool = False,
     seasons: int | list[int] | bool | None = None,
     max_workers: int | None = None,
-    base_dir: Path | None = None
+    base_dir: Path | None = None,
+    ui: Optional["ConsoleUI"] = None
 ) -> dict[str, Any]:
     """Download multiple datasets in parallel for faster setup.
 
@@ -37,6 +46,7 @@ def download_datasets_parallel(
     :param seasons: Season(s) to load for nflverse (True=all, None=current, int/list=specific)
     :param max_workers: Max concurrent workers (default: None = one per task)
     :param base_dir: Base directory for nflverse caching (default: data/nflverse)
+    :param ui: Optional ConsoleUI instance for fancy display (default: None = verbose logging)
     :return: Summary dict with download statistics
 
     Example:
@@ -50,22 +60,19 @@ def download_datasets_parallel(
             seasons=True
         )
     """
-    # Configure logging for thread-safe output
-    logging.basicConfig(
-        level=logging.INFO,
-        format='[%(threadName)s] %(message)s',
-        force=True
-    )
+    # Configure logging for thread-safe output (if no UI or UI is in verbose mode)
+    use_verbose = ui is None or (ui is not None and ui.mode == DisplayMode.VERBOSE)
+    if use_verbose:
+        logging.basicConfig(
+            level=logging.INFO,
+            format='[%(threadName)s] %(message)s',
+            force=True
+        )
 
     # Setup cache directories for nflverse
     cache_dirs = setup_cache_dirs(base_dir)
 
-    # Build header
-    logger.info("="*80)
-    logger.info("PARALLEL DATA DOWNLOAD")
-    logger.info("="*80)
-
-    # Show what we're downloading
+    # Show what we're downloading (verbose mode only)
     download_items = []
     if nflverse_datasets:
         download_items.append(f"NFLverse: {', '.join(sorted(nflverse_datasets))}")
@@ -73,18 +80,25 @@ def download_datasets_parallel(
         download_items.append("GM/Executive data")
 
     if not download_items:
-        logger.info("No datasets specified!")
+        if use_verbose:
+            logger.info("No datasets specified!")
         return {'successful': [], 'failed': [], 'total_tasks': 0}
 
-    for item in download_items:
-        logger.info(f"  • {item}")
+    # Verbose logging (only if no UI or UI in verbose mode)
+    if use_verbose:
+        logger.info("="*80)
+        logger.info("PARALLEL DATA DOWNLOAD")
+        logger.info("="*80)
 
-    if nflverse_datasets and seasons is not None:
-        logger.info(f"  • Seasons: {seasons if seasons is not True else 'all available'}")
+        for item in download_items:
+            logger.info(f"  • {item}")
 
-    logger.info(f"Cache location: {list(cache_dirs.values())[0]}")
-    logger.info("="*80)
-    logger.info("")
+        if nflverse_datasets and seasons is not None:
+            logger.info(f"  • Seasons: {seasons if seasons is not True else 'all available'}")
+
+        logger.info(f"Cache location: {list(cache_dirs.values())[0]}")
+        logger.info("="*80)
+        logger.info("")
 
     # Build task list
     tasks = []
@@ -113,31 +127,48 @@ def download_datasets_parallel(
     if include_gm:
         tasks.append(Task('gm_data', download_gm_data, ()))
 
+    # Initialize UI status for all datasets (if UI provided and in fancy mode)
+    if ui is not None and ui.mode != DisplayMode.VERBOSE:
+        from src.gridiron_yampylytics.ui import TaskStatus
+        for task in tasks:
+            ui.update_dataset(task.name, TaskStatus.RUNNING, progress=0.0)
+
     # Execute all downloads in parallel
-    logger.info(f"Starting parallel download of {len(tasks)} datasets...\n")
+    if use_verbose:
+        logger.info(f"Starting parallel download of {len(tasks)} datasets...\n")
     results = run_tasks_parallel(tasks, max_workers=max_workers)
 
-    # Print summary
-    logger.info("\n" + "="*80)
-    logger.info("DOWNLOAD SUMMARY")
-    logger.info("="*80)
-
-    if results['successful']:
-        logger.info(f"\n✅ Successfully downloaded {len(results['successful'])} dataset(s):")
+    # Update UI status based on results (if UI provided and in fancy mode)
+    if ui is not None and ui.mode != DisplayMode.VERBOSE:
+        from src.gridiron_yampylytics.ui import TaskStatus
         for name in results['successful']:
-            logger.info(f"   • {name}")
-
-    if results['failed']:
-        logger.info(f"\n⚠️  Failed to download {len(results['failed'])} dataset(s):")
+            ui.update_dataset(name, TaskStatus.COMPLETE, progress=1.0)
         for name, error in results['failed']:
-            logger.info(f"   • {name}: {error[:80]}...")
+            ui.update_dataset(name, TaskStatus.FAILED, progress=0.0)
 
-    logger.info("\n" + "="*80)
+    # Print summary (verbose mode only)
+    if use_verbose:
+        logger.info("\n" + "="*80)
+        logger.info("DOWNLOAD SUMMARY")
+        logger.info("="*80)
+
+        if results['successful']:
+            logger.info(f"\n✅ Successfully downloaded {len(results['successful'])} dataset(s):")
+            for name in results['successful']:
+                logger.info(f"   • {name}")
+
+        if results['failed']:
+            logger.info(f"\n⚠️  Failed to download {len(results['failed'])} dataset(s):")
+            for name, error in results['failed']:
+                logger.info(f"   • {name}: {error[:80]}...")
+
+        logger.info("\n" + "="*80)
 
     # Update manifest for successful nflverse datasets (not GM)
     nflverse_successful = [name for name in results['successful'] if name != 'gm_data']
     if nflverse_successful:
-        logger.info("Updating manifest...")
+        if use_verbose:
+            logger.info("Updating manifest...")
         for dataset_name in nflverse_successful:
             try:
                 dataset_dir = cache_dirs[dataset_name]
@@ -151,9 +182,11 @@ def download_datasets_parallel(
                         "files": len(files)
                     })
             except Exception as e:
-                logger.info(f"  ⚠️  Warning: Could not update manifest for {dataset_name}: {e}")
+                if use_verbose:
+                    logger.info(f"  ⚠️  Warning: Could not update manifest for {dataset_name}: {e}")
 
-        logger.info("  ✓ Manifest updated")
+        if use_verbose:
+            logger.info("  ✓ Manifest updated")
 
     return {
         'successful': results['successful'],

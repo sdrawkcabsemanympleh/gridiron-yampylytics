@@ -22,6 +22,12 @@ dependencies = [
     "rich>=13.7.0",
 ]
 
+[project.scripts]
+load-data = "gridiron_yampylytics.scripts.download_data:main"
+
+[tool.uv]
+package = true
+
 default_profile = "my_duckdb_profile"
 
 [profiles.my_duckdb_profile]

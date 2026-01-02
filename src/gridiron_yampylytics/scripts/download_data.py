@@ -43,11 +43,13 @@ from src.gridiron_yampylytics.config import (
     ANALYSIS_DATASETS,
     YAMPY_DATASETS
 )
+from src.gridiron_yampylytics.ui import ConsoleUI, DisplayMode
 
 
 def main() -> None:
     """CLI entry point for unified data download."""
-    sys.stdout.reconfigure(encoding='utf-8')
+    # Note: UTF-8 reconfigure is done later, only for verbose mode
+    # Rich Console handles encoding automatically for fancy mode
 
     parser = argparse.ArgumentParser(
         description="Download NFL data from multiple sources in parallel",
@@ -174,12 +176,30 @@ def main() -> None:
         }
     else:
         # Parallel execution (default)
-        result = download_datasets_parallel(
-            nflverse_datasets=nflverse_datasets,
-            include_gm=args.gm,
-            seasons=seasons,
-            max_workers=args.max_workers
-        )
+        # Determine display mode
+        mode = DisplayMode.VERBOSE if args.verbose else DisplayMode.FANCY
+
+        # Configure UTF-8 output for verbose mode (Rich handles it automatically for fancy mode)
+        if mode == DisplayMode.VERBOSE:
+            sys.stdout.reconfigure(encoding='utf-8')
+
+        # Build config for UI header
+        config = {
+            "datasets": nflverse_datasets,
+            "seasons": seasons,
+            "gm": args.gm,
+            "workers": args.max_workers,
+        }
+
+        # Create UI and run download with context manager
+        with ConsoleUI(mode=mode, config=config) as ui:
+            result = download_datasets_parallel(
+                nflverse_datasets=nflverse_datasets,
+                include_gm=args.gm,
+                seasons=seasons,
+                max_workers=args.max_workers,
+                ui=ui
+            )
 
     # Exit with error if everything failed
     if result['failed'] and not result['successful']:

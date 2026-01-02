@@ -15,7 +15,6 @@ class Task(NamedTuple):
     :param args: Positional arguments for func (default: empty tuple)
     :param kwargs: Keyword arguments for func (default: empty dict)
     """
-
     name: str
     func: Callable
     args: tuple = ()

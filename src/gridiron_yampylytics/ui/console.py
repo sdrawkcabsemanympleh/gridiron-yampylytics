@@ -17,6 +17,17 @@ from rich.panel import Panel
 from rich.table import Table
 
 
+class DisplayMode(Enum):
+    """Display mode for console output.
+
+    - FANCY: Rich-based live-updating tables and progress bars
+    - VERBOSE: Traditional logging output for debugging and non-TTY environments
+    """
+
+    FANCY = "fancy"
+    VERBOSE = "verbose"
+
+
 class TaskStatus(Enum):
     """Status indicators for tasks/datasets.
 
@@ -37,18 +48,27 @@ class ConsoleUI:
     information during parallel data downloads and processing tasks. It automatically
     falls back to verbose mode when not in a TTY environment.
 
+    :ivar mode: Current display mode (FANCY or VERBOSE)
+    :ivar config: Configuration dict for header display (datasets, seasons, workers, etc.)
+    :ivar console: Rich Console instance for styled output
+    :ivar is_tty: Whether stdout is a TTY (interactive terminal)
+    :ivar datasets: Dictionary tracking dataset download states
+    :ivar processing_tasks: Dictionary tracking processing task states
+    :ivar start_time: Timestamp when UI was initialized
+    :ivar live: Rich Live instance for live-updating displays (None until __enter__)
+
     Example usage:
         config = {"datasets": ["combine", "rosters"], "workers": 4}
-        with ConsoleUI(mode="fancy", config=config) as ui:
+        with ConsoleUI(mode=DisplayMode.FANCY, config=config) as ui:
             ui.update_dataset("combine", TaskStatus.RUNNING)
             # ... download logic ...
             ui.update_dataset("combine", TaskStatus.COMPLETE, rows=8649)
     """
 
-    def __init__(self, mode: str = "fancy", config: Optional[dict[str, Any]] = None) -> None:
+    def __init__(self, mode: DisplayMode = DisplayMode.FANCY, config: Optional[dict[str, Any]] = None) -> None:
         """Initialize the ConsoleUI.
 
-        :param mode: Display mode - "fancy" for rich UI, "verbose" for traditional logging
+        :param mode: Display mode (DisplayMode.FANCY or DisplayMode.VERBOSE)
         :param config: Configuration dict for header display (datasets, seasons, workers, etc.)
         """
         self.mode = mode
@@ -57,8 +77,8 @@ class ConsoleUI:
         self.is_tty = sys.stdout.isatty()
 
         # Force verbose mode if not a TTY (piped output, file redirect, etc.)
-        if not self.is_tty and self.mode == "fancy":
-            self.mode = "verbose"
+        if not self.is_tty and self.mode == DisplayMode.FANCY:
+            self.mode = DisplayMode.VERBOSE
 
         # Track dataset states: {dataset_name: {status, rows, progress, start_time}}
         self.datasets: dict[str, dict[str, Any]] = {}
@@ -77,10 +97,17 @@ class ConsoleUI:
 
         :return: self for context manager usage
         """
-        if self.mode == "fancy":
-            # Phase 1: Just create the Live instance, we'll implement display later
-            # For now, this is a no-op placeholder
-            pass
+        if self.mode == DisplayMode.FANCY:
+            # Create Live instance with initial display
+            initial_table = self._generate_table()
+
+            self.live = Live(
+                initial_table,
+                console=self.console,
+                refresh_per_second=4,  # 4 FPS refresh rate
+                transient=False,  # Keep display after exit
+            )
+            self.live.start()
 
         return self
 
@@ -89,10 +116,10 @@ class ConsoleUI:
 
         :param args: Exception info (exc_type, exc_value, traceback)
         """
-        if self.mode == "fancy" and self.live is not None:
-            # Phase 1: Cleanup placeholder
-            # Later phases will stop the live display here
-            pass
+        if self.mode == DisplayMode.FANCY and self.live is not None:
+            # Update one final time then stop
+            self.live.update(self._generate_table())
+            self.live.stop()
 
     def update_dataset(
         self,
@@ -110,7 +137,7 @@ class ConsoleUI:
         :param rows: Number of rows downloaded (optional)
         :param progress: Progress fraction 0.0-1.0 (optional, for incremental downloads)
         """
-        # Phase 1: Just track state, no display yet
+        # Update internal state
         if name not in self.datasets:
             self.datasets[name] = {
                 "status": status,
@@ -126,6 +153,10 @@ class ConsoleUI:
                     "progress": progress if progress is not None else self.datasets[name].get("progress", 0.0),
                 }
             )
+
+        # Refresh live display if in fancy mode
+        if self.mode == DisplayMode.FANCY and self.live is not None:
+            self.live.update(self._generate_table())
 
     def update_processing(
         self,
@@ -157,3 +188,154 @@ class ConsoleUI:
                     "detail": detail,
                 }
             )
+
+    def _create_config_header(self) -> Panel:
+        """Create configuration header panel.
+
+        :return: Rich Panel with configuration information
+        """
+        # Build config lines
+        lines = []
+
+        # Datasets
+        if "datasets" in self.config:
+            datasets = self.config["datasets"]
+            if isinstance(datasets, (list, set)):
+                datasets_str = ", ".join(sorted(datasets)[:5])  # Show first 5
+                if len(datasets) > 5:
+                    datasets_str += f" + {len(datasets) - 5} more"
+            else:
+                datasets_str = str(datasets)
+            lines.append(f"  • Datasets: {datasets_str}")
+
+        # Seasons
+        if "seasons" in self.config:
+            seasons = self.config["seasons"]
+            if seasons is True:
+                lines.append("  • Seasons: all available")
+            elif seasons:
+                lines.append(f"  • Seasons: {seasons}")
+            else:
+                lines.append("  • Seasons: current season")
+
+        # GM data
+        if "gm" in self.config:
+            lines.append(f"  • GM data: {'included' if self.config['gm'] else 'excluded'}")
+
+        # Workers
+        if "workers" in self.config and self.config["workers"]:
+            lines.append(f"  • Workers: {self.config['workers']} parallel threads")
+
+        config_text = "\n".join(lines) if lines else "  • No configuration provided"
+
+        return Panel(
+            config_text,
+            title="🏈 NFL DATA DOWNLOAD - PARALLEL MODE",
+            border_style="blue",
+            expand=False,
+        )
+
+    def _create_download_table(self) -> Table:
+        """Create the download status table.
+
+        :return: Rich Table with dataset download status
+        """
+        table = Table(
+            show_header=True,
+            header_style="bold cyan",
+            border_style="blue",
+            expand=False,
+        )
+
+        # Add columns
+        table.add_column("Dataset", style="cyan", width=17)
+        table.add_column("Status", width=16)
+        table.add_column("Rows", justify="right", width=10)
+        table.add_column("Progress", width=23)
+        table.add_column("Time", justify="right", width=8)
+
+        # Add rows for each dataset
+        for name, state in self.datasets.items():
+            status: TaskStatus = state["status"]
+            rows = state.get("rows")
+            progress = state.get("progress", 0.0)
+            elapsed = time.time() - state.get("start_time", time.time())
+
+            # Format status with emoji and color
+            emoji, label, color = status.value
+            status_str = f"{emoji} {label}"
+
+            # Format rows
+            rows_str = f"{rows:,}" if rows is not None else "-"
+
+            # Format progress bar (20 characters wide)
+            bar_width = 20
+            filled = int(progress * bar_width)
+            bar = "█" * filled + "░" * (bar_width - filled)
+
+            # Format time
+            time_str = f"{elapsed:.1f}s"
+
+            table.add_row(
+                name,
+                f"[{color}]{status_str}[/{color}]",
+                rows_str,
+                bar,
+                time_str,
+            )
+
+        return table
+
+    def _create_footer(self) -> str:
+        """Create summary footer with stats.
+
+        :return: Footer string with summary information
+        """
+        total_datasets = len(self.datasets)
+        completed = sum(1 for d in self.datasets.values() if d["status"] == TaskStatus.COMPLETE)
+        failed = sum(1 for d in self.datasets.values() if d["status"] == TaskStatus.FAILED)
+        elapsed = time.time() - self.start_time
+
+        # Count NFLverse vs GM datasets
+        nflverse_datasets = [n for n in self.datasets.keys() if n != "gm_data"]
+        nflverse_complete = sum(
+            1 for n, d in self.datasets.items()
+            if n != "gm_data" and d["status"] == TaskStatus.COMPLETE
+        )
+
+        parts = []
+        if nflverse_datasets:
+            parts.append(f"NFLverse: {nflverse_complete}/{len(nflverse_datasets)} complete")
+
+        # GM progress (if present)
+        if "gm_data" in self.datasets:
+            gm_state = self.datasets["gm_data"]
+            if gm_state.get("rows") and "/" in str(gm_state["rows"]):
+                parts.append(f"GM: {gm_state['rows']}")
+
+        parts.append(f"Elapsed: {elapsed:.1f}s")
+
+        return " │ ".join(parts)
+
+    def _generate_table(self) -> Panel:
+        """Generate the complete display with header, table, and footer.
+
+        :return: Rich Panel containing the entire display
+        """
+        from rich.console import Group
+
+        # Build the display components
+        config_header = self._create_config_header()
+        download_table = self._create_download_table()
+        footer = self._create_footer()
+
+        # Combine into a group
+        display_group = Group(
+            config_header,
+            "",  # Blank line
+            download_table,
+            "",  # Blank line
+            footer,
+        )
+
+        return Panel(display_group, border_style="dim", expand=False)
