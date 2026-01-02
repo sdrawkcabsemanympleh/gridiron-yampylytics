@@ -133,7 +133,7 @@ def show_status(
 
     if not nflverse_datasets:
         print("  ❌ No nflverse data found")
-        print("  Run: inv load-data")
+        print("  Run: uv run load-data")
     else:
         total_size = sum(d['size'] for d in nflverse_datasets.values())
         print(f"  ✓ {len(nflverse_datasets)} dataset(s) downloaded")
@@ -162,7 +162,7 @@ def show_status(
 
     if gm_info['count'] == 0:
         print("  ❌ No GM data found")
-        print("  Run: inv download-gm")
+        print("  Run: uv run load-data --gm")
     else:
         size_str = format_size(gm_info['size']) if gm_info['size'] else 'N/A'
         print(f"  ✓ {gm_info['count']} team file(s) downloaded")
@@ -184,14 +184,14 @@ def show_status(
 
     if not db_info['exists']:
         print("  ❌ Database not found")
-        print("  Run: inv create-duckdb")
+        print("  Run: uv run create-duckdb-views")
     else:
         size_str = format_size(db_info['size'])
         print(f"  ✓ Database exists")
         print(f"  Size: {size_str}")
         print(f"  Location: gridiron_yampylytics.db")
         print()
-        print("  Open with: inv sql")
+        print("  Open with: uv run sql")
 
     print()
 
@@ -211,20 +211,20 @@ def show_status(
         print("  Missing: " + ", ".join(missing_components))
         print()
         print("  Run complete setup:")
-        print("    inv setup              # Downloads data + creates database")
+        print("    uv run setup-analysis  # Downloads data + creates database")
         print()
         print("  Or run individual steps:")
-        print("    inv load-data          # Download nflverse + GM data")
-        print("    inv process-data       # Process and enrich data")
-        print("    inv create-duckdb      # Create database")
+        print("    uv run load-data       # Download nflverse + GM data")
+        print("    uv run process-data    # Process and enrich data")
+        print("    uv run create-duckdb-views  # Create database")
     else:
         print("  ✓ All components present!")
         print()
         print("  Ready to analyze:")
-        print("    inv sql                # Open interactive SQL explorer")
+        print("    uv run sql             # Open interactive SQL explorer")
         print()
         print("  Update data:")
-        print("    inv load-data          # Refresh nflverse data")
+        print("    uv run load-data       # Refresh nflverse data")
 
     print()
     print("=" * 80)

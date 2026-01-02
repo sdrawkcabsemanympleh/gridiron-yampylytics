@@ -20,7 +20,7 @@ This is much like RAS data, and uses the same calculations to generate the data.
 ### Other Notes
 On depth charts, you'll notice there's a legacy and modern.  The schema in `nflreadpy` changed after the 2024 year for some reason, and is now completely different.  I have them as different datasets.  I may attempt to reconcilethem at some point, but at time of writing, have not.  It might be worth double checking whether I did since writing this, since it's easy to forget updating a readme.
 
-Large datasets like Play-by-Play (PBP) are not included by default are available if explicitly requested.  You will want to check the invoke args for that in `tasks.py`.
+Large datasets like Play-by-Play (PBP) are not always included depending on your setup options.  You can check those with `uv run list` and `uv run setup-WHICHEVER`.
 
 ## Installation
 
@@ -86,15 +86,15 @@ cd gridiron-yampylytics
 uv sync
 
 # 2. Load and process all NFL data
-inv setup-analysis
+uv run setup-analysis
 
 # 3. Explore with SQL
-inv sql
+uv run sql
 ```
 
-That's it! You now have as many as ~3M+ rows of NFL data (1999-2025) ready to query.  See the invoke commands for setup commands with different sets of datasets (quick, analysis, full, yampy)
+That's it! You now have as many as ~3M+ rows of NFL data (1999-2025) ready to query depending on setup choice used (quick, analysis, full, yampy)
 
-**Want more control?** Run `inv -l` to see all available commands for:
+**Want more control?** Run `uv run list` to see all available commands for:
 - Selective loading (specific datasets or seasons)
 - Database options (views vs tables, include/exclude large datasets)
 - Individual processing steps
