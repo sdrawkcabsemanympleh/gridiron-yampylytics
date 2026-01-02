@@ -21,6 +21,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from gridiron_yampylytics.manifest import update_transformation_script
+
 
 # For each position we calculate, we may need to include others, due to it being a superset, naming, nomenclature
 # Ideally a player which contributes to more than one of these will have an entry for where they lie in each.
@@ -257,7 +259,6 @@ def calculate_yas(
     :param base_dir: Base directory for relative paths (default: current working directory)
     :return: Summary dict with statistics and file info
     """
-    from gridiron_yampylytics.manifest import update_transformation_script
 
     # Set default paths if not provided
     if base_dir is None:

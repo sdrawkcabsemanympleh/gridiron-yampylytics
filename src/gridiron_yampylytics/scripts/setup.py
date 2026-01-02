@@ -10,7 +10,6 @@ Each setup runs the full workflow: download → process → create database
 """
 import sys
 import argparse
-from typing import Optional
 from gridiron_yampylytics.scripts import download_data, process_data
 from gridiron_yampylytics.scripts import create_duckdb_views, create_duckdb_tables
 

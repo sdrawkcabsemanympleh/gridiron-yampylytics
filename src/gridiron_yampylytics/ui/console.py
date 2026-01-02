@@ -11,7 +11,7 @@ import time
 from enum import Enum
 from typing import Any, Optional
 
-from rich.console import Console
+from rich.console import Console, Group
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
@@ -322,7 +322,6 @@ class ConsoleUI:
 
         :return: Rich Panel containing the entire display
         """
-        from rich.console import Group
 
         # Build the display components
         config_header = self._create_config_header()
