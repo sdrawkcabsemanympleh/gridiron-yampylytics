@@ -4,7 +4,7 @@ This module provides status checking for downloaded data files and databases,
 giving a quick overview of what's available locally.
 
 For programmatic use:
-    from src.gridiron_yampylytics.utils.status import show_status
+    from gridiron_yampylytics.utils.status import show_status
     result = show_status()
 
 Provides:
@@ -15,7 +15,7 @@ Provides:
 """
 from pathlib import Path
 from typing import Any
-from src.gridiron_yampylytics.manifest import read_manifest
+from gridiron_yampylytics.manifest import read_manifest
 
 
 def format_size(size_bytes: int) -> str:

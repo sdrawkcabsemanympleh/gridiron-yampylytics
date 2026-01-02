@@ -6,7 +6,7 @@ This module creates a high-performance DuckDB database with:
 - Optional play-by-play data (large dataset)
 
 For programmatic use:
-    from src.gridiron_yampylytics.database.tables import create_duckdb_tables
+    from gridiron_yampylytics.database.tables import create_duckdb_tables
     result = create_duckdb_tables(include_pbp=False)
 
 Database size: ~580 MB (default) | ~3.2 GB (with pbp)

@@ -44,13 +44,24 @@ gridiron-yampylytics/
 
 ## Style Guidelines
 
-Follow the Python style guidelines:
-- Full reST docstrings on every function, method, and class
-- Type annotations on everything
-- Minimal whitespace (PEP8 required only)
-- No multi-line or nested list comprehensions
-- Descriptive variable names
-- No lazy imports without good reason... a _really_ good reason
+- Full reST docstrings on every function, method, and class.  This should almost always include the list of paramaters and such.
+- Type annotations on everything.  I plan to utilize mypy and ruff on everything we work on.
+- Keep whitespace to minimum; only that which is required by pep8.  No other line breaks within functions or methods.  
+  - There's wiggle room on this in scripts and test files :)
+  - Inline comments should be kept on the same line as the code they refer to if they can fit
+- Never create multi-line or nested list comprehension.
+- Use descriptive names.  We don't get dinged for character count, but we will be angry at ourselves later if we don't know what we did.  This doesn't necessarily mean no one letter variables--use those when one letter communicates the purpose of a variable.  Examples:
+  - i, j for indexes - These are still descriptive even as one letter.  They communicate an index.
+  - x or similar in list comprehension or lambdas.  Another case where lack of description is a description.
+- Lazy loading shouldn't be done without a very good reason
+
+## Working Agreement
+
+First and foremost, remember that we're working together.  This is collaborative, and your thoughts and observations matter.  I'd like to be very conversational about things.  Some key points:
+- I try to be clear if I want you to make changes or go do something.  I like to ask questions and understand what you're doing, what you're seeing, and why.  So remember that questions are actually questions, and to err on the side of answering rather than doing.
+- With that, don't feel pressure to go and do a thing immediately.  It's natural to think of that as the instruction, but I want you to always consider coming back partway through with questions, thoughts, suggestions, concerns, or pushback just as valid.  In fact, it's frequently more important that you do.
+- We aren't in a hurry, and we can take a few more prompts to do it, and do it right.  The process is what matters, and it's what will get us our best work.
+- Your opinion matters, and your judgement is both sound and important.
 
 ## Architecture Notes
 

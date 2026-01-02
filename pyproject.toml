@@ -23,16 +23,36 @@ dependencies = [
 ]
 
 [project.scripts]
+# Help and information
+help = "gridiron_yampylytics.scripts.help:main"
+list = "gridiron_yampylytics.scripts.help:main"
+
+# Data download and status
 load-data = "gridiron_yampylytics.scripts.download_data:main"
+show-status = "gridiron_yampylytics.scripts.show_status:main"
+
+# Setup workflows (download → process → create database)
+setup-quick = "gridiron_yampylytics.scripts.setup:quick"
+setup-analysis = "gridiron_yampylytics.scripts.setup:analysis"
+setup-full = "gridiron_yampylytics.scripts.setup:full"
+setup-yampy = "gridiron_yampylytics.scripts.setup:yampy"
+
+# Data processing
+clean-depth-charts = "gridiron_yampylytics.scripts.clean_depth_charts:main"
+combine-gm-data = "gridiron_yampylytics.scripts.combine_gm_data:main"
+generate-yamplayer-id = "gridiron_yampylytics.scripts.generate_yamplayer_id:main"
+calculate-yas = "gridiron_yampylytics.scripts.calculate_yas:main"
+process-data = "gridiron_yampylytics.scripts.process_data:main"
+
+# Database creation
+create-duckdb-views = "gridiron_yampylytics.scripts.create_duckdb_views:main"
+create-duckdb-tables = "gridiron_yampylytics.scripts.create_duckdb_tables:main"
+
+# Database exploration
+sql = "gridiron_yampylytics.scripts.sql:main"
 
 [tool.uv]
 package = true
-
-default_profile = "my_duckdb_profile"
-
-[profiles.my_duckdb_profile]
-adapter = "duckdb"
-conn_str = ["my_database.duckdb"]
 
 [tool.ruff]
 line-length = 120

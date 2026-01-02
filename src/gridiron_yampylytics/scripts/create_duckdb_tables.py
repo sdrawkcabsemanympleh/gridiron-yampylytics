@@ -3,7 +3,7 @@
 This script is a thin wrapper around the create_duckdb_tables function.
 For programmatic use, import and call the function directly:
 
-    from src.gridiron_yampylytics.database.tables import create_duckdb_tables
+    from gridiron_yampylytics.database.tables import create_duckdb_tables
     result = create_duckdb_tables(include_pbp=False)
 
 Usage:
@@ -16,7 +16,7 @@ Database size: ~580 MB (default) | ~3.2 GB (with pbp)
 """
 import sys
 import argparse
-from src.gridiron_yampylytics.database.tables import create_duckdb_tables
+from gridiron_yampylytics.database.tables import create_duckdb_tables
 
 
 def main() -> None:

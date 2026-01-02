@@ -1,0 +1,5 @@
+default_profile = "my_duckdb_profile"
+
+[profiles.my_duckdb_profile]
+adapter = "duckdb"
+conn_str = ["my_database.duckdb"]

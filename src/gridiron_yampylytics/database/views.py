@@ -5,7 +5,7 @@ and Parquet files in the data directory. Views are organized by directory
 structure for easy navigation.
 
 For programmatic use:
-    from src.gridiron_yampylytics.database.views import create_duckdb_views
+    from gridiron_yampylytics.database.views import create_duckdb_views
     result = create_duckdb_views()
 
 Views are lightweight (no disk space) and always reflect current CSVs.

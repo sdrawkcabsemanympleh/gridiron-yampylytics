@@ -3,14 +3,14 @@
 This script is a thin wrapper around the combine_gm_data function.
 For programmatic use, import and call the function directly:
 
-    from src.gridiron_yampylytics.processors.gm_data import combine_gm_data
+    from gridiron_yampylytics.processors.gm_data import combine_gm_data
     result = combine_gm_data()
 
 Usage:
     uv run python -m scripts.combine_gm_data
 """
 import sys
-from src.gridiron_yampylytics.processors.gm_data import combine_gm_data
+from gridiron_yampylytics.processors.gm_data import combine_gm_data
 
 
 def main() -> None:

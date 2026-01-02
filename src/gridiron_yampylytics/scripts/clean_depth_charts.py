@@ -3,14 +3,14 @@
 This script is a thin wrapper around the clean_depth_charts function.
 For programmatic use, import and call the function directly:
 
-    from src.gridiron_yampylytics.processors.depth_charts import clean_depth_charts
+    from gridiron_yampylytics.processors.depth_charts import clean_depth_charts
     result = clean_depth_charts()
 
 Usage:
     uv run python -m scripts.clean_depth_charts
 """
 import sys
-from src.gridiron_yampylytics.processors.depth_charts import clean_depth_charts
+from gridiron_yampylytics.processors.depth_charts import clean_depth_charts
 
 
 def main() -> None:

@@ -4,8 +4,8 @@ This script replaces the individual cache_nflreadpy_data.py and download_gm_data
 scripts with a single, flexible parallel downloader.
 
 For programmatic use, import and call the function directly:
-    from src.gridiron_yampylytics.loaders.parallel_loader import download_datasets_parallel
-    from src.gridiron_yampylytics.config import ESSENTIAL_DATASETS
+    from gridiron_yampylytics.loaders.parallel_loader import download_datasets_parallel
+    from gridiron_yampylytics.config import ESSENTIAL_DATASETS
 
     result = download_datasets_parallel(
         nflverse_datasets=ESSENTIAL_DATASETS,
@@ -31,19 +31,19 @@ Usage:
 """
 import sys
 import argparse
-from src.gridiron_yampylytics.loaders.parallel_loader import download_datasets_parallel
-from src.gridiron_yampylytics.loaders.nflverse import (
+from gridiron_yampylytics.loaders.parallel_loader import download_datasets_parallel
+from gridiron_yampylytics.loaders.nflverse import (
     SEASON_DATASETS,
     NO_SEASON_DATASETS,
     cache_nflverse_data
 )
-from src.gridiron_yampylytics.loaders.gm_data import download_gm_data
-from src.gridiron_yampylytics.config import (
+from gridiron_yampylytics.loaders.gm_data import download_gm_data
+from gridiron_yampylytics.config import (
     ESSENTIAL_DATASETS,
     ANALYSIS_DATASETS,
     YAMPY_DATASETS
 )
-from src.gridiron_yampylytics.ui import ConsoleUI, DisplayMode
+from gridiron_yampylytics.ui import ConsoleUI, DisplayMode
 
 
 def main() -> None:

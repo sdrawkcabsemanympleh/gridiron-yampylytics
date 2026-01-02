@@ -3,7 +3,7 @@
 This script is a thin wrapper around the show_status function.
 For programmatic use, import and call the function directly:
 
-    from src.gridiron_yampylytics.utils.status import show_status
+    from gridiron_yampylytics.utils.status import show_status
     result = show_status()
 
 Usage:
@@ -13,7 +13,7 @@ Shows status of downloaded data files and database, providing
 a quick overview of what's available locally.
 """
 import sys
-from src.gridiron_yampylytics.utils.status import show_status
+from gridiron_yampylytics.utils.status import show_status
 
 
 def main() -> None:

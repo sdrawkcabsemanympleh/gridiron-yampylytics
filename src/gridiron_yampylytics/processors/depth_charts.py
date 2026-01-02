@@ -12,7 +12,7 @@ import csv
 from pathlib import Path
 from datetime import datetime
 from typing import Any
-from src.gridiron_yampylytics.manifest import update_transformation_script
+from gridiron_yampylytics.manifest import update_transformation_script
 
 
 def clean_depth_charts(

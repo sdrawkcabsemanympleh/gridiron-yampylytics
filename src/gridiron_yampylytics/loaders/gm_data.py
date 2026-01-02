@@ -4,7 +4,7 @@ This module downloads executive data CSVs from PFR for all NFL teams
 using Selenium with headless Chrome to bypass Cloudflare blocking.
 
 For programmatic use:
-    from src.gridiron_yampylytics.loaders.gm_data import download_gm_data
+    from gridiron_yampylytics.loaders.gm_data import download_gm_data
     result = download_gm_data()
 
 The scraper:
@@ -119,7 +119,7 @@ def download_gm_data(
     :param teams: List of PFR team codes to download (default: all 32 teams)
     :return: Summary dict with download statistics
     """
-    from src.gridiron_yampylytics.manifest import update_gm_data
+    from gridiron_yampylytics.manifest import update_gm_data
 
     # Set default values
     if output_dir is None:

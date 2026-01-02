@@ -8,7 +8,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Any
 import pandas as pd
-from src.gridiron_yampylytics.manifest import update_transformation_script
+from gridiron_yampylytics.manifest import update_transformation_script
 
 
 def load_team_code_mapping() -> pd.DataFrame:

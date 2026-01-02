@@ -5,7 +5,7 @@ for NFL prospects based on combine measurables. Provides both historical
 (year-by-year) and current (all-time) percentile rankings.
 
 For programmatic use:
-    from src.gridiron_yampylytics.processors.yas import calculate_yas
+    from gridiron_yampylytics.processors.yas import calculate_yas
     result = calculate_yas()
 
 The calculation process:
@@ -257,7 +257,7 @@ def calculate_yas(
     :param base_dir: Base directory for relative paths (default: current working directory)
     :return: Summary dict with statistics and file info
     """
-    from src.gridiron_yampylytics.manifest import update_transformation_script
+    from gridiron_yampylytics.manifest import update_transformation_script
 
     # Set default paths if not provided
     if base_dir is None:

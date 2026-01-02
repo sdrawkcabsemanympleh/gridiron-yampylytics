@@ -8,22 +8,22 @@ from pathlib import Path
 from typing import Any, Optional
 from datetime import datetime
 
-from src.gridiron_yampylytics.loaders.nflverse import (
+from gridiron_yampylytics.loaders.nflverse import (
     SEASON_DATASETS,
     NO_SEASON_DATASETS,
     setup_cache_dirs,
 )
-from src.gridiron_yampylytics.loaders.gm_data import download_gm_data
-from src.gridiron_yampylytics.manifest import update_dataset
-from src.gridiron_yampylytics.utils.parallel import Task, run_tasks_parallel
+from gridiron_yampylytics.loaders.gm_data import download_gm_data
+from gridiron_yampylytics.manifest import update_dataset
+from gridiron_yampylytics.utils.parallel import Task, run_tasks_parallel
 
 # Import TYPE_CHECKING to avoid circular imports
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from src.gridiron_yampylytics.ui import ConsoleUI, TaskStatus, DisplayMode
+    from gridiron_yampylytics.ui import ConsoleUI, TaskStatus, DisplayMode
 else:
     # Import DisplayMode for runtime checks (it's just an enum, no circular dependency issue)
-    from src.gridiron_yampylytics.ui import DisplayMode
+    from gridiron_yampylytics.ui import DisplayMode
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +50,8 @@ def download_datasets_parallel(
     :return: Summary dict with download statistics
 
     Example:
-        from src.gridiron_yampylytics.config import ESSENTIAL_DATASETS
-        from src.gridiron_yampylytics.loaders.parallel_loader import download_datasets_parallel
+        from gridiron_yampylytics.config import ESSENTIAL_DATASETS
+        from gridiron_yampylytics.loaders.parallel_loader import download_datasets_parallel
 
         # Download essential datasets + GM data in parallel
         result = download_datasets_parallel(
@@ -129,7 +129,7 @@ def download_datasets_parallel(
 
     # Initialize UI status for all datasets (if UI provided and in fancy mode)
     if ui is not None and ui.mode != DisplayMode.VERBOSE:
-        from src.gridiron_yampylytics.ui import TaskStatus
+        from gridiron_yampylytics.ui import TaskStatus
         for task in tasks:
             ui.update_dataset(task.name, TaskStatus.RUNNING, progress=0.0)
 
@@ -140,7 +140,7 @@ def download_datasets_parallel(
 
     # Update UI status based on results (if UI provided and in fancy mode)
     if ui is not None and ui.mode != DisplayMode.VERBOSE:
-        from src.gridiron_yampylytics.ui import TaskStatus
+        from gridiron_yampylytics.ui import TaskStatus
         for name in results['successful']:
             ui.update_dataset(name, TaskStatus.COMPLETE, progress=1.0)
         for name, error in results['failed']:

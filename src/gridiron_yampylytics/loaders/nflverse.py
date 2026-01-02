@@ -4,7 +4,7 @@ This module downloads data from nflreadpy (nflverse) and caches it locally as CS
 Useful for SQL exploration, offline analysis, and reproducible research.
 
 For programmatic use:
-    from src.gridiron_yampylytics.loaders.nflverse import cache_nflverse_data
+    from gridiron_yampylytics.loaders.nflverse import cache_nflverse_data
     result = cache_nflverse_data(dataset="all", seasons=True)
 
 Available datasets:
@@ -30,8 +30,8 @@ from typing import Any
 from datetime import datetime
 import nflreadpy as nfl
 
-from src.gridiron_yampylytics.manifest import update_dataset
-from src.gridiron_yampylytics.utils.parallel import Task, run_tasks_parallel
+from gridiron_yampylytics.manifest import update_dataset
+from gridiron_yampylytics.utils.parallel import Task, run_tasks_parallel
 
 # Configure logging for thread-safe output with thread names
 logger = logging.getLogger(__name__)

@@ -3,7 +3,7 @@
 This script is a thin wrapper around the generate_yamplayer_id function.
 For programmatic use, import and call the function directly:
 
-    from src.gridiron_yampylytics.processors.yamplayer_id import generate_yamplayer_id
+    from gridiron_yampylytics.processors.yamplayer_id import generate_yamplayer_id
     result = generate_yamplayer_id()
 
 Usage:
@@ -13,7 +13,7 @@ Usage:
 import sys
 import argparse
 from pathlib import Path
-from src.gridiron_yampylytics.processors.yamplayer_id import generate_yamplayer_id
+from gridiron_yampylytics.processors.yamplayer_id import generate_yamplayer_id
 
 
 def main() -> None:
