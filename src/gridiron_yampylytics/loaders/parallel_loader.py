@@ -133,18 +133,28 @@ def download_datasets_parallel(
         for task in tasks:
             ui.update_dataset(task.name, TaskStatus.RUNNING, progress=0.0)
 
+    # Define callback for real-time UI updates (if UI provided and in fancy mode)
+    def on_task_complete(name: str, result: Any | None, error: Exception | None) -> None:
+        """Callback to update UI as each task completes.
+
+        :param name: Task name (dataset identifier)
+        :param result: Task result (dict with 'rows' key if successful, None if failed)
+        :param error: Exception if task failed, None if successful
+        """
+        if ui is not None and ui.mode != DisplayMode.VERBOSE:
+            if error is not None:
+                ui.update_dataset(name, TaskStatus.FAILED, progress=0.0)
+            else:
+                # Extract row count from result if available
+                rows = None
+                if result is not None and isinstance(result, dict):
+                    rows = result.get('rows')
+                ui.update_dataset(name, TaskStatus.COMPLETE, rows=rows, progress=1.0)
+
     # Execute all downloads in parallel
     if use_verbose:
         logger.info(f"Starting parallel download of {len(tasks)} datasets...\n")
-    results = run_tasks_parallel(tasks, max_workers=max_workers)
-
-    # Update UI status based on results (if UI provided and in fancy mode)
-    if ui is not None and ui.mode != DisplayMode.VERBOSE:
-        from gridiron_yampylytics.ui import TaskStatus
-        for name in results['successful']:
-            ui.update_dataset(name, TaskStatus.COMPLETE, progress=1.0)
-        for name, error in results['failed']:
-            ui.update_dataset(name, TaskStatus.FAILED, progress=0.0)
+    results = run_tasks_parallel(tasks, max_workers=max_workers, on_complete=on_task_complete)
 
     # Print summary (verbose mode only)
     if use_verbose:

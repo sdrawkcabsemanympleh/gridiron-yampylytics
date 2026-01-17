@@ -144,15 +144,18 @@ class ConsoleUI:
                 "rows": rows,
                 "progress": progress or 0.0,
                 "start_time": time.time(),
+                "completion_time": None,
             }
         else:
-            self.datasets[name].update(
-                {
-                    "status": status,
-                    "rows": rows if rows is not None else self.datasets[name].get("rows"),
-                    "progress": progress if progress is not None else self.datasets[name].get("progress", 0.0),
-                }
-            )
+            update_dict = {
+                "status": status,
+                "rows": rows if rows is not None else self.datasets[name].get("rows"),
+                "progress": progress if progress is not None else self.datasets[name].get("progress", 0.0),
+            }
+            # Set completion time when task finishes
+            if status in (TaskStatus.COMPLETE, TaskStatus.FAILED, TaskStatus.PARTIAL):
+                update_dict["completion_time"] = time.time()
+            self.datasets[name].update(update_dict)
 
         # Refresh live display if in fancy mode
         if self.mode == DisplayMode.FANCY and self.live is not None:
@@ -249,7 +252,7 @@ class ConsoleUI:
 
         # Add columns
         table.add_column("Dataset", style="cyan", width=17)
-        table.add_column("Status", width=16)
+        table.add_column("Status", width=18)  # Increased for emoji + "Downloading"
         table.add_column("Rows", justify="right", width=10)
         table.add_column("Progress", width=23)
         table.add_column("Time", justify="right", width=8)
@@ -259,7 +262,10 @@ class ConsoleUI:
             status: TaskStatus = state["status"]
             rows = state.get("rows")
             progress = state.get("progress", 0.0)
-            elapsed = time.time() - state.get("start_time", time.time())
+            # Calculate elapsed time: use completion_time if task is done, otherwise current time
+            start_time = state.get("start_time", time.time())
+            end_time = state.get("completion_time") or time.time()
+            elapsed = end_time - start_time
 
             # Format status with emoji and color
             emoji, label, color = status.value

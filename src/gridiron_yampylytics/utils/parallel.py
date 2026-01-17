@@ -23,7 +23,8 @@ class Task(NamedTuple):
 
 def run_tasks_parallel(
     tasks: list[Task],
-    max_workers: int | None = None
+    max_workers: int | None = None,
+    on_complete: Callable[[str, Any | None, Exception | None], None] | None = None
 ) -> dict[str, Any]:
     """Run tasks in parallel using ThreadPoolExecutor.
 
@@ -32,16 +33,23 @@ def run_tasks_parallel(
 
     :param tasks: List of Task objects to execute
     :param max_workers: Max concurrent workers (None = one worker per task)
+    :param on_complete: Optional callback called when each task completes: on_complete(name, result, error)
     :return: Dict with 'successful', 'failed', and 'results' keys
 
     Example:
         from gridiron_yampylytics.utils.parallel import Task, run_tasks_parallel
 
+        def handle_complete(name, result, error):
+            if error:
+                print(f"{name} failed: {error}")
+            else:
+                print(f"{name} completed: {result}")
+
         tasks = [
             Task('task1', my_func, (arg1, arg2), {'kwarg': value}),
             Task('task2', other_func),  # No args needed
         ]
-        results = run_tasks_parallel(tasks, max_workers=4)
+        results = run_tasks_parallel(tasks, max_workers=4, on_complete=handle_complete)
         print(f"Success: {results['successful']}")
         print(f"Failed: {results['failed']}")
     """
@@ -66,9 +74,15 @@ def run_tasks_parallel(
                 result = future.result()  # Will raise if task failed
                 successful.append(name)
                 results[name] = result
+                # Call completion callback if provided
+                if on_complete is not None:
+                    on_complete(name, result, None)
             except Exception as e:
                 failed.append((name, str(e)))
                 results[name] = None
+                # Call completion callback with error if provided
+                if on_complete is not None:
+                    on_complete(name, None, e)
 
     return {
         'successful': successful,

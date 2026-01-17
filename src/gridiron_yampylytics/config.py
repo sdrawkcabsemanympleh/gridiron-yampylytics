@@ -9,7 +9,9 @@ setup to maximum performance. Using frozensets allows DRY superset relationships
 ESSENTIAL_DATASETS = frozenset({
     'combine',      # NFL Combine results (2000-2024)
     'draft_picks',  # Draft history (1967-2025)
+    'players',      # Comprehensive player info + multi-platform IDs (all players)
     'rosters',      # Team rosters (2006-2025)
+    'teams',        # Team metadata (abbr, names, colors, logos)
 })
 
 # Comprehensive analysis datasets - everything except the massive files

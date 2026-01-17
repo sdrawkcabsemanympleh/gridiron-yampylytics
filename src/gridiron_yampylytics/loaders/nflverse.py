@@ -15,13 +15,15 @@ Available datasets:
     - combine: NFL Combine results (2000-2024)
     - contracts: Player contracts (2000s-2025)
     - ids: Player ID mappings (all)
+    - players: Comprehensive player info with multi-platform IDs (all)
+    - teams: Team metadata (abbr, names, colors, logos) (all)
     - schedules: Game schedules (1999-2025)
     - injuries: Injury reports (recent)
     - depth_charts: Team depth charts (2017-2025)
 
 Additional datasets available from nflreadr (not yet implemented):
     - qbr, nextgen_stats, snap_counts, participation, ftn_charting,
-      trades, players, team_stats, pfr_passing, roster_status,
+      trades, team_stats, pfr_passing, roster_status,
       ff_opportunity, ff_rankings
 """
 import logging
@@ -57,6 +59,8 @@ def setup_cache_dirs(base_dir: Path | None = None) -> dict[str, Path]:
         "combine": base_dir,
         "contracts": base_dir,
         "ids": base_dir,
+        "players": base_dir,
+        "teams": base_dir,
         "schedules": base_dir,
         "injuries": base_dir,
         "depth_charts": base_dir,
@@ -65,39 +69,46 @@ def setup_cache_dirs(base_dir: Path | None = None) -> dict[str, Path]:
     return dirs
 
 
-def cache_pbp(seasons: int | list[int] | bool, cache_dir: Path) -> None:
+def cache_pbp(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
     """Cache play-by-play data.
 
     :param seasons: Season(s) to load (True for all, None for current, int/list for specific)
     :param cache_dir: Directory to save cached files
+    :return: Dict with row count
     """
     logger.info(f"Loading play-by-play data (seasons={seasons})...")
     df = nfl.load_pbp(seasons=seasons)
 
     output_file = cache_dir / "pbp.csv" if seasons is True else cache_dir / f"pbp_{seasons}.csv"
     df.write_csv(output_file)
-    logger.info(f"  ✓ Saved {len(df):,} rows to {output_file}")
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
 
 
-def cache_player_stats(seasons: int | list[int] | bool, cache_dir: Path) -> None:
+def cache_player_stats(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
     """Cache player statistics.
 
     :param seasons: Season(s) to load
     :param cache_dir: Directory to save cached files
+    :return: Dict with row count
     """
     logger.info(f"Loading player stats (seasons={seasons})...")
     df = nfl.load_player_stats(seasons=seasons)
 
     output_file = cache_dir / "player_stats.csv" if seasons is True else cache_dir / f"player_stats_{seasons}.csv"
     df.write_csv(output_file)
-    logger.info(f"  ✓ Saved {len(df):,} rows to {output_file}")
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
 
 
-def cache_rosters(seasons: int | list[int] | bool, cache_dir: Path) -> None:
+def cache_rosters(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
     """Cache weekly rosters.
 
     :param seasons: Season(s) to load
     :param cache_dir: Directory to save cached files
+    :return: Dict with row count
     """
     logger.info(f"Loading rosters (seasons={seasons})...")
     df = nfl.load_rosters(seasons=seasons)
@@ -112,86 +123,141 @@ def cache_rosters(seasons: int | list[int] | bool, cache_dir: Path) -> None:
 
     output_file = cache_dir / "rosters.csv" if seasons is True else cache_dir / f"rosters_{seasons}.csv"
     df.write_csv(output_file)
-    logger.info(f"  ✓ Saved {len(df):,} rows to {output_file}")
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
 
 
-def cache_draft_picks(cache_dir: Path) -> None:
+def cache_draft_picks(cache_dir: Path) -> dict[str, int]:
     """Cache draft picks (no season filter - loads all).
 
     :param cache_dir: Directory to save cached files
+    :return: Dict with row count
     """
     logger.info("Loading draft picks (all years)...")
     df = nfl.load_draft_picks()
 
     output_file = cache_dir / "draft_picks.csv"
     df.write_csv(output_file)
-    logger.info(f"  ✓ Saved {len(df):,} rows to {output_file}")
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
 
 
-def cache_combine(cache_dir: Path) -> None:
+def cache_combine(cache_dir: Path) -> dict[str, int]:
     """Cache NFL Combine results (no season filter - loads all).
 
     :param cache_dir: Directory to save cached files
+    :return: Dict with row count
     """
     logger.info("Loading combine results (all years)...")
     df = nfl.load_combine()
 
     output_file = cache_dir / "combine.csv"
     df.write_csv(output_file)
-    logger.info(f"  ✓ Saved {len(df):,} rows to {output_file}")
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
 
 
-def cache_contracts(cache_dir: Path) -> None:
+def cache_contracts(cache_dir: Path) -> dict[str, int]:
     """Cache player contracts (no season filter - loads all).
 
     Saved as Parquet because contracts contain nested year-by-year data.
 
     :param cache_dir: Directory to save cached files
+    :return: Dict with row count
     """
     logger.info("Loading player contracts (all years)...")
     df = nfl.load_contracts()
 
     output_file = cache_dir / "contracts.parquet"
     df.write_parquet(output_file)
-    logger.info(f"  ✓ Saved {len(df):,} rows to {output_file} (Parquet format - includes nested year-by-year contract details)")
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file} (Parquet format - includes nested year-by-year contract details)")
+    return {'rows': rows}
 
 
-def cache_ids(cache_dir: Path) -> None:
+def cache_ids(cache_dir: Path) -> dict[str, int]:
     """Cache player ID mappings (no season filter - loads all).
 
     Uses load_ff_playerids (fantasy football player IDs) for cross-platform ID mapping.
 
     :param cache_dir: Directory to save cached files
+    :return: Dict with row count
     """
     logger.info("Loading player ID mappings...")
     df = nfl.load_ff_playerids()
 
     output_file = cache_dir / "player_ids.csv"
     df.write_csv(output_file)
-    logger.info(f"  ✓ Saved {len(df):,} rows to {output_file}")
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
 
 
-def cache_schedules(seasons: int | list[int] | bool, cache_dir: Path) -> None:
+def cache_players(cache_dir: Path) -> dict[str, int]:
+    """Cache comprehensive player information (no season filter - loads all).
+
+    Loads complete player database with biographical info, positions, draft data,
+    and ID mappings across multiple platforms (GSIS, PFR, PFF, OTC, ESB, ESPN).
+
+    :param cache_dir: Directory to save cached files
+    :return: Dict with row count
+    """
+    logger.info("Loading player data (all players)...")
+    df = nfl.load_players()
+
+    output_file = cache_dir / "players.csv"
+    df.write_csv(output_file)
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
+
+
+def cache_teams(cache_dir: Path) -> dict[str, int]:
+    """Cache NFL team metadata (no season filter - loads all teams).
+
+    Loads team information including abbreviations, names, divisions, colors, and logos.
+
+    :param cache_dir: Directory to save cached files
+    :return: Dict with row count
+    """
+    logger.info("Loading team metadata (all teams)...")
+    df = nfl.load_teams()
+
+    output_file = cache_dir / "teams.csv"
+    df.write_csv(output_file)
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
+
+
+def cache_schedules(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
     """Cache game schedules.
 
     :param seasons: Season(s) to load
     :param cache_dir: Directory to save cached files
+    :return: Dict with row count
     """
     logger.info(f"Loading schedules (seasons={seasons})...")
     df = nfl.load_schedules(seasons=seasons)
 
     output_file = cache_dir / "schedules.csv" if seasons is True else cache_dir / f"schedules_{seasons}.csv"
     df.write_csv(output_file)
-    logger.info(f"  ✓ Saved {len(df):,} rows to {output_file}")
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
 
 
-def cache_injuries(seasons: int | list[int] | bool, cache_dir: Path) -> None:
+def cache_injuries(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
     """Cache injury reports.
 
     Walks forward from 2009 until hitting a 404, loading all available years.
 
     :param seasons: Season(s) to load (if True, auto-detects available years)
     :param cache_dir: Directory to save cached files
+    :return: Dict with row count
     """
     if seasons is True:
         # Walk forward from 2009 until we hit a year that doesn't exist
@@ -221,21 +287,26 @@ def cache_injuries(seasons: int | list[int] | bool, cache_dir: Path) -> None:
         output_file = cache_dir / f"injuries_{seasons}.csv"
 
     df.write_csv(output_file)
-    logger.info(f"  ✓ Saved {len(df):,} rows to {output_file}")
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
 
 
-def cache_depth_charts(seasons: int | list[int] | bool, cache_dir: Path) -> None:
+def cache_depth_charts(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
     """Cache team depth charts.
 
     :param seasons: Season(s) to load
     :param cache_dir: Directory to save cached files
+    :return: Dict with row count
     """
     logger.info(f"Loading depth charts (seasons={seasons})...")
     df = nfl.load_depth_charts(seasons=seasons)
 
     output_file = cache_dir / "depth_charts.csv" if seasons is True else cache_dir / f"depth_charts_{seasons}.csv"
     df.write_csv(output_file)
-    logger.info(f"  ✓ Saved {len(df):,} rows to {output_file}")
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
 
 
 # ============================================================================
@@ -282,6 +353,8 @@ NO_SEASON_DATASETS = {
     "combine": cache_combine,
     "contracts": cache_contracts,
     "ids": cache_ids,
+    "players": cache_players,
+    "teams": cache_teams,
 }
 
 # Datasets that are very large and are omitted during standard setup
