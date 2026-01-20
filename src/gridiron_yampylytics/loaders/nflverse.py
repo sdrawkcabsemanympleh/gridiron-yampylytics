@@ -17,14 +17,16 @@ Available datasets:
     - ids: Player ID mappings (all)
     - players: Comprehensive player info with multi-platform IDs (all)
     - teams: Team metadata (abbr, names, colors, logos) (all)
+    - ff_rankings: Fantasy football rankings and projections (all)
+    - ff_opportunity: Fantasy opportunity metrics - expected vs actual (2006-2024)
     - schedules: Game schedules (1999-2025)
     - injuries: Injury reports (recent)
     - depth_charts: Team depth charts (2017-2025)
+    - snap_counts: Player snap counts from PFR (2012-2025)
 
 Additional datasets available from nflreadr (not yet implemented):
-    - qbr, nextgen_stats, snap_counts, participation, ftn_charting,
-      trades, team_stats, pfr_passing, roster_status,
-      ff_opportunity, ff_rankings
+    - qbr, nextgen_stats, participation, ftn_charting,
+      trades, team_stats, pfr_passing, roster_status
 """
 import logging
 from pathlib import Path
@@ -61,9 +63,12 @@ def setup_cache_dirs(base_dir: Path | None = None) -> dict[str, Path]:
         "ids": base_dir,
         "players": base_dir,
         "teams": base_dir,
+        "ff_rankings": base_dir,
+        "ff_opportunity": base_dir,
         "schedules": base_dir,
         "injuries": base_dir,
         "depth_charts": base_dir,
+        "snap_counts": base_dir,
     }
 
     return dirs
@@ -233,6 +238,43 @@ def cache_teams(cache_dir: Path) -> dict[str, int]:
     return {'rows': rows}
 
 
+def cache_ff_rankings(cache_dir: Path) -> dict[str, int]:
+    """Cache fantasy football rankings and projections (no season filter - loads all).
+
+    Loads expert consensus rankings (ECR), player ownership percentages, and fantasy metrics.
+
+    :param cache_dir: Directory to save cached files
+    :return: Dict with row count
+    """
+    logger.info("Loading fantasy football rankings (all available)...")
+    df = nfl.load_ff_rankings()
+
+    output_file = cache_dir / "ff_rankings.csv"
+    df.write_csv(output_file)
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
+
+
+def cache_ff_opportunity(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
+    """Cache fantasy opportunity metrics (expected vs actual fantasy stats).
+
+    Loads detailed fantasy metrics including expected stats, actual performance, and team shares.
+
+    :param seasons: Season(s) to load
+    :param cache_dir: Directory to save cached files
+    :return: Dict with row count
+    """
+    logger.info(f"Loading fantasy opportunity metrics (seasons={seasons})...")
+    df = nfl.load_ff_opportunity(seasons=seasons)
+
+    output_file = cache_dir / "ff_opportunity.csv" if seasons is True else cache_dir / f"ff_opportunity_{seasons}.csv"
+    df.write_csv(output_file)
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
+
+
 def cache_schedules(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
     """Cache game schedules.
 
@@ -309,6 +351,23 @@ def cache_depth_charts(seasons: int | list[int] | bool, cache_dir: Path) -> dict
     return {'rows': rows}
 
 
+def cache_snap_counts(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
+    """Cache player snap counts from Pro Football Reference.
+
+    :param seasons: Season(s) to load
+    :param cache_dir: Directory to save cached files
+    :return: Dict with row count
+    """
+    logger.info(f"Loading snap counts (seasons={seasons})...")
+    df = nfl.load_snap_counts(seasons=seasons)
+
+    output_file = cache_dir / "snap_counts.csv" if seasons is True else cache_dir / f"snap_counts_{seasons}.csv"
+    df.write_csv(output_file)
+    rows = len(df)
+    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
+    return {'rows': rows}
+
+
 # ============================================================================
 # ADDITIONAL DATASETS (not yet implemented)
 # ============================================================================
@@ -346,6 +405,8 @@ SEASON_DATASETS = {
     "schedules": cache_schedules,
     "injuries": cache_injuries,
     "depth_charts": cache_depth_charts,
+    "snap_counts": cache_snap_counts,
+    "ff_opportunity": cache_ff_opportunity,
 }
 
 NO_SEASON_DATASETS = {
@@ -355,6 +416,7 @@ NO_SEASON_DATASETS = {
     "ids": cache_ids,
     "players": cache_players,
     "teams": cache_teams,
+    "ff_rankings": cache_ff_rankings,
 }
 
 # Datasets that are very large and are omitted during standard setup

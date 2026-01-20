@@ -12,6 +12,7 @@ ESSENTIAL_DATASETS = frozenset({
     'players',      # Comprehensive player info + multi-platform IDs (all players)
     'rosters',      # Team rosters (2006-2025)
     'teams',        # Team metadata (abbr, names, colors, logos)
+    'ff_rankings',  # Fantasy football rankings and projections (tiny: 0.77 MB)
 })
 
 # Comprehensive analysis datasets - everything except the massive files
@@ -21,8 +22,10 @@ ANALYSIS_DATASETS = ESSENTIAL_DATASETS | frozenset({
     'schedules',     # Game schedules (1999-2025)
     'injuries',      # Injury reports (2009-2025)
     'depth_charts',  # Depth charts (2017-2025)
+    'snap_counts',   # Player snap counts from PFR (2012-2025)
     'contracts',     # Player contracts (48K contracts)
     'ids',           # Player ID mappings (gsis_id, pfr_id, espn_id)
+    'ff_opportunity',  # Fantasy opportunity metrics (2006-2024)
 })
 
 # Large datasets that require significant time and disk space
