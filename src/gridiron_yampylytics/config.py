@@ -1,41 +1,28 @@
 """Dataset groupings and configuration constants for gridiron-yampylytics.
 
-This module defines reusable dataset collections for different use cases, from quick
-setup to maximum performance. Using frozensets allows DRY superset relationships.
+This module auto-generates dataset collections from the configuration in nflverse.py.
+Groups are defined by the 'groups' field in DATASET_CONFIG.
 """
+from gridiron_yampylytics.loaders.nflverse import DATASET_CONFIG
 
-# Essential datasets for quick exploration and minimal setup
-# Focused on player evaluation and draft analysis
+# Auto-generate dataset groups from configuration
+# Datasets can belong to multiple groups via the 'groups' field in DATASET_CONFIG
 ESSENTIAL_DATASETS = frozenset({
-    'combine',      # NFL Combine results (2000-2024)
-    'draft_picks',  # Draft history (1967-2025)
-    'players',      # Comprehensive player info + multi-platform IDs (all players)
-    'rosters',      # Team rosters (2006-2025)
-    'teams',        # Team metadata (abbr, names, colors, logos)
-    'ff_rankings',  # Fantasy football rankings and projections (tiny: 0.77 MB)
+    name for name, cfg in DATASET_CONFIG.items()
+    if 'ESSENTIAL' in cfg['groups']
 })
 
-# Comprehensive analysis datasets - everything except the massive files
-# Suitable for most analysis workflows without overwhelming download times
-ANALYSIS_DATASETS = ESSENTIAL_DATASETS | frozenset({
-    'player_stats',  # Weekly/seasonal stats (2012-2025)
-    'schedules',     # Game schedules (1999-2025)
-    'injuries',      # Injury reports (2009-2025)
-    'depth_charts',  # Depth charts (2017-2025)
-    'snap_counts',   # Player snap counts from PFR (2012-2025)
-    'contracts',     # Player contracts (48K contracts)
-    'ids',           # Player ID mappings (gsis_id, pfr_id, espn_id)
-    'ff_opportunity',  # Fantasy opportunity metrics (2006-2024)
+ANALYSIS_DATASETS = frozenset({
+    name for name, cfg in DATASET_CONFIG.items()
+    if 'ANALYSIS' in cfg['groups'] or 'ESSENTIAL' in cfg['groups']
 })
 
-# Large datasets that require significant time and disk space
-# Play-by-play is the behemoth (~1.2M rows, 1999-2025)
 LARGE_DATASETS = frozenset({
-    'pbp',  # Play-by-play data (WARNING: very large, takes time to download/process)
+    name for name, cfg in DATASET_CONFIG.items()
+    if 'LARGE' in cfg['groups']
 })
 
 # Maximum yampage - every available dataset
-# Use for comprehensive analysis or when building with tables + indexes
 YAMPY_DATASETS = ANALYSIS_DATASETS | LARGE_DATASETS
 
 # All available nflverse datasets

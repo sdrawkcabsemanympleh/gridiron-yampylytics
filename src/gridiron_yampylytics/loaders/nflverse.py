@@ -7,38 +7,167 @@ For programmatic use:
     from gridiron_yampylytics.loaders.nflverse import cache_nflverse_data
     result = cache_nflverse_data(dataset="all", seasons=True)
 
-Available datasets:
-    - pbp: Play-by-play data (1999-2025) - LARGE
-    - player_stats: Weekly/seasonal player statistics (2012-2025)
-    - rosters: Weekly rosters (2006-2025)
-    - draft_picks: Draft history (1967-2025)
-    - combine: NFL Combine results (2000-2024)
-    - contracts: Player contracts (2000s-2025)
-    - ids: Player ID mappings (all)
-    - players: Comprehensive player info with multi-platform IDs (all)
-    - teams: Team metadata (abbr, names, colors, logos) (all)
-    - ff_rankings: Fantasy football rankings and projections (all)
-    - ff_opportunity: Fantasy opportunity metrics - expected vs actual (2006-2024)
-    - schedules: Game schedules (1999-2025)
-    - injuries: Injury reports (recent)
-    - depth_charts: Team depth charts (2017-2025)
-    - snap_counts: Player snap counts from PFR (2012-2025)
-
-Additional datasets available from nflreadr (not yet implemented):
-    - qbr, nextgen_stats, participation, ftn_charting,
-      trades, team_stats, pfr_passing, roster_status
+Datasets are defined in DATASET_CONFIG below. Adding a new dataset requires only
+adding an entry to that configuration dictionary.
 """
 import logging
 from pathlib import Path
 from typing import Any
 from datetime import datetime
 import nflreadpy as nfl
-
 from gridiron_yampylytics.manifest import update_dataset
 from gridiron_yampylytics.utils.parallel import Task, run_tasks_parallel
 
 # Configure logging for thread-safe output with thread names
 logger = logging.getLogger(__name__)
+
+# ============================================================================
+# DATASET CONFIGURATION
+# ============================================================================
+# All nflverse datasets with their metadata. Adding a new dataset requires
+# only adding an entry here - everything else is auto-generated.
+DATASET_CONFIG = {
+    # SEASON-BASED DATASETS (support seasons parameter)
+    'pbp': {
+        'has_seasons': True,
+        'description': 'Play-by-play data',
+        'groups': {'LARGE'},
+        'coverage': '1999-2025',
+    },
+    'player_stats': {
+        'has_seasons': True,
+        'description': 'Weekly/seasonal player statistics',
+        'groups': {'ANALYSIS'},
+        'coverage': '2012-2025',
+    },
+    'rosters': {
+        'has_seasons': True,
+        'description': 'Weekly rosters',
+        'groups': {'ESSENTIAL'},
+        'coverage': '2006-2025',
+    },
+    'schedules': {
+        'has_seasons': True,
+        'description': 'Game schedules',
+        'groups': {'ANALYSIS'},
+        'coverage': '1999-2025',
+    },
+    'injuries': {
+        'has_seasons': True,
+        'description': 'Injury reports',
+        'groups': {'ANALYSIS'},
+        'coverage': '2009-2025',
+    },
+    'depth_charts': {
+        'has_seasons': True,
+        'description': 'Team depth charts',
+        'groups': {'ANALYSIS'},
+        'coverage': '2017-2025',
+    },
+    'snap_counts': {
+        'has_seasons': True,
+        'description': 'Player snap counts from PFR',
+        'groups': {'ANALYSIS'},
+        'coverage': '2012-2025',
+    },
+    'ff_opportunity': {
+        'has_seasons': True,
+        'description': 'Fantasy opportunity metrics - expected vs actual',
+        'groups': {'ANALYSIS'},
+        'coverage': '2006-2024',
+    },
+    'officials': {
+        'has_seasons': True,
+        'description': 'Referee assignments',
+        'groups': {'ANALYSIS'},
+        'coverage': '2015-2025',
+    },
+    'nextgen_stats': {
+        'has_seasons': True,
+        'description': 'Next Gen Stats - player tracking data',
+        'groups': {'ANALYSIS'},
+        'coverage': '2016-2025',
+    },
+    'team_stats': {
+        'has_seasons': True,
+        'description': 'Team-level statistics',
+        'groups': {'ESSENTIAL'},
+        'coverage': '2002-2025',
+    },
+    'participation': {
+        'has_seasons': True,
+        'description': 'Player participation on specific plays',
+        'groups': {'LARGE'},
+        'coverage': '2016-2025',
+    },
+    'ftn_charting': {
+        'has_seasons': True,
+        'description': 'Detailed play charting data',
+        'groups': {'ANALYSIS'},
+        'coverage': '2022-2025',
+    },
+    'rosters_weekly': {
+        'has_seasons': True,
+        'description': 'Weekly roster changes',
+        'groups': {'LARGE'},
+        'coverage': '2002-2025',
+    },
+    # NO-SEASON DATASETS (load all data at once)
+    'draft_picks': {
+        'has_seasons': False,
+        'description': 'Draft history',
+        'groups': {'ESSENTIAL'},
+        'coverage': '1967-2025',
+    },
+    'combine': {
+        'has_seasons': False,
+        'description': 'NFL Combine results',
+        'groups': {'ESSENTIAL'},
+        'coverage': '2000-2024',
+    },
+    'contracts': {
+        'has_seasons': False,
+        'description': 'Player contracts',
+        'groups': {'ANALYSIS'},
+        'coverage': '2000s-2025',
+    },
+    'ids': {
+        'has_seasons': False,
+        'description': 'Player ID mappings',
+        'groups': {'ANALYSIS'},
+        'coverage': 'all',
+    },
+    'players': {
+        'has_seasons': False,
+        'description': 'Comprehensive player info with multi-platform IDs',
+        'groups': {'ESSENTIAL'},
+        'coverage': 'all',
+    },
+    'teams': {
+        'has_seasons': False,
+        'description': 'Team metadata (abbr, names, colors, logos)',
+        'groups': {'ESSENTIAL'},
+        'coverage': 'all',
+    },
+    'ff_rankings': {
+        'has_seasons': False,
+        'description': 'Fantasy football rankings and projections',
+        'groups': {'ESSENTIAL'},
+        'coverage': 'all',
+    },
+    'trades': {
+        'has_seasons': False,
+        'description': 'Trade transactions',
+        'groups': {'ESSENTIAL'},
+        'coverage': 'all',
+    },
+    'ff_playerids': {
+        'has_seasons': False,
+        'description': 'Cross-platform fantasy player ID mappings',
+        'groups': {'ESSENTIAL'},
+        'coverage': 'all',
+    },
+}
 
 
 def setup_cache_dirs(base_dir: Path | None = None) -> dict[str, Path]:
@@ -49,374 +178,54 @@ def setup_cache_dirs(base_dir: Path | None = None) -> dict[str, Path]:
     """
     if base_dir is None:
         base_dir = Path.cwd() / "data" / "nflverse"
-
     base_dir.mkdir(parents=True, exist_ok=True)
-
     # All files go directly in data/nflverse/ (no subdirectories)
-    dirs = {
-        "pbp": base_dir,
-        "player_stats": base_dir,
-        "rosters": base_dir,
-        "draft_picks": base_dir,
-        "combine": base_dir,
-        "contracts": base_dir,
-        "ids": base_dir,
-        "players": base_dir,
-        "teams": base_dir,
-        "ff_rankings": base_dir,
-        "ff_opportunity": base_dir,
-        "schedules": base_dir,
-        "injuries": base_dir,
-        "depth_charts": base_dir,
-        "snap_counts": base_dir,
-    }
-
-    return dirs
+    return {dataset_name: base_dir for dataset_name in DATASET_CONFIG.keys()}
 
 
-def cache_pbp(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
-    """Cache play-by-play data.
+def _cache_dataset(dataset_name: str, seasons: int | list[int] | bool | None, cache_dir: Path) -> dict[str, int]:
+    """Generic dataset cacher - handles both season-based and non-season datasets.
 
-    :param seasons: Season(s) to load (True for all, None for current, int/list for specific)
+    :param dataset_name: Name of the dataset to cache
+    :param seasons: Season(s) to load (only used for season-based datasets)
     :param cache_dir: Directory to save cached files
     :return: Dict with row count
     """
-    logger.info(f"Loading play-by-play data (seasons={seasons})...")
-    df = nfl.load_pbp(seasons=seasons)
-
-    output_file = cache_dir / "pbp.csv" if seasons is True else cache_dir / f"pbp_{seasons}.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_player_stats(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
-    """Cache player statistics.
-
-    :param seasons: Season(s) to load
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info(f"Loading player stats (seasons={seasons})...")
-    df = nfl.load_player_stats(seasons=seasons)
-
-    output_file = cache_dir / "player_stats.csv" if seasons is True else cache_dir / f"player_stats_{seasons}.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_rosters(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
-    """Cache weekly rosters.
-
-    :param seasons: Season(s) to load
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info(f"Loading rosters (seasons={seasons})...")
-    df = nfl.load_rosters(seasons=seasons)
-
-    # Sanitize headshot_url column to fix CSV parsing issues
-    # nflverse data has unescaped commas in URLs which breaks CSV format
-    if 'headshot_url' in df.columns:
-        logger.info("  ⚙ Sanitizing headshot_url column (URL-encoding commas)...")
-        df = df.with_columns(
-            df['headshot_url'].str.replace_all(',', '%2C')  # URL-encode commas
-        )
-
-    output_file = cache_dir / "rosters.csv" if seasons is True else cache_dir / f"rosters_{seasons}.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_draft_picks(cache_dir: Path) -> dict[str, int]:
-    """Cache draft picks (no season filter - loads all).
-
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info("Loading draft picks (all years)...")
-    df = nfl.load_draft_picks()
-
-    output_file = cache_dir / "draft_picks.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_combine(cache_dir: Path) -> dict[str, int]:
-    """Cache NFL Combine results (no season filter - loads all).
-
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info("Loading combine results (all years)...")
-    df = nfl.load_combine()
-
-    output_file = cache_dir / "combine.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_contracts(cache_dir: Path) -> dict[str, int]:
-    """Cache player contracts (no season filter - loads all).
-
-    Saved as Parquet because contracts contain nested year-by-year data.
-
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info("Loading player contracts (all years)...")
-    df = nfl.load_contracts()
-
-    output_file = cache_dir / "contracts.parquet"
-    df.write_parquet(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file} (Parquet format - includes nested year-by-year contract details)")
-    return {'rows': rows}
-
-
-def cache_ids(cache_dir: Path) -> dict[str, int]:
-    """Cache player ID mappings (no season filter - loads all).
-
-    Uses load_ff_playerids (fantasy football player IDs) for cross-platform ID mapping.
-
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info("Loading player ID mappings...")
-    df = nfl.load_ff_playerids()
-
-    output_file = cache_dir / "player_ids.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_players(cache_dir: Path) -> dict[str, int]:
-    """Cache comprehensive player information (no season filter - loads all).
-
-    Loads complete player database with biographical info, positions, draft data,
-    and ID mappings across multiple platforms (GSIS, PFR, PFF, OTC, ESB, ESPN).
-
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info("Loading player data (all players)...")
-    df = nfl.load_players()
-
-    output_file = cache_dir / "players.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_teams(cache_dir: Path) -> dict[str, int]:
-    """Cache NFL team metadata (no season filter - loads all teams).
-
-    Loads team information including abbreviations, names, divisions, colors, and logos.
-
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info("Loading team metadata (all teams)...")
-    df = nfl.load_teams()
-
-    output_file = cache_dir / "teams.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_ff_rankings(cache_dir: Path) -> dict[str, int]:
-    """Cache fantasy football rankings and projections (no season filter - loads all).
-
-    Loads expert consensus rankings (ECR), player ownership percentages, and fantasy metrics.
-
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info("Loading fantasy football rankings (all available)...")
-    df = nfl.load_ff_rankings()
-
-    output_file = cache_dir / "ff_rankings.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_ff_opportunity(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
-    """Cache fantasy opportunity metrics (expected vs actual fantasy stats).
-
-    Loads detailed fantasy metrics including expected stats, actual performance, and team shares.
-
-    :param seasons: Season(s) to load
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info(f"Loading fantasy opportunity metrics (seasons={seasons})...")
-    df = nfl.load_ff_opportunity(seasons=seasons)
-
-    output_file = cache_dir / "ff_opportunity.csv" if seasons is True else cache_dir / f"ff_opportunity_{seasons}.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_schedules(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
-    """Cache game schedules.
-
-    :param seasons: Season(s) to load
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info(f"Loading schedules (seasons={seasons})...")
-    df = nfl.load_schedules(seasons=seasons)
-
-    output_file = cache_dir / "schedules.csv" if seasons is True else cache_dir / f"schedules_{seasons}.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_injuries(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
-    """Cache injury reports.
-
-    Walks forward from 2009 until hitting a 404, loading all available years.
-
-    :param seasons: Season(s) to load (if True, auto-detects available years)
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    if seasons is True:
-        # Walk forward from 2009 until we hit a year that doesn't exist
-        logger.info("Loading injuries (auto-detecting available years)...")
-        current_year = datetime.now().year
-        start_year = 2009  # injuries data starts in 2009
-
-        available_seasons = []
-        for year in range(start_year, current_year + 1):
-            try:
-                # Test if this year exists
-                test_df = nfl.load_injuries(seasons=year)
-                available_seasons.append(year)
-            except Exception:
-                # Year doesn't exist, we've reached the end
-                break
-
-        if not available_seasons:
-            raise Exception("No injury data available")
-
-        logger.info(f"  Found injury data for {len(available_seasons)} seasons ({min(available_seasons)}-{max(available_seasons)})")
-        df = nfl.load_injuries(seasons=available_seasons)
-        output_file = cache_dir / "injuries.csv"
+    config = DATASET_CONFIG[dataset_name]
+    has_seasons = config['has_seasons']
+    # Get the nflreadpy load function dynamically
+    load_func = getattr(nfl, f'load_{dataset_name}')
+    # Construct log message and load data
+    if has_seasons:
+        logger.info(f"Loading {dataset_name} (seasons={seasons})...")
+        df = load_func(seasons=seasons)
+        output_file = cache_dir / f"{dataset_name}.csv" if seasons is True else cache_dir / f"{dataset_name}_{seasons}.csv"
     else:
-        logger.info(f"Loading injuries (seasons={seasons})...")
-        df = nfl.load_injuries(seasons=seasons)
-        output_file = cache_dir / f"injuries_{seasons}.csv"
-
+        logger.info(f"Loading {dataset_name} (all)...")
+        df = load_func()
+        output_file = cache_dir / f"{dataset_name}.csv"
+    # Special handling for rosters headshot_url
+    if dataset_name == 'rosters' and 'headshot_url' in df.columns:
+        logger.info("  ⚙ Sanitizing headshot_url column (URL-encoding commas)...")
+        df = df.with_columns(df['headshot_url'].str.replace_all(',', '%2C'))
+    # Write to CSV
     df.write_csv(output_file)
     rows = len(df)
     logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
     return {'rows': rows}
 
 
-def cache_depth_charts(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
-    """Cache team depth charts.
-
-    :param seasons: Season(s) to load
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info(f"Loading depth charts (seasons={seasons})...")
-    df = nfl.load_depth_charts(seasons=seasons)
-
-    output_file = cache_dir / "depth_charts.csv" if seasons is True else cache_dir / f"depth_charts_{seasons}.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-def cache_snap_counts(seasons: int | list[int] | bool, cache_dir: Path) -> dict[str, int]:
-    """Cache player snap counts from Pro Football Reference.
-
-    :param seasons: Season(s) to load
-    :param cache_dir: Directory to save cached files
-    :return: Dict with row count
-    """
-    logger.info(f"Loading snap counts (seasons={seasons})...")
-    df = nfl.load_snap_counts(seasons=seasons)
-
-    output_file = cache_dir / "snap_counts.csv" if seasons is True else cache_dir / f"snap_counts_{seasons}.csv"
-    df.write_csv(output_file)
-    rows = len(df)
-    logger.info(f"  ✓ Saved {rows:,} rows to {output_file}")
-    return {'rows': rows}
-
-
-# ============================================================================
-# ADDITIONAL DATASETS (not yet implemented)
-# ============================================================================
-# To add new datasets, follow this pattern:
-#
-# def cache_nextgen_stats(seasons: int | list[int] | bool, cache_dir: Path) -> None:
-#     """Cache Next Gen Stats (player tracking data)."""
-#     logger.info(f"Loading Next Gen Stats (seasons={seasons})...")
-#     df = nfl.load_nextgen_stats(seasons=seasons)
-#     output_file = cache_dir / "nextgen_stats.csv" if seasons is True else cache_dir / f"nextgen_stats_{seasons}.csv"
-#     df.write_csv(output_file)
-#     logger.info(f"  ✓ Saved {len(df):,} rows to {output_file}")
-#
-# Then add to SEASON_DATASETS dict below:
-#     "nextgen_stats": cache_nextgen_stats,
-#
-# Available functions from nflreadpy:
-#     - nfl.load_nextgen_stats() - Next Gen tracking data
-#     - nfl.load_snap_counts() - Player snap counts
-#     - nfl.load_qbr() - ESPN QB ratings
-#     - nfl.load_trades() - Trade transactions
-#     - nfl.load_participation() - Game participation
-#     - nfl.load_team_stats() - Team-level stats
-#     - nfl.load_pfr_passing() - PFR passing stats
-#     - nfl.load_ftn_charting() - Film charting data
-#     - And more! See: https://nflreadr.nflverse.com/articles/index.html
-# ============================================================================
-
-
-# Dataset configuration: which datasets support season filtering
+# Auto-generate dataset function mappings from configuration
 SEASON_DATASETS = {
-    "pbp": cache_pbp,
-    "player_stats": cache_player_stats,
-    "rosters": cache_rosters,
-    "schedules": cache_schedules,
-    "injuries": cache_injuries,
-    "depth_charts": cache_depth_charts,
-    "snap_counts": cache_snap_counts,
-    "ff_opportunity": cache_ff_opportunity,
+    name: lambda seasons, cache_dir, n=name: _cache_dataset(n, seasons, cache_dir)
+    for name, config in DATASET_CONFIG.items()
+    if config['has_seasons']
 }
 
 NO_SEASON_DATASETS = {
-    "draft_picks": cache_draft_picks,
-    "combine": cache_combine,
-    "contracts": cache_contracts,
-    "ids": cache_ids,
-    "players": cache_players,
-    "teams": cache_teams,
-    "ff_rankings": cache_ff_rankings,
+    name: lambda cache_dir, n=name: _cache_dataset(n, None, cache_dir)
+    for name, config in DATASET_CONFIG.items()
+    if not config['has_seasons']
 }
 
 # Datasets that are very large and are omitted during standard setup
@@ -428,63 +237,52 @@ def cache_nflverse_data(
     seasons: int | list[int] | bool | None = None,
     base_dir: Path | None = None,
     parallel: bool = True,
-    max_workers: int | None = None
+    max_workers: int | None = None,
+    callback: Any = None,
 ) -> dict[str, Any]:
-    """Cache nflreadpy data locally for SQL exploration and offline analysis.
+    """Cache nflverse data locally.
 
-    Downloads data from nflreadpy (nflverse) and caches it locally as CSV files.
-
-    :param dataset: Which dataset to cache ("all" or specific dataset name)
-    :param seasons: Season(s) to load (True=all, None=current, int/list=specific)
+    :param dataset: Dataset name (e.g., 'pbp', 'player_stats') or 'all'
+    :param seasons: Season(s) to load (True=all, int=single, list=multiple, None=current)
     :param base_dir: Base directory for caching (default: data/nflverse)
-    :param parallel: Use parallel execution (default: True)
-    :param max_workers: Max concurrent workers for parallel execution (default: None = one per task)
-    :return: Summary dict with caching statistics
+    :param parallel: Whether to use parallel execution (default: True)
+    :param max_workers: Number of parallel workers (default: CPU count)
+    :param callback: Optional callback function for progress updates
+    :return: Dict with download results {'successful': [...], 'failed': [...]}
     """
-    # Configure logging for thread-safe output with thread names
-    logging.basicConfig(
-        level=logging.INFO,
-        format='[%(threadName)s] %(message)s',
-        force=True  # Override any existing config
-    )
-
-    # Setup cache directories
     cache_dirs = setup_cache_dirs(base_dir)
-
-    logger.info("="*80)
-    logger.info("NFLREADPY DATA CACHING")
-    logger.info("="*80)
-    logger.info(f"Dataset: {dataset}")
-    logger.info(f"Seasons: {seasons if seasons is not None else 'current season'}")
-    logger.info(f"Cache location: {list(cache_dirs.values())[0]}")
-    logger.info("="*80)
-    logger.info("")
-
-    # Track successes and failures
     successful = []
     failed = []
-
     if dataset == "all":
         # Cache all datasets
-        logger.info("Caching all datasets...\n")
-
         if parallel:
-            # Build task list for parallel execution
+            # Build task list
             tasks = []
-
-            # Add season-based datasets
+            # Season-based datasets
             for name, func in SEASON_DATASETS.items():
-                tasks.append(Task(name, func, (seasons, cache_dirs[name])))
-
-            # Add non-season datasets
+                if seasons is None:
+                    logger.info(f"Skipping {name} (requires explicit seasons parameter)")
+                    continue
+                task = Task(
+                    name=name,
+                    func=func,
+                    args=(seasons, cache_dirs[name]),
+                    callback=callback,
+                )
+                tasks.append(task)
+            # Non-season datasets
             for name, func in NO_SEASON_DATASETS.items():
-                tasks.append(Task(name, func, (cache_dirs[name],)))
-
+                task = Task(
+                    name=name,
+                    func=func,
+                    args=(cache_dirs[name],),
+                    callback=callback,
+                )
+                tasks.append(task)
             # Execute in parallel
             results = run_tasks_parallel(tasks, max_workers=max_workers)
             successful = results['successful']
             failed = results['failed']
-
         else:
             # Sequential execution (for debugging)
             # Cache season-based datasets
@@ -495,7 +293,6 @@ def cache_nflverse_data(
                 except Exception as e:
                     logger.info(f"  ⚠️  Failed: {e}")
                     failed.append((name, str(e)))
-
             # Cache non-season datasets
             for name, func in NO_SEASON_DATASETS.items():
                 try:
@@ -504,7 +301,6 @@ def cache_nflverse_data(
                 except Exception as e:
                     logger.info(f"  ⚠️  Failed: {e}")
                     failed.append((name, str(e)))
-
     elif dataset in SEASON_DATASETS:
         # Cache specific season-based dataset
         try:
@@ -513,7 +309,6 @@ def cache_nflverse_data(
         except Exception as e:
             logger.info(f"\n❌ Error: {e}")
             failed.append((dataset, str(e)))
-
     elif dataset in NO_SEASON_DATASETS:
         # Cache specific non-season dataset
         if seasons:
@@ -525,56 +320,20 @@ def cache_nflverse_data(
             logger.info(f"\n❌ Error: {e}")
             failed.append((dataset, str(e)))
     else:
-        raise ValueError(f"Unknown dataset: {dataset}")
-
-    # Print summary
-    logger.info("\n" + "="*80)
-    logger.info("CACHING SUMMARY")
-    logger.info("="*80)
-
-    if successful:
-        logger.info(f"\n✅ Successfully cached {len(successful)} dataset(s):")
-        for name in successful:
-            logger.info(f"   • {name}")
-
-    if failed:
-        logger.info(f"\n⚠️  Failed to cache {len(failed)} dataset(s):")
-        for name, error in failed:
-            logger.info(f"   • {name}: {error[:80]}...")
-
-    logger.info("\n" + "="*80)
-    logger.info(f"Data cached in: {list(cache_dirs.values())[0]}")
-    logger.info("You can now import these CSVs into your SQL tool of choice.")
-
-    # Update manifest for successfully cached datasets
-    if successful:
-        logger.info("\nUpdating manifest...")
-        for dataset_name in successful:
-            try:
-                # Find the cached file(s) for this dataset
-                dataset_dir = cache_dirs[dataset_name]
-                files = list(dataset_dir.glob(f"{dataset_name}.*"))
-
-                if files:
-                    # Get total size of all files for this dataset
-                    total_size = sum(f.stat().st_size for f in files)
-
-                    # Update manifest with last_downloaded timestamp and size
-                    update_dataset(dataset_name, {
-                        "last_downloaded": datetime.now().strftime("%Y-%m-%d"),
-                        "file_size_bytes": total_size,
-                        "files": len(files)
-                    })
-            except Exception as e:
-                # Don't fail the whole script if manifest update fails
-                logger.info(f"  ⚠️  Warning: Could not update manifest for {dataset_name}: {e}")
-
-        logger.info("  ✓ Manifest updated")
-
-    # Return structured data for programmatic use
-    return {
-        'successful': successful,
-        'failed': failed,
-        'total_datasets': len(successful) + len(failed),
-        'cache_dir': list(cache_dirs.values())[0] if cache_dirs else None,
-    }
+        raise ValueError(f"Unknown dataset: {dataset}. Available: {list(DATASET_CONFIG.keys())}")
+    # Update manifest for successful downloads
+    for dataset_name in successful:
+        try:
+            cache_dir = cache_dirs[dataset_name]
+            files = list(cache_dir.glob(f"{dataset_name}*.csv"))
+            if files:
+                total_size = sum(f.stat().st_size for f in files)
+                update_dataset(
+                    dataset_name=dataset_name,
+                    file_size_bytes=total_size,
+                    last_downloaded=datetime.now().strftime("%Y-%m-%d"),
+                    files=len(files),
+                )
+        except Exception as e:
+            logger.warning(f"Failed to update manifest for {dataset_name}: {e}")
+    return {"successful": successful, "failed": failed}
