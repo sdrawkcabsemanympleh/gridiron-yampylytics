@@ -1,7 +1,7 @@
 {
   "metadata": {
     "created": "2025-10-31",
-    "last_updated": "2026-01-26",
+    "last_updated": "2026-04-03",
     "version": "3.0.0",
     "description": "Data inventory for gridiron-yampylytics NFL analytics project"
   },
@@ -452,10 +452,10 @@
       "status": "complete",
       "records": "8,649",
       "description": "Calculate Yampy Athletic Scores (YAS) from combine data - 8 of 10 metrics, position-normalized 0-10 scale",
-      "last_processed": "2026-01-02",
+      "last_processed": "2026-04-03",
       "file_size_bytes": 4663968,
       "total_rows": 15554,
-      "unique_players": 5201,
+      "unique_players": 5203,
       "positions_covered": 20,
       "year_range": "2000-2026"
     },
@@ -470,12 +470,12 @@
       ],
       "output": "data/reference/yamplayer_mapping.csv",
       "status": "complete",
-      "unique_players": 43107,
-      "total_rows": 43107,
+      "unique_players": 27189,
+      "total_rows": 27189,
       "duplicate_rate": "0.0%",
       "description": "Generate unified yamplayer_id across all datasets using SQL-based entity resolution with tiered matching (ID → name+birthdate → name+college)",
-      "last_processed": "2026-01-02",
-      "file_size_bytes": 3063637
+      "last_processed": "2026-04-03",
+      "file_size_bytes": 2369565
     },
     "add_yamplayer_id": {
       "script": "scripts/add_yamplayer_id.py",

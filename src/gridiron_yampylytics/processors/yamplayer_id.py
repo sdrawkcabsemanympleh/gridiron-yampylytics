@@ -4,7 +4,8 @@ This module creates a deduplicated unified_players table using SQL-based entity
 resolution, then generates yamplayer_id hashes and applies them back to all datasets.
 
 Strategy:
-1. Build unified_players table from 5 source datasets
+1. Build unified_players table — foundation: players.csv (100% gsis_id coverage),
+   enriched with combine.csv (combine-only players) and draft_picks.csv (historical picks)
 2. Use UPDATE-then-INSERT to enrich and deduplicate
 3. Only update VARCHAR-safe fields (skip type-mismatched fields)
 4. Generate yamplayer_id from available IDs
@@ -42,8 +43,25 @@ def normalize_college_sql(college_field: str) -> str:
     """
 
 
+def _normalize_college_python(college: str) -> str:
+    """Normalize a college name string in Python (mirrors normalize_college_sql).
+
+    Used in generate_yamplayer_id_hash() where SQL expressions cannot be applied.
+
+    :param college: Raw college name string
+    :return: Normalized college name
+    """
+    college = re.sub(r' St\.?$', ' State', college, flags=re.IGNORECASE)
+    college = re.sub(r' Col\.?$', ' College', college, flags=re.IGNORECASE)
+    return college
+
+
 def generate_yamplayer_id_hash(row: dict) -> str:
     """Generate yamplayer_id hash from available identifiers.
+
+    Uses gsis_id, pfr_id, name, birthdate, and normalized college as hash inputs.
+    mfl_id is intentionally excluded — it is not present in players.csv and was
+    never used as a hydration join key.
 
     :param row: Dictionary containing player data
     :return: yamplayer_id in format YAMP_<12-char-hash>
@@ -51,10 +69,9 @@ def generate_yamplayer_id_hash(row: dict) -> str:
     id_components = [
         str(row.get('gsis_id', '')),
         str(row.get('pfr_id', '')),
-        str(row.get('mfl_id', '')),
         str(row.get('name', '')),
         str(row.get('birthdate', '')),
-        normalize_college_sql(row.get('college', '')),
+        _normalize_college_python(str(row.get('college', '') or '')),
     ]
     id_string = '|'.join([c for c in id_components if c])
     hash_str = hashlib.md5(id_string.encode()).hexdigest()
@@ -63,6 +80,11 @@ def generate_yamplayer_id_hash(row: dict) -> str:
 
 def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) -> None:
     """Build deduplicated unified_players table from source datasets.
+
+    Foundation: players.csv (all known NFL players, 100% gsis_id, 91% pfr_id).
+    Enriched with combine.csv (combine-only invitees who never signed to a roster)
+    and draft_picks.csv (historical drafted players not in players.csv).
+    rosters.csv is intentionally omitted — players.csv already covers all rostered players.
 
     :param con: DuckDB connection
     :param base_dir: Base directory containing data/ folder
@@ -73,32 +95,31 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
     print("STEP 1: BUILDING UNIFIED PLAYERS TABLE")
     print("="*80)
 
-    # Phase 1: Load player_ids.csv as foundation (minimal schema, VARCHAR-only)
-    print("\nLoading player_ids.csv as foundation...")
-    player_ids_file = nflverse_dir / 'player_ids.csv'
+    # Phase 1: Load players.csv as foundation
+    print("\nLoading players.csv as foundation...")
+    players_file = nflverse_dir / 'players.csv'
 
     con.execute(f"""
         CREATE TABLE unified_players AS
         SELECT DISTINCT
             gsis_id,
             pfr_id,
-            mfl_id,
-            name,
-            {normalize_name_sql()} as merge_name,
-            CAST(birthdate AS VARCHAR) as birthdate,
-            {normalize_college_sql('college')} as college
-        FROM read_csv_auto('{player_ids_file}', strict_mode=false, quote='"')
-        WHERE name IS NOT NULL
+            display_name AS name,
+            LOWER(REGEXP_REPLACE(TRIM(display_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) AS merge_name,
+            CAST(birth_date AS VARCHAR) AS birthdate,
+            {normalize_college_sql('college_name')} AS college
+        FROM read_csv_auto('{players_file}', strict_mode=false, quote='"')
+        WHERE display_name IS NOT NULL
     """)
 
     count = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
-    print(f"  [OK] Loaded {count:,} players from player_ids.csv")
+    print(f"  [OK] Loaded {count:,} players from players.csv")
 
     # Phase 2: Process combine.csv
     print("\nProcessing combine.csv...")
     combine_file = nflverse_dir / 'combine.csv'
 
-    # UPDATE: Enrich existing players with pfr_id from combine
+    # UPDATE: Enrich existing players with pfr_id/college from combine
     con.execute(f"""
         UPDATE unified_players
         SET
@@ -116,22 +137,20 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
     """)
     print("  [OK] Enriched existing players with combine data")
 
-    # INSERT: Add new players from combine
+    # INSERT: Add combine-only players (invited but never signed to an NFL roster)
     con.execute(f"""
         INSERT INTO unified_players (pfr_id, name, merge_name, college)
         SELECT DISTINCT
             c.pfr_id,
-            c.player_name as name,
-            LOWER(REGEXP_REPLACE(TRIM(c.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name,
-            {normalize_college_sql('c.school')} as college
+            c.player_name AS name,
+            LOWER(REGEXP_REPLACE(TRIM(c.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) AS merge_name,
+            {normalize_college_sql('c.school')} AS college
         FROM read_csv_auto('{combine_file}', strict_mode=false, quote='"') c
         WHERE c.player_name IS NOT NULL
           AND NOT EXISTS (
               SELECT 1 FROM unified_players u
               WHERE
-                  -- TIER 1: ID match
                   (c.pfr_id IS NOT NULL AND u.pfr_id = c.pfr_id)
-                  -- TIER 2: name + college (combine doesn't have birthdate)
                OR (u.merge_name = LOWER(REGEXP_REPLACE(TRIM(c.player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i'))
                    AND u.college IS NOT NULL
                    AND u.college = {normalize_college_sql('c.school')})
@@ -141,59 +160,11 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
     count = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
     print(f"  [OK] Total after combine: {count:,}")
 
-    # Phase 3: Process rosters.csv
-    print("\nProcessing rosters.csv...")
-    rosters_file = nflverse_dir / 'rosters.csv'
-
-    # UPDATE: Enrich with gsis_id and birthdate
-    con.execute(f"""
-        UPDATE unified_players
-        SET
-            gsis_id = COALESCE(unified_players.gsis_id, r.gsis_id),
-            pfr_id = COALESCE(unified_players.pfr_id, r.pfr_id),
-            birthdate = COALESCE(unified_players.birthdate, CAST(r.birth_date AS VARCHAR))
-        FROM read_csv_auto('{rosters_file}', strict_mode=false, quote='"') r
-        WHERE r.full_name IS NOT NULL
-          AND (
-              (r.gsis_id IS NOT NULL AND unified_players.gsis_id = r.gsis_id)
-           OR (r.pfr_id IS NOT NULL AND unified_players.pfr_id = r.pfr_id)
-           OR (r.birth_date IS NOT NULL
-               AND unified_players.birthdate = CAST(r.birth_date AS VARCHAR)
-               AND unified_players.merge_name = LOWER(REGEXP_REPLACE(TRIM(r.full_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')))
-          )
-    """)
-    print("  [OK] Enriched existing players with roster data")
-
-    # INSERT: Add new players from rosters
-    con.execute(f"""
-        INSERT INTO unified_players (gsis_id, pfr_id, name, merge_name, birthdate)
-        SELECT DISTINCT
-            r.gsis_id,
-            r.pfr_id,
-            r.full_name as name,
-            LOWER(REGEXP_REPLACE(TRIM(r.full_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name,
-            CAST(r.birth_date AS VARCHAR) as birthdate
-        FROM read_csv_auto('{rosters_file}', strict_mode=false, quote='"') r
-        WHERE r.full_name IS NOT NULL
-          AND NOT EXISTS (
-              SELECT 1 FROM unified_players u
-              WHERE
-                  (r.gsis_id IS NOT NULL AND u.gsis_id = r.gsis_id)
-               OR (r.pfr_id IS NOT NULL AND u.pfr_id = r.pfr_id)
-               OR (r.birth_date IS NOT NULL
-                   AND u.birthdate = CAST(r.birth_date AS VARCHAR)
-                   AND u.merge_name = LOWER(REGEXP_REPLACE(TRIM(r.full_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')))
-          )
-    """)
-
-    count = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
-    print(f"  [OK] Total after rosters: {count:,}")
-
-    # Phase 4: Process draft_picks.csv
+    # Phase 3: Process draft_picks.csv
     print("\nProcessing draft_picks.csv...")
     draft_file = nflverse_dir / 'draft_picks.csv'
 
-    # UPDATE: Enrich with pfr_id
+    # UPDATE: Enrich existing players with pfr_id/college from draft data
     con.execute(f"""
         UPDATE unified_players
         SET
@@ -211,22 +182,20 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
     """)
     print("  [OK] Enriched existing players with draft data")
 
-    # INSERT: Add new players from draft
+    # INSERT: Add historical draft picks not in players.csv
     con.execute(f"""
         INSERT INTO unified_players (pfr_id, name, merge_name, college)
         SELECT DISTINCT
-            d.pfr_player_id as pfr_id,
-            d.pfr_player_name as name,
-            LOWER(REGEXP_REPLACE(TRIM(d.pfr_player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) as merge_name,
+            d.pfr_player_id AS pfr_id,
+            d.pfr_player_name AS name,
+            LOWER(REGEXP_REPLACE(TRIM(d.pfr_player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i')) AS merge_name,
             d.college
         FROM read_csv_auto('{draft_file}', strict_mode=false, quote='"') d
         WHERE d.pfr_player_name IS NOT NULL
           AND NOT EXISTS (
               SELECT 1 FROM unified_players u
               WHERE
-                  -- TIER 1: ID match
                   (d.pfr_player_id IS NOT NULL AND u.pfr_id = d.pfr_player_id)
-                  -- TIER 2: name + college (draft doesn't have birthdate)
                OR (u.merge_name = LOWER(REGEXP_REPLACE(TRIM(d.pfr_player_name), ' (jr\\.?|sr\\.?|ii|iii|iv|v)$', '', 'i'))
                    AND u.college IS NOT NULL
                    AND u.college = {normalize_college_sql('d.college')})
@@ -235,7 +204,6 @@ def build_unified_players_table(con: duckdb.DuckDBPyConnection, base_dir: Path) 
 
     count = con.execute("SELECT COUNT(*) FROM unified_players").fetchone()[0]
     print(f"  [OK] Total after draft_picks: {count:,}")
-
     print(f"\n[OK] Unified players table complete: {count:,} unique players")
 
 
@@ -573,6 +541,148 @@ def hydrate_depth_charts(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
     return df
 
 
+def hydrate_players(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
+    """Hydrate players.csv with yamplayer_ids via gsis_id lookup.
+
+    Matching strategy:
+    - TIER 1: gsis_id match (players.csv has 100% gsis_id coverage)
+
+    :param con: DuckDB connection with unified_players table loaded
+    :param df: Pandas DataFrame of players.csv data
+    :return: DataFrame with yamplayer_id column added
+    """
+    unified = con.execute("SELECT gsis_id, yamplayer_id FROM unified_players WHERE gsis_id IS NOT NULL").df()
+    gsis_lookup = unified.set_index('gsis_id')['yamplayer_id'].to_dict()
+    df['yamplayer_id'] = df['gsis_id'].map(gsis_lookup)
+    return df
+
+
+def hydrate_nextgen_stats(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
+    """Hydrate nextgen_stats with yamplayer_ids via player_gsis_id lookup.
+
+    Matching strategy:
+    - TIER 1: player_gsis_id match (maps to gsis_id in unified_players)
+
+    :param con: DuckDB connection with unified_players table loaded
+    :param df: Pandas DataFrame of nextgen_stats data
+    :return: DataFrame with yamplayer_id column added
+    """
+    unified = con.execute("SELECT gsis_id, yamplayer_id FROM unified_players WHERE gsis_id IS NOT NULL").df()
+    gsis_lookup = unified.set_index('gsis_id')['yamplayer_id'].to_dict()
+    df['yamplayer_id'] = df['player_gsis_id'].map(gsis_lookup)
+    return df
+
+
+def hydrate_rosters_weekly(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
+    """Hydrate rosters_weekly with yamplayer_ids via gsis_id then pfr_id fallback.
+
+    Matching strategy:
+    - TIER 1: gsis_id match
+    - TIER 2: pfr_id match
+
+    :param con: DuckDB connection with unified_players table loaded
+    :param df: Pandas DataFrame of rosters_weekly data
+    :return: DataFrame with yamplayer_id column added
+    """
+    unified = con.execute("SELECT gsis_id, pfr_id, yamplayer_id FROM unified_players").df()
+    gsis_lookup = unified[unified['gsis_id'].notna()].set_index('gsis_id')['yamplayer_id'].to_dict()
+    pfr_lookup = unified[unified['pfr_id'].notna()].set_index('pfr_id')['yamplayer_id'].to_dict()
+
+    def get_yamplayer_id(row):
+        """Get yamplayer_id: gsis_id first, pfr_id fallback."""
+        gsis_id = row.get('gsis_id')
+        if pd.notna(gsis_id) and gsis_id != '':
+            result = gsis_lookup.get(gsis_id)
+            if result:
+                return result
+        pfr_id = row.get('pfr_id')
+        if pd.notna(pfr_id) and pfr_id != '':
+            return pfr_lookup.get(pfr_id)
+        return None
+
+    df['yamplayer_id'] = df.apply(get_yamplayer_id, axis=1)
+    return df
+
+
+def hydrate_ff_opportunity(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
+    """Hydrate ff_opportunity with yamplayer_ids via player_id (gsis_id) lookup.
+
+    Matching strategy:
+    - TIER 1: player_id match (maps to gsis_id in unified_players)
+
+    :param con: DuckDB connection with unified_players table loaded
+    :param df: Pandas DataFrame of ff_opportunity data
+    :return: DataFrame with yamplayer_id column added
+    """
+    unified = con.execute("SELECT gsis_id, yamplayer_id FROM unified_players WHERE gsis_id IS NOT NULL").df()
+    gsis_lookup = unified.set_index('gsis_id')['yamplayer_id'].to_dict()
+    df['yamplayer_id'] = df['player_id'].map(gsis_lookup)
+    return df
+
+
+def hydrate_ff_playerids(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
+    """Hydrate ff_playerids with yamplayer_ids via gsis_id then pfr_id fallback.
+
+    Matching strategy:
+    - TIER 1: gsis_id match
+    - TIER 2: pfr_id match
+
+    :param con: DuckDB connection with unified_players table loaded
+    :param df: Pandas DataFrame of ff_playerids data
+    :return: DataFrame with yamplayer_id column added
+    """
+    unified = con.execute("SELECT gsis_id, pfr_id, yamplayer_id FROM unified_players").df()
+    gsis_lookup = unified[unified['gsis_id'].notna()].set_index('gsis_id')['yamplayer_id'].to_dict()
+    pfr_lookup = unified[unified['pfr_id'].notna()].set_index('pfr_id')['yamplayer_id'].to_dict()
+
+    def get_yamplayer_id(row):
+        """Get yamplayer_id: gsis_id first, pfr_id fallback."""
+        gsis_id = row.get('gsis_id')
+        if pd.notna(gsis_id) and gsis_id != '':
+            result = gsis_lookup.get(gsis_id)
+            if result:
+                return result
+        pfr_id = row.get('pfr_id')
+        if pd.notna(pfr_id) and pfr_id != '':
+            return pfr_lookup.get(pfr_id)
+        return None
+
+    df['yamplayer_id'] = df.apply(get_yamplayer_id, axis=1)
+    return df
+
+
+def hydrate_snap_counts(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
+    """Hydrate snap_counts with yamplayer_ids via pfr_player_id lookup.
+
+    Matching strategy:
+    - TIER 1: pfr_player_id match (maps to pfr_id in unified_players)
+
+    :param con: DuckDB connection with unified_players table loaded
+    :param df: Pandas DataFrame of snap_counts data
+    :return: DataFrame with yamplayer_id column added
+    """
+    unified = con.execute("SELECT pfr_id, yamplayer_id FROM unified_players WHERE pfr_id IS NOT NULL").df()
+    pfr_lookup = unified.set_index('pfr_id')['yamplayer_id'].to_dict()
+    df['yamplayer_id'] = df['pfr_player_id'].map(pfr_lookup)
+    return df
+
+
+def hydrate_trades(con: duckdb.DuckDBPyConnection, df) -> 'pd.DataFrame':
+    """Hydrate trades with yamplayer_ids via pfr_id lookup.
+
+    Matching strategy:
+    - TIER 1: pfr_id match
+
+    :param con: DuckDB connection with unified_players table loaded
+    :param df: Pandas DataFrame of trades data
+    :return: DataFrame with yamplayer_id column added
+    """
+    unified = con.execute("SELECT pfr_id, yamplayer_id FROM unified_players WHERE pfr_id IS NOT NULL").df()
+    pfr_lookup = unified.set_index('pfr_id')['yamplayer_id'].to_dict()
+    df['yamplayer_id'] = df['pfr_id'].map(pfr_lookup)
+    return df
+
+
 def apply_yamplayer_ids_to_datasets(
     con: duckdb.DuckDBPyConnection,
     base_dir: Path,
@@ -590,8 +700,9 @@ def apply_yamplayer_ids_to_datasets(
 
     nflverse_dir = base_dir / 'data' / 'nflverse'
 
-    # Mapping: filename -> hydration function
-    # Each hydrator mirrors the matching logic used in Step 1 for that dataset
+    # Mapping: filename stem pattern -> hydration function
+    # Seasonal datasets match by stem prefix (e.g. 'nextgen_stats_' matches nextgen_stats_2024.csv)
+    # Non-seasonal datasets match exact filename
     HYDRATORS = {
         'combine.csv': hydrate_combine,
         'rosters.csv': hydrate_rosters,
@@ -600,10 +711,21 @@ def apply_yamplayer_ids_to_datasets(
         'injuries.csv': hydrate_injuries,
         'depth_charts_legacy.csv': hydrate_depth_charts,
         'depth_charts_modern.csv': hydrate_depth_charts,
+        'ff_playerids.csv': hydrate_ff_playerids,
+        'trades.csv': hydrate_trades,
+        'players.csv': hydrate_players,
     }
 
-    # List of datasets to process
-    datasets = [
+    # Seasonal hydrators: pattern prefix -> function (matches all season files)
+    SEASONAL_HYDRATORS = {
+        'nextgen_stats_': hydrate_nextgen_stats,
+        'rosters_weekly_': hydrate_rosters_weekly,
+        'ff_opportunity_': hydrate_ff_opportunity,
+        'snap_counts_': hydrate_snap_counts,
+    }
+
+    # Non-seasonal datasets (exact filenames)
+    static_datasets = [
         nflverse_dir / 'combine.csv',
         nflverse_dir / 'rosters.csv',
         nflverse_dir / 'draft_picks.csv',
@@ -611,15 +733,30 @@ def apply_yamplayer_ids_to_datasets(
         nflverse_dir / 'injuries.csv',
         nflverse_dir / 'depth_charts_legacy.csv',
         nflverse_dir / 'depth_charts_modern.csv',
+        nflverse_dir / 'ff_playerids.csv',
+        nflverse_dir / 'trades.csv',
+        nflverse_dir / 'players.csv',
     ]
+
+    # Seasonal datasets (glob all matching season files)
+    seasonal_datasets = []
+    for prefix in SEASONAL_HYDRATORS:
+        seasonal_datasets.extend(sorted(nflverse_dir.glob(f'{prefix}*.csv')))
+
+    datasets = static_datasets + seasonal_datasets
 
     for file_path in datasets:
         if not file_path.exists():
             print(f"\n[WARNING] Skipping {file_path.name} (not found)")
             continue
 
-        # Get the appropriate hydrator function
+        # Get the appropriate hydrator function (exact match first, then seasonal prefix)
         hydrator = HYDRATORS.get(file_path.name)
+        if not hydrator:
+            hydrator = next(
+                (fn for prefix, fn in SEASONAL_HYDRATORS.items() if file_path.name.startswith(prefix)),
+                None,
+            )
         if not hydrator:
             print(f"\n[WARNING] No hydrator defined for {file_path.name}, skipping")
             continue

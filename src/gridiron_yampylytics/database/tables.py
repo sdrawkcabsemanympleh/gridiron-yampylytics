@@ -69,6 +69,65 @@ def create_table_with_indexes(
     print()
 
 
+def create_seasonal_table_with_indexes(
+    con: duckdb.DuckDBPyConnection,
+    schema: str,
+    table_name: str,
+    glob_pattern: str,
+    indexes: list[tuple[str, str]] | None = None,
+) -> bool:
+    """Create a combined seasonal table from all CSV files matching a glob pattern.
+
+    Uses union_by_name to merge columns across files that may differ slightly
+    between seasons. Skips creation silently if no matching files are found.
+
+    :param con: DuckDB connection
+    :param schema: Schema name
+    :param table_name: Table name
+    :param glob_pattern: Glob pattern string (e.g. '/path/to/nextgen_stats_*.csv')
+    :param indexes: List of (index_name, column_spec) tuples
+    :return: True if table was created, False if no files matched
+    """
+    from glob import glob
+    files = sorted(glob(glob_pattern))
+    if not files:
+        print(f"  ⚠ Skipping {schema}.{table_name} — no files matched: {glob_pattern}\n")
+        return False
+
+    full_name = f"{schema}.{table_name}"
+    # Build DuckDB list literal with forward-slash paths (required on Windows)
+    quoted = ", ".join(f"'{f.replace(chr(92), '/')}'" for f in files)
+    file_list = f"[{quoted}]"
+    print(f"Creating table: {full_name} ({len(files)} season file(s))...")
+
+    con.execute(f"""
+        CREATE TABLE {full_name} AS
+        SELECT * FROM read_csv_auto(
+            {file_list},
+            union_by_name=true,
+            auto_detect=true,
+            null_padding=true,
+            quote='"',
+            sample_size=-1,
+            parallel=false
+        )
+    """)
+
+    row_count = con.execute(f"SELECT COUNT(*) FROM {full_name}").fetchone()[0]
+    print(f"  ✓ Loaded {row_count:,} rows")
+
+    if indexes:
+        for idx_name, columns in indexes:
+            try:
+                con.execute(f"CREATE INDEX {idx_name} ON {full_name}({columns})")
+                print(f"  ✓ INDEX: {idx_name} ({columns})")
+            except Exception as e:
+                print(f"  ⚠ Could not create index {idx_name}: {e}")
+
+    print()
+    return True
+
+
 def create_duckdb_tables(
     db_path: Path | str | None = None,
     data_dir: Path | str | None = None,
@@ -195,7 +254,7 @@ def create_duckdb_tables(
     print("NFLVERSE PLAYER DIMENSION TABLES")
     print("=" * 80)
 
-    # nflverse.player_ids (PRIMARY KEY: gsis_id)
+    # nflverse.player_ids (PRIMARY KEY: gsis_id) — fantasy platform ID crosswalk (not hydrated)
     if (data_dir / "nflverse" / "player_ids.csv").exists():
         create_table_with_indexes(
             con,
@@ -206,7 +265,6 @@ def create_duckdb_tables(
             indexes=[
                 ("idx_playerids_pfr", "pfr_id"),
                 ("idx_playerids_espn", "espn_id"),
-                ("idx_playerids_yamplayer", "yamplayer_id"),
                 ("idx_playerids_name", "name"),
             ],
         )
@@ -357,6 +415,201 @@ def create_duckdb_tables(
         print("\n⏭  Skipping play-by-play data (use include_pbp=True to include)")
 
     print("\n" + "=" * 80)
+    print("NFLVERSE PLAYER DIMENSION TABLES (NEW)")
+    print("=" * 80)
+
+    # nflverse.players (PRIMARY KEY: gsis_id) — full nflverse player registry
+    if (data_dir / "nflverse" / "players.csv").exists():
+        create_table_with_indexes(
+            con,
+            "nflverse",
+            "players",
+            data_dir / "nflverse" / "players.csv",
+            primary_key="gsis_id",
+            indexes=[
+                ("idx_players_yamplayer", "yamplayer_id"),
+                ("idx_players_pfr", "pfr_id"),
+                ("idx_players_espn", "espn_id"),
+                ("idx_players_name", "display_name"),
+                ("idx_players_status", "status"),
+                ("idx_players_position", "position"),
+            ],
+        )
+        tables_created += 1
+
+    # nflverse.ff_playerids (PRIMARY KEY: gsis_id) — fantasy platform ID crosswalk
+    if (data_dir / "nflverse" / "ff_playerids.csv").exists():
+        create_table_with_indexes(
+            con,
+            "nflverse",
+            "ff_playerids",
+            data_dir / "nflverse" / "ff_playerids.csv",
+            primary_key="gsis_id",
+            indexes=[
+                ("idx_ffpids_yamplayer", "yamplayer_id"),
+                ("idx_ffpids_pfr", "pfr_id"),
+                ("idx_ffpids_espn", "espn_id"),
+            ],
+        )
+        tables_created += 1
+
+    # nflverse.trades (no natural key — one row per player per trade)
+    if (data_dir / "nflverse" / "trades.csv").exists():
+        create_table_with_indexes(
+            con,
+            "nflverse",
+            "trades",
+            data_dir / "nflverse" / "trades.csv",
+            primary_key=None,
+            indexes=[
+                ("idx_trades_yamplayer", "yamplayer_id"),
+                ("idx_trades_pfr", "pfr_id"),
+            ],
+        )
+        tables_created += 1
+
+    # nflverse.ff_rankings (no natural single key — rankings snapshot)
+    if (data_dir / "nflverse" / "ff_rankings.csv").exists():
+        create_table_with_indexes(
+            con,
+            "nflverse",
+            "ff_rankings",
+            data_dir / "nflverse" / "ff_rankings.csv",
+            primary_key=None,
+            indexes=[
+                ("idx_ffrank_ecr_type", "ecr_type"),
+                ("idx_ffrank_player", "player"),
+            ],
+        )
+        tables_created += 1
+
+    print("\n" + "=" * 80)
+    print("NFLVERSE SEASONAL TABLES (NEW)")
+    print("=" * 80)
+
+    nflverse_glob = str(data_dir / "nflverse").replace("\\", "/")
+
+    # nflverse.nextgen_stats (all seasons, PRIMARY KEY: player_gsis_id + season + week + season_type)
+    if create_seasonal_table_with_indexes(
+        con,
+        "nflverse",
+        "nextgen_stats",
+        f"{nflverse_glob}/nextgen_stats_*.csv",
+        indexes=[
+            ("idx_ngs_yamplayer", "yamplayer_id"),
+            ("idx_ngs_gsis", "player_gsis_id"),
+            ("idx_ngs_season_week", "season, week"),
+            ("idx_ngs_position", "player_position"),
+            ("idx_ngs_team", "team_abbr"),
+        ],
+    ):
+        tables_created += 1
+
+    # nflverse.rosters_weekly (all seasons, PRIMARY KEY: gsis_id + season + week)
+    if create_seasonal_table_with_indexes(
+        con,
+        "nflverse",
+        "rosters_weekly",
+        f"{nflverse_glob}/rosters_weekly_*.csv",
+        indexes=[
+            ("idx_rostersw_yamplayer", "yamplayer_id"),
+            ("idx_rostersw_gsis", "gsis_id"),
+            ("idx_rostersw_pfr", "pfr_id"),
+            ("idx_rostersw_team_season", "team, season"),
+            ("idx_rostersw_season", "season"),
+        ],
+    ):
+        tables_created += 1
+
+    # nflverse.ff_opportunity (all seasons, PRIMARY KEY: player_id + season + week + season_type)
+    if create_seasonal_table_with_indexes(
+        con,
+        "nflverse",
+        "ff_opportunity",
+        f"{nflverse_glob}/ff_opportunity_*.csv",
+        indexes=[
+            ("idx_ffopp_yamplayer", "yamplayer_id"),
+            ("idx_ffopps_gsis", "player_id"),
+            ("idx_ffopps_season_week", "season, week"),
+            ("idx_ffopps_position", "position"),
+            ("idx_ffopps_team", "posteam"),
+        ],
+    ):
+        tables_created += 1
+
+    # nflverse.snap_counts (all seasons, PRIMARY KEY: pfr_player_id + season + week)
+    if create_seasonal_table_with_indexes(
+        con,
+        "nflverse",
+        "snap_counts",
+        f"{nflverse_glob}/snap_counts_*.csv",
+        indexes=[
+            ("idx_snap_yamplayer", "yamplayer_id"),
+            ("idx_snap_pfr", "pfr_player_id"),
+            ("idx_snap_season_week", "season, week"),
+            ("idx_snap_team", "team"),
+            ("idx_snap_position", "position"),
+        ],
+    ):
+        tables_created += 1
+
+    # nflverse.officials (all seasons, PRIMARY KEY: game_id + official_id)
+    if create_seasonal_table_with_indexes(
+        con,
+        "nflverse",
+        "officials",
+        f"{nflverse_glob}/officials_*.csv",
+        indexes=[
+            ("idx_officials_game", "game_id"),
+            ("idx_officials_season_week", "season, week"),
+            ("idx_officials_name", "official_name"),
+            ("idx_officials_position", "position"),
+        ],
+    ):
+        tables_created += 1
+
+    # nflverse.team_stats (all seasons, PRIMARY KEY: season + week + team + season_type)
+    if create_seasonal_table_with_indexes(
+        con,
+        "nflverse",
+        "team_stats",
+        f"{nflverse_glob}/team_stats_*.csv",
+        indexes=[
+            ("idx_teamstats_team_season", "team, season"),
+            ("idx_teamstats_season_week", "season, week"),
+            ("idx_teamstats_opponent", "opponent_team"),
+        ],
+    ):
+        tables_created += 1
+
+    # nflverse.ftn_charting (all seasons, PRIMARY KEY: nflverse_game_id + nflverse_play_id)
+    if create_seasonal_table_with_indexes(
+        con,
+        "nflverse",
+        "ftn_charting",
+        f"{nflverse_glob}/ftn_charting_*.csv",
+        indexes=[
+            ("idx_ftn_game", "nflverse_game_id"),
+            ("idx_ftn_season_week", "season, week"),
+        ],
+    ):
+        tables_created += 1
+
+    # nflverse.participation (all seasons, PRIMARY KEY: nflverse_game_id + play_id)
+    # Note: no season column at play level — game-keyed only
+    if create_seasonal_table_with_indexes(
+        con,
+        "nflverse",
+        "participation",
+        f"{nflverse_glob}/participation_*.csv",
+        indexes=[
+            ("idx_participation_game", "nflverse_game_id"),
+            ("idx_participation_team", "possession_team"),
+        ],
+    ):
+        tables_created += 1
+
+    print("\n" + "=" * 80)
     print("YAS (ATHLETIC SCORES)")
     print("=" * 80)
 
@@ -371,7 +624,6 @@ def create_duckdb_tables(
             primary_key="yamplayer_id, calculation_position, calculation_type",
             indexes=[
                 ("idx_yascomplete_yamplayer", "yamplayer_id"),
-                ("idx_yascomplete_drafted_position", "drafted_position"),
                 ("idx_yascomplete_yas_position", "yas_position"),
                 ("idx_yascomplete_calculation_position", "calculation_position"),
                 ("idx_yascomplete_draft_year", "draft_year"),

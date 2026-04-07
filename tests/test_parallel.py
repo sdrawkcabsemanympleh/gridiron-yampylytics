@@ -1,5 +1,5 @@
 """Tests for parallel task execution utilities."""
-from src.gridiron_yampylytics.utils.parallel import Task, run_tasks_parallel
+from gridiron_yampylytics.utils.parallel import Task, run_tasks_parallel
 
 
 class DummyException(Exception):
