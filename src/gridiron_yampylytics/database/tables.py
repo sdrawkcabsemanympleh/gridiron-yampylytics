@@ -449,6 +449,7 @@ def create_duckdb_tables(
                 ("idx_ffpids_yamplayer", "yamplayer_id"),
                 ("idx_ffpids_pfr", "pfr_id"),
                 ("idx_ffpids_espn", "espn_id"),
+                ("idx_ffpids_fantasypros", "fantasypros_id"),  # join key for ff_rankings
             ],
         )
         tables_created += 1
