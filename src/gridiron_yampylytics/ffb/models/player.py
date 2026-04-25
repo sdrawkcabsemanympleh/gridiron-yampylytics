@@ -42,6 +42,9 @@ class NFLPlayer(BaseModel):
     :param injury_status: Current injury designation. ``None`` means healthy.
         Typical Sleeper values: ``"Q"`` (questionable), ``"D"`` (doubtful),
         ``"O"`` (out), ``"IR"`` (injured reserve), ``"PUP"``.
+    :param sleeper_id: Sleeper platform player identifier from ``ff_playerids``.
+        ``None`` for players not in the mapping (DST, obscure players). Used as
+        the application-level key when receiving Sleeper WebSocket draft events.
     """
     player_id: str
     name: str
@@ -54,6 +57,7 @@ class NFLPlayer(BaseModel):
     bye_week: int | None = None
     ecr_rank: int | None = None
     injury_status: str | None = None
+    sleeper_id: str | None = None
 
     @model_validator(mode="after")
     def ensure_primary_position_is_eligible(self) -> "NFLPlayer":

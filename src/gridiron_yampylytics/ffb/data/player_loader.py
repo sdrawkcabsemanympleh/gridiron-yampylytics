@@ -70,6 +70,7 @@ season_ppr AS (
 rankings AS (
     SELECT
         fp.yamplayer_id,
+        fp.sleeper_id,
         r.ecr AS ecr_rank,
         r.sd AS adp_std,
         ROW_NUMBER() OVER (PARTITION BY fp.yamplayer_id ORDER BY r.ecr) AS rn
@@ -87,7 +88,8 @@ SELECT
     rk.adp_std,
     bw.bye_week,
     CAST(rk.ecr_rank AS BIGINT) AS ecr_rank,
-    li.injury_status
+    li.injury_status,
+    rk.sleeper_id
 FROM nflverse.players p
 JOIN rankings rk ON p.yamplayer_id = rk.yamplayer_id AND rk.rn = 1
 LEFT JOIN season_ppr sp     ON p.yamplayer_id = sp.yamplayer_id
@@ -139,7 +141,8 @@ SELECT
     r.adp_std,
     bw.bye_week,
     r.ecr_rank,
-    NULL::VARCHAR           AS injury_status
+    NULL::VARCHAR           AS injury_status,
+    NULL::VARCHAR           AS sleeper_id
 FROM dst_rankings r
 LEFT JOIN bye_weeks bw ON r.team = bw.team
 WHERE r.rn = 1
@@ -151,10 +154,10 @@ def _row_to_nfl_player(row: tuple) -> NFLPlayer:
     """Convert a single query result row to an ``NFLPlayer``.
 
     :param row: Tuple of (player_id, name, position, team, projected_points,
-        adp, adp_std, bye_week, ecr_rank, injury_status).
+        adp, adp_std, bye_week, ecr_rank, injury_status, sleeper_id).
     :return: Hydrated ``NFLPlayer`` instance.
     """
-    player_id, name, position, team, projected_points, adp, adp_std, bye_week, ecr_rank, injury_status = row
+    player_id, name, position, team, projected_points, adp, adp_std, bye_week, ecr_rank, injury_status, sleeper_id = row
     return NFLPlayer(
         player_id=str(player_id),
         name=str(name),
@@ -166,6 +169,7 @@ def _row_to_nfl_player(row: tuple) -> NFLPlayer:
         bye_week=int(bye_week) if bye_week is not None else None,
         ecr_rank=int(ecr_rank) if ecr_rank is not None else None,
         injury_status=str(injury_status) if injury_status is not None else None,
+        sleeper_id=str(sleeper_id) if sleeper_id is not None else None,
     )
 
 
