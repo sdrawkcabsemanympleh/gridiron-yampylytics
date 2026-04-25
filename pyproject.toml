@@ -20,6 +20,8 @@ dependencies = [
     "duckdb>=1.4.2",
     "rich>=13.7.0",
     "numpy>=1.26.0",
+    "websockets>=12.0",
+    "pytest-asyncio>=0.24.0",
 ]
 
 [project.scripts]
@@ -98,6 +100,9 @@ ignore = [
 # Docstring settings - we want reST style
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"  # Closest to reST style with param documentation
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
 
 [tool.mypy]
 python_version = "3.13"
