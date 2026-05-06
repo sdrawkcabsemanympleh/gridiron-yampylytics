@@ -192,6 +192,40 @@ class DraftState(BaseModel):
             count += 1
         return count  # fallback; should not be reached in a valid draft state
 
+    def apply_pick(self, player: NFLPlayer) -> "DraftState":
+        """Produce a new ``DraftState`` after a player is drafted.
+
+        Advances ``current_pick`` by one, adds ``player`` to the current
+        manager's roster, appends a :class:`DraftPick` to the history, and
+        removes ``player`` from ``available_players`` if present.  Passing a
+        player that is not in ``available_players`` (e.g. a placeholder for an
+        unrecognised Sleeper pick) is silently accepted — the roster and pick
+        history are still updated correctly.
+
+        :param player: The player being drafted at the current pick.
+        :return: A new immutable ``DraftState`` reflecting the pick.
+        :raises KeyError: If ``current_manager.manager_id`` is not in ``rosters``
+            (should never occur in a properly constructed state).
+        """
+        manager = self.current_manager
+        new_pick = DraftPick(
+            overall_pick=self.current_pick,
+            round_number=self.current_round,
+            pick_in_round=self.current_pick_in_round,
+            manager=manager,
+            player=player,
+        )
+        current_roster = self.rosters[manager.manager_id]
+        updated_roster = current_roster.model_copy(
+            update={"players": current_roster.players + [player]}
+        )
+        return self.model_copy(update={
+            "available_players": [p for p in self.available_players if p.player_id != player.player_id],
+            "rosters": {**self.rosters, manager.manager_id: updated_roster},
+            "picks": self.picks + [new_pick],
+            "current_pick": self.current_pick + 1,
+        })
+
     @classmethod
     def new(
         cls,

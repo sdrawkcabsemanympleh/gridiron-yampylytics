@@ -626,3 +626,138 @@ class TestDraftStateProperties:
         """
         state = twelve_team_state.model_copy(update={"current_pick": 13})
         assert state.picks_until_user() == 9
+
+
+# ---------------------------------------------------------------------------
+# DraftState — apply_pick
+# ---------------------------------------------------------------------------
+
+class TestDraftStateApplyPick:
+    """Tests for DraftState.apply_pick()."""
+
+    @pytest.fixture()
+    def two_team_state(
+        self,
+        two_team_league: League,
+        user_manager: Manager,
+        opponent_manager: Manager,
+        rb_player: NFLPlayer,
+        wr_player: NFLPlayer,
+    ) -> DraftState:
+        """2-team, 2-round draft state with 2 available players.
+
+        :return: DraftState at pick 1 (user's turn, slot 1).
+        """
+        return DraftState.new(
+            league=two_team_league,
+            managers=[user_manager, opponent_manager],
+            available_players=[rb_player, wr_player],
+        )
+
+    def test_current_pick_advances(
+        self, two_team_state: DraftState, rb_player: NFLPlayer
+    ) -> None:
+        """current_pick increments by 1 after apply_pick.
+
+        :param two_team_state: 2-team state at pick 1.
+        :param rb_player: Player to draft.
+        """
+        next_state = two_team_state.apply_pick(rb_player)
+        assert next_state.current_pick == 2
+
+    def test_player_removed_from_available(
+        self, two_team_state: DraftState, rb_player: NFLPlayer, wr_player: NFLPlayer
+    ) -> None:
+        """Drafted player is removed from available_players.
+
+        :param two_team_state: State with rb_player and wr_player available.
+        :param rb_player: Player being drafted.
+        :param wr_player: Should remain available.
+        """
+        next_state = two_team_state.apply_pick(rb_player)
+        available_ids = {p.player_id for p in next_state.available_players}
+        assert rb_player.player_id not in available_ids
+        assert wr_player.player_id in available_ids
+
+    def test_player_added_to_current_managers_roster(
+        self, two_team_state: DraftState, user_manager: Manager, rb_player: NFLPlayer
+    ) -> None:
+        """Picked player appears on the picking manager's roster.
+
+        User is at slot 1 and picks first.
+
+        :param two_team_state: State at pick 1 (user's turn).
+        :param user_manager: The user manager fixture.
+        :param rb_player: Player being drafted.
+        """
+        next_state = two_team_state.apply_pick(rb_player)
+        user_roster = next_state.rosters[user_manager.manager_id]
+        assert rb_player in user_roster.players
+
+    def test_draft_pick_appended_to_history(
+        self, two_team_state: DraftState, rb_player: NFLPlayer
+    ) -> None:
+        """A DraftPick is appended to picks with correct metadata.
+
+        :param two_team_state: State at pick 1, round 1.
+        :param rb_player: Player being drafted.
+        """
+        next_state = two_team_state.apply_pick(rb_player)
+        assert len(next_state.picks) == 1
+        recorded = next_state.picks[0]
+        assert recorded.player is rb_player
+        assert recorded.overall_pick == 1
+        assert recorded.round_number == 1
+        assert recorded.pick_in_round == 1
+
+    def test_original_state_is_unchanged(
+        self, two_team_state: DraftState, rb_player: NFLPlayer
+    ) -> None:
+        """apply_pick returns a new state; original is not mutated.
+
+        :param two_team_state: Original state.
+        :param rb_player: Player drafted in the copy.
+        """
+        original_pick = two_team_state.current_pick
+        two_team_state.apply_pick(rb_player)
+        assert two_team_state.current_pick == original_pick
+
+    def test_unknown_player_still_advances_state(
+        self, two_team_state: DraftState
+    ) -> None:
+        """Applying a player not in available_players still advances current_pick.
+
+        This handles placeholder picks for players not in our pool.
+
+        :param two_team_state: State with its own available pool.
+        """
+        stranger = NFLPlayer(
+            player_id="unknown_xyz", name="Unknown", position=Position.QB,
+            team="FA", projected_points=0.0, adp=999.0,
+        )
+        next_state = two_team_state.apply_pick(stranger)
+        assert next_state.current_pick == 2
+        assert stranger in next_state.rosters[next_state.picks[0].manager.manager_id].players
+
+    def test_two_picks_simulate_snake_turn(
+        self,
+        two_team_state: DraftState,
+        user_manager: Manager,
+        opponent_manager: Manager,
+        rb_player: NFLPlayer,
+        wr_player: NFLPlayer,
+    ) -> None:
+        """Two sequential apply_pick calls advance through snake order correctly.
+
+        Pick 1: user (slot 1). Pick 2: opponent (slot 2).
+
+        :param two_team_state: 2-team state at pick 1.
+        :param user_manager: User at draft slot 1.
+        :param opponent_manager: Opponent at draft slot 2.
+        :param rb_player: Drafted at pick 1.
+        :param wr_player: Drafted at pick 2.
+        """
+        state_after_1 = two_team_state.apply_pick(rb_player)
+        state_after_2 = state_after_1.apply_pick(wr_player)
+        assert rb_player in state_after_2.rosters[user_manager.manager_id].players
+        assert wr_player in state_after_2.rosters[opponent_manager.manager_id].players
