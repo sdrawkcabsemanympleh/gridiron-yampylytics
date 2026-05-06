@@ -196,7 +196,7 @@ class TestDraftSessionGetRecommendations:
         assert scores == sorted(scores, reverse=True)
 
     def test_respects_n_candidates_limit(self) -> None:
-        """At most n_candidates players are simulated."""
+        """At most n_candidates players are simulated (one simulate() call each)."""
         players = [_p(f"p{i}", "QB", 300.0 - i, float(i + 1), sleeper_id=f"s{i}") for i in range(6)]
         rc = RosterConfig(qb=1, rb=0, wr=0, te=0, flex=0, k=0, def_=0, bench=1)
         league = League(team_count=2, roster=rc)
@@ -207,7 +207,9 @@ class TestDraftSessionGetRecommendations:
         state = DraftState.new(league=league, managers=managers, available_players=players)
         replacement_levels = compute_replacement_levels(players, rc, 2)
         mock_sim = MagicMock(spec=DraftSimulator)
-        mock_sim.recommend.return_value = []
+        mock_sim.simulate.return_value = SimulationResult(
+            candidate=players[0], mean_score=100.0, std_score=5.0, n_simulations=5,
+        )
         session = DraftSession(
             initial_state=state,
             player_index=build_player_index(players),
@@ -216,9 +218,7 @@ class TestDraftSessionGetRecommendations:
             n_candidates=3,
         )
         session.get_recommendations()
-        _, call_args, _ = mock_sim.recommend.mock_calls[0]
-        candidates_passed = call_args[1]
-        assert len(candidates_passed) <= 3
+        assert mock_sim.simulate.call_count <= 3
 
     def test_empty_available_returns_empty(self) -> None:
         """get_recommendations returns [] when no players remain."""

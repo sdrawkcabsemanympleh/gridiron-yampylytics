@@ -12,6 +12,7 @@ loop, or a test harness all interact with it through the same two entry points:
 - :meth:`DraftSession.process_pick` — advance state by one pick.
 - :meth:`DraftSession.get_recommendations` — score and rank available players.
 """
+import threading
 from gridiron_yampylytics.ffb.data.sleeper import SleeperPick, resolve_pick
 from gridiron_yampylytics.ffb.models.draft import DraftState
 from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
@@ -115,24 +116,40 @@ class DraftSession:
         self.state = self.state.apply_pick(player)
         return player
 
-    def get_recommendations(self) -> list[SimulationResult]:
-        """Compute ranked pick recommendations for the user's current turn.
+    def get_recommendations(
+        self,
+        cancel_event: threading.Event | None = None,
+    ) -> list[SimulationResult] | None:
+        """Compute ranked pick recommendations for the current draft state.
 
         Runs :class:`~gridiron_yampylytics.ffb.scoring.scorer.WeightedLinearScorer`
         to select the top ``n_candidates`` available players, then evaluates
-        each via :meth:`~gridiron_yampylytics.ffb.simulation.engine.DraftSimulator.recommend`.
+        each via Monte Carlo simulation.  Iterates candidates one at a time so
+        that a ``cancel_event`` can interrupt computation between candidates
+        (used by the FastAPI layer when a new pick arrives mid-computation).
 
-        This method is CPU-bound (Monte Carlo simulation).  FastAPI callers
-        should dispatch it with ``asyncio.get_event_loop().run_in_executor``
-        rather than calling it directly from an async handler.
+        This method is CPU-bound.  FastAPI callers should dispatch it with
+        ``asyncio.get_event_loop().run_in_executor`` rather than calling it
+        directly from an async handler.
 
+        :param cancel_event: Optional :class:`threading.Event`.  When set,
+            computation stops after the current candidate finishes and ``None``
+            is returned to signal cancellation.  ``None`` disables cancellation.
         :return: :class:`~gridiron_yampylytics.ffb.simulation.engine.SimulationResult`
-            list sorted by ``mean_score`` descending.  Empty list if no players
-            are available.
+            list sorted by ``mean_score`` descending, or ``None`` if cancelled.
+            Empty list if no players are available.
         """
         scored = self._scorer.score(self.state, self._replacement_levels)
         candidates = [s.player for s in scored[:self._n_candidates]]
-        return self._simulator.recommend(self.state, candidates, self._replacement_levels)
+        results: list[SimulationResult] = []
+        for candidate in candidates:
+            if cancel_event is not None and cancel_event.is_set():
+                return None
+            results.append(
+                self._simulator.simulate(self.state, candidate, self._replacement_levels)
+            )
+        results.sort(key=lambda r: r.mean_score, reverse=True)
+        return results
 
     def _make_placeholder(self, sleeper_pick: SleeperPick) -> NFLPlayer:
         """Create a zero-value placeholder for a Sleeper player not in our pool.
