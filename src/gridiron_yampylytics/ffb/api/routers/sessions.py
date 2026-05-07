@@ -9,7 +9,9 @@ Endpoints:
 import asyncio
 import threading
 from pathlib import Path
+
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+
 from gridiron_yampylytics.ffb.api.schemas import (
     DraftCompleteEvent,
     PickMadeEvent,
@@ -213,6 +215,14 @@ async def create_session(body: SessionCreateRequest) -> SessionResponse:
         raise HTTPException(status_code=500, detail=f"Sleeper API error: {exc}") from exc
     if draft.draft_type != "snake":
         raise HTTPException(status_code=400, detail=f"Only snake drafts are supported; got {draft.draft_type!r}.")
+    prefetched_picks: list | None = None
+    if not draft.draft_order and draft.status == "complete":
+        # Sleeper omits draft_order for auto-randomised completed drafts; reconstruct from picks.
+        try:
+            prefetched_picks = client.get_existing_picks(body.draft_id)
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Sleeper API error fetching picks: {exc}") from exc
+        draft.draft_order = {p.picked_by: p.draft_slot for p in prefetched_picks if p.round == 1}
     if not draft.draft_order:
         raise HTTPException(status_code=400, detail="Draft order has not been set yet.")
     if body.sleeper_user_id not in draft.draft_order:
@@ -249,7 +259,7 @@ async def create_session(body: SessionCreateRequest) -> SessionResponse:
         simulator=DraftSimulator(n_simulations=100, seed=None),
     )
     try:
-        existing_picks = client.get_existing_picks(body.draft_id)
+        existing_picks = prefetched_picks if prefetched_picks is not None else client.get_existing_picks(body.draft_id)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to fetch existing picks: {exc}") from exc
     for pick in existing_picks:
