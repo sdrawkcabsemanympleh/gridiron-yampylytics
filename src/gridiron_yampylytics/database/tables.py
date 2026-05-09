@@ -484,6 +484,22 @@ def create_duckdb_tables(
         )
         tables_created += 1
 
+    # nflverse.ff_projections — FantasyPros pre-draft PPR season projections
+    if (data_dir / "nflverse" / "ff_projections.csv").exists():
+        create_table_with_indexes(
+            con,
+            "nflverse",
+            "ff_projections",
+            data_dir / "nflverse" / "ff_projections.csv",
+            primary_key=None,
+            indexes=[
+                ("idx_ffproj_player", "player_name"),
+                ("idx_ffproj_position", "position"),
+                ("idx_ffproj_team", "team"),
+            ],
+        )
+        tables_created += 1
+
     print("\n" + "=" * 80)
     print("NFLVERSE SEASONAL TABLES (NEW)")
     print("=" * 80)

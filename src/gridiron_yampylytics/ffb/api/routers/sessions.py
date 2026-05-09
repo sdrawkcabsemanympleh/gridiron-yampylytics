@@ -36,8 +36,8 @@ from gridiron_yampylytics.ffb.models.league import League, RosterConfig
 from gridiron_yampylytics.ffb.models.manager import Manager
 from gridiron_yampylytics.ffb.models.player import NFLPlayer
 from gridiron_yampylytics.ffb.scoring.vor import compute_replacement_levels
-from gridiron_yampylytics.ffb.session import DraftSession
-from gridiron_yampylytics.ffb.simulation.engine import DraftSimulator, SimulationResult
+from gridiron_yampylytics.ffb.session import DraftSession, EnrichedResult
+from gridiron_yampylytics.ffb.simulation.engine import DraftSimulator
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
@@ -60,23 +60,32 @@ def _player_info(p: NFLPlayer) -> PlayerInfo:
 def _roster_config_from_sleeper(settings: dict) -> RosterConfig:
     """Derive a RosterConfig from Sleeper draft settings.
 
+    When ``settings`` includes a ``rounds`` field (the authoritative draft
+    length), bench spots are back-calculated as ``rounds - total_starters`` so
+    that our round count always matches Sleeper's.  Falls back to ``slots_bn``
+    or a default of 6 when ``rounds`` is absent.
+
     :param settings: The ``settings`` dict from a :class:`~gridiron_yampylytics.ffb.data.sleeper.SleeperDraft`.
     :return: Equivalent :class:`~gridiron_yampylytics.ffb.models.league.RosterConfig`.
     """
-    return RosterConfig(
-        qb=int(settings.get("slots_qb", 1)),
-        rb=int(settings.get("slots_rb", 2)),
-        wr=int(settings.get("slots_wr", 2)),
-        te=int(settings.get("slots_te", 1)),
-        flex=int(settings.get("slots_flex", 1)),
-        k=int(settings.get("slots_k", 1)),
-        def_=int(settings.get("slots_def", 1)),
-        bench=int(settings.get("slots_bn", 6)),
-    )
+    qb = int(settings.get("slots_qb", 1))
+    rb = int(settings.get("slots_rb", 2))
+    wr = int(settings.get("slots_wr", 2))
+    te = int(settings.get("slots_te", 1))
+    flex = int(settings.get("slots_flex", 1))
+    k = int(settings.get("slots_k", 1))
+    def_ = int(settings.get("slots_def", 1))
+    total_starters = qb + rb + wr + te + flex + k + def_
+    if settings.get("rounds"):
+        bench = max(0, int(settings["rounds"]) - total_starters)
+    else:
+        bench = int(settings.get("slots_bn", 6))
+    return RosterConfig(qb=qb, rb=rb, wr=wr, te=te, flex=flex, k=k, def_=def_, bench=bench)
 
 
 def _session_response(draft_id: str, ctx: SessionContext, picks_replayed: int = 0) -> SessionResponse:
     state = ctx.session.state
+    user_manager = next((m for m in state.managers if m.is_user), None)
     picks = [
         PickRecord(
             overall_pick=pk.overall_pick,
@@ -94,6 +103,8 @@ def _session_response(draft_id: str, ctx: SessionContext, picks_replayed: int = 
         draft_id=draft_id,
         current_pick=state.current_pick,
         total_picks=state.total_picks,
+        team_count=state.league.team_count,
+        user_draft_slot=user_manager.draft_slot if user_manager else 1,
         is_user_turn=ctx.session.is_user_turn,
         is_complete=ctx.session.is_complete,
         picks_replayed=picks_replayed,
@@ -102,20 +113,24 @@ def _session_response(draft_id: str, ctx: SessionContext, picks_replayed: int = 
     )
 
 
-async def _compute_and_broadcast_recommendations(draft_id: str, for_pick: int) -> None:
+async def _compute_and_broadcast_recommendations(
+    draft_id: str, for_pick: int, cancel_event: threading.Event
+) -> None:
     """Run MC simulation in a thread pool and push results to all frontend clients.
 
-    Captures ``ctx.cancel_event`` at the start so that a new pick replacing the
-    event with a fresh one automatically orphans this computation.
+    ``cancel_event`` must be captured by the caller at task-creation time.  When a
+    new pick arrives the listener sets that event and replaces ``ctx.cancel_event``
+    with a fresh one, orphaning this computation before it finishes.
 
     :param draft_id: Session to compute for.
     :param for_pick: The ``current_pick`` snapshot these recommendations target;
         used to let the frontend discard stale events on rapid pick sequences.
+    :param cancel_event: Threading event captured at task-creation time; set by
+        the listener when a superseding pick arrives.
     """
     ctx = get_context(draft_id)
     if ctx is None:
         return
-    cancel_event = ctx.cancel_event  # capture: replaced by listener on new pick
     loop = asyncio.get_event_loop()
     results: list[SimulationResult] | None = await loop.run_in_executor(
         None,
@@ -131,6 +146,10 @@ async def _compute_and_broadcast_recommendations(draft_id: str, for_pick: int) -
                 mean_score=r.mean_score,
                 std_score=r.std_score,
                 n_simulations=r.n_simulations,
+                vor=r.vor,
+                vona=r.vona,
+                scarcity_score=r.scarcity_score,
+                roster_need_score=r.roster_need_score,
             )
             for r in results
         ],
@@ -138,53 +157,54 @@ async def _compute_and_broadcast_recommendations(draft_id: str, for_pick: int) -
     await broadcast(draft_id, event.model_dump())
 
 
-async def _run_sleeper_listener(draft_id: str) -> None:
-    """Background task: stream Sleeper picks, update session state, push events.
+async def _run_sleeper_listener(draft_id: str, picks_already_seen: int) -> None:
+    """Background task: poll Sleeper for new picks, update session state, push events.
 
-    Reconnects automatically on transient WebSocket failures.  Exits cleanly
+    Polls the Sleeper REST API every few seconds for new picks.  Exits cleanly
     when ``ctx.shutdown`` is set or the draft completes.
 
     :param draft_id: The draft to listen to.
+    :param picks_already_seen: Number of picks replayed at session creation;
+        polling starts from this offset to avoid re-processing them.
     """
     ctx = get_context(draft_id)
     if ctx is None:
         return
-    while not ctx.shutdown:
-        try:
-            async for sleeper_pick in ctx.sleeper_client.stream_picks(draft_id):
-                if ctx.shutdown:
-                    return
-                # Cancel any in-progress recommendation computation
-                ctx.cancel_event.set()
-                ctx.cancel_event = threading.Event()
-                # Apply pick to session state
-                player = ctx.session.process_pick(sleeper_pick)
-                state = ctx.session.state
-                last_pick = state.picks[-1]
-                pick_event = PickMadeEvent(
-                    overall_pick=last_pick.overall_pick,
-                    round=last_pick.round_number,
-                    pick_in_round=last_pick.pick_in_round,
-                    manager_id=last_pick.manager.manager_id,
-                    player_id=player.player_id,
-                    player_name=player.name,
-                    position=str(player.position),
-                    team=player.team,
-                    is_user_pick=last_pick.manager.is_user,
-                    current_pick=state.current_pick,
-                    is_user_turn=ctx.session.is_user_turn,
-                )
-                await broadcast(draft_id, pick_event.model_dump())
-                if ctx.session.is_complete:
-                    await broadcast(draft_id, DraftCompleteEvent().model_dump())
-                    return
-                asyncio.create_task(
-                    _compute_and_broadcast_recommendations(draft_id, state.current_pick)
-                )
-        except Exception:
+    try:
+        async for sleeper_pick in ctx.sleeper_client.stream_picks(draft_id, seen_count=picks_already_seen):
             if ctx.shutdown:
                 return
-            await asyncio.sleep(3)  # brief backoff before reconnect
+            # Cancel any in-progress recommendation computation
+            ctx.cancel_event.set()
+            ctx.cancel_event = threading.Event()
+            new_cancel = ctx.cancel_event  # capture NOW before next pick replaces it
+            # Apply pick to session state
+            player = ctx.session.process_pick(sleeper_pick)
+            state = ctx.session.state
+            last_pick = state.picks[-1]
+            pick_event = PickMadeEvent(
+                overall_pick=last_pick.overall_pick,
+                round=last_pick.round_number,
+                pick_in_round=last_pick.pick_in_round,
+                manager_id=last_pick.manager.manager_id,
+                player_id=player.player_id,
+                player_name=player.name,
+                position=str(player.position),
+                team=player.team,
+                is_user_pick=last_pick.manager.is_user,
+                current_pick=state.current_pick,
+                is_user_turn=ctx.session.is_user_turn,
+            )
+            await broadcast(draft_id, pick_event.model_dump())
+            if ctx.session.is_complete:
+                await broadcast(draft_id, DraftCompleteEvent().model_dump())
+                return
+            if ctx.session.is_user_turn:
+                asyncio.create_task(
+                    _compute_and_broadcast_recommendations(draft_id, state.current_pick, new_cancel)
+                )
+    except Exception:
+        pass  # draft complete or session torn down
 
 
 # ---------------------------------------------------------------------------
@@ -242,10 +262,16 @@ async def create_session(body: SessionCreateRequest) -> SessionResponse:
         )
         for uid, slot in draft.draft_order.items()
     ]
+    # Pad missing slots with CPU placeholders (mock drafts / partial draft_order)
+    filled_slots = {m.draft_slot for m in managers}
+    for slot in range(1, team_count + 1):
+        if slot not in filled_slots:
+            managers.append(Manager(manager_id=f"cpu_{slot}", name=f"CPU {slot}", draft_slot=slot, is_user=False))
+    managers.sort(key=lambda m: m.draft_slot)
     try:
         players = load_player_pool(
             db_path=Path(body.db_path) if body.db_path else None,
-            season=draft.season or 2024,
+            season=draft.season or 2025,
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Player pool load error: {exc}") from exc
@@ -256,7 +282,7 @@ async def create_session(body: SessionCreateRequest) -> SessionResponse:
         initial_state=initial_state,
         player_index=player_index,
         replacement_levels=replacement_levels,
-        simulator=DraftSimulator(n_simulations=100, seed=None),
+        simulator=DraftSimulator(n_simulations=20, seed=None),
     )
     try:
         existing_picks = prefetched_picks if prefetched_picks is not None else client.get_existing_picks(body.draft_id)
@@ -271,11 +297,11 @@ async def create_session(body: SessionCreateRequest) -> SessionResponse:
         sleeper_client=client,
     )
     register_context(ctx)
-    ctx.listener_task = asyncio.create_task(_run_sleeper_listener(body.draft_id))
+    ctx.listener_task = asyncio.create_task(_run_sleeper_listener(body.draft_id, picks_replayed))
     # Push initial recommendations if it's already the user's turn
     if session.is_user_turn:
         asyncio.create_task(
-            _compute_and_broadcast_recommendations(body.draft_id, session.state.current_pick)
+            _compute_and_broadcast_recommendations(body.draft_id, session.state.current_pick, ctx.cancel_event)
         )
     return _session_response(body.draft_id, ctx, picks_replayed=picks_replayed)
 
@@ -312,6 +338,14 @@ async def session_websocket(websocket: WebSocket, draft_id: str) -> None:
         return
     await websocket.accept()
     ctx.clients.append(websocket)
+    # If it's already the user's turn when they connect, kick off fresh recommendations
+    # so they don't miss events that were broadcast before the WS was established.
+    if ctx.session.is_user_turn and not ctx.session.is_complete:
+        asyncio.create_task(
+            _compute_and_broadcast_recommendations(
+                draft_id, ctx.session.state.current_pick, ctx.cancel_event
+            )
+        )
     try:
         while True:
             await websocket.receive_text()  # blocks; raises WebSocketDisconnect on close

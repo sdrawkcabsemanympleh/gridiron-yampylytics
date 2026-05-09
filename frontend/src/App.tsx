@@ -44,6 +44,11 @@ export default function App() {
         isLoading={isLoading}
         isComplete={session.is_complete}
         userRoster={session.user_roster}
+        currentPick={session.current_pick}
+        totalPicks={session.total_picks}
+        teamCount={session.team_count}
+        userDraftSlot={session.user_draft_slot}
+        lastPick={session.picks.length > 0 ? session.picks[session.picks.length - 1] : null}
       />
 
       <RosterBar roster={session.user_roster} />

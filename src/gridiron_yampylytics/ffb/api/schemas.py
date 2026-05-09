@@ -45,11 +45,19 @@ class RecommendationItem(BaseModel):
     :param mean_score: Mean final roster projected points across all simulations.
     :param std_score: Standard deviation of roster scores (risk signal).
     :param n_simulations: Number of simulations run.
+    :param vor: Raw VOR in fantasy points above replacement.
+    :param vona: Raw VONA in fantasy points (value over next available).
+    :param scarcity_score: Normalized positional scarcity in [0.0, 1.0].
+    :param roster_need_score: Normalized roster need in [0.0, 1.0].
     """
     player: PlayerInfo
     mean_score: float
     std_score: float
     n_simulations: int
+    vor: float
+    vona: float
+    scarcity_score: float
+    roster_need_score: float
 
 
 class PickRecord(BaseModel):
@@ -80,6 +88,8 @@ class SessionResponse(BaseModel):
     :param draft_id: Sleeper draft identifier.
     :param current_pick: Next pick number to be made.
     :param total_picks: Total picks in the full draft.
+    :param team_count: Number of teams in the draft.
+    :param user_draft_slot: The user's 1-indexed draft slot (snake position).
     :param is_user_turn: Whether it is currently the user's pick.
     :param is_complete: Whether the draft has concluded.
     :param picks_replayed: Number of existing picks replayed on session creation.
@@ -89,6 +99,8 @@ class SessionResponse(BaseModel):
     draft_id: str
     current_pick: int
     total_picks: int
+    team_count: int
+    user_draft_slot: int
     is_user_turn: bool
     is_complete: bool
     picks_replayed: int = 0

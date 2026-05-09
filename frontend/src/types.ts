@@ -12,6 +12,10 @@ export interface RecommendationItem {
   mean_score: number;
   std_score: number;
   n_simulations: number;
+  vor: number;
+  vona: number;
+  scarcity_score: number;
+  roster_need_score: number;
 }
 
 export interface PickRecord {
@@ -29,6 +33,8 @@ export interface SessionState {
   draft_id: string;
   current_pick: number;
   total_picks: number;
+  team_count: number;
+  user_draft_slot: number;
   is_user_turn: boolean;
   is_complete: boolean;
   picks_replayed: number;

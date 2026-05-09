@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/api': 'http://localhost:8765',
-      '/ws': { target: 'ws://localhost:8765', ws: true },
+      '/api': { target: 'http://localhost:8767', ws: true },
+      '/ws': { target: 'ws://localhost:8767', ws: true },
     },
   },
 })

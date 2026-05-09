@@ -1,7 +1,7 @@
 {
   "metadata": {
     "created": "2025-10-31",
-    "last_updated": "2026-04-03",
+    "last_updated": "2026-05-08",
     "version": "3.0.0",
     "description": "Data inventory for gridiron-yampylytics NFL analytics project"
   },
@@ -54,7 +54,10 @@
       "coverage": "1999-2025",
       "location": "data/nflverse/pbp.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
-      "format": "CSV"
+      "format": "CSV",
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 2792450713,
+      "files": 1
     },
     "player_stats": {
       "source": "nflreadpy (nflverse)",
@@ -65,8 +68,8 @@
       "location": "data/nflverse/player_stats.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
       "format": "CSV",
-      "last_downloaded": "2026-01-02",
-      "file_size_bytes": 177163497,
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 179201512,
       "files": 1
     },
     "rosters": {
@@ -78,8 +81,8 @@
       "location": "data/nflverse/rosters.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
       "format": "CSV",
-      "last_downloaded": "2026-01-16",
-      "file_size_bytes": 35888253,
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 36283269,
       "files": 1
     },
     "draft_picks": {
@@ -91,8 +94,8 @@
       "location": "data/nflverse/draft_picks.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
       "format": "CSV",
-      "last_downloaded": "2026-01-16",
-      "file_size_bytes": 1571646,
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 1660312,
       "files": 1
     },
     "combine": {
@@ -104,8 +107,8 @@
       "location": "data/nflverse/combine.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
       "format": "CSV",
-      "last_downloaded": "2026-01-16",
-      "file_size_bytes": 940418,
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 976523,
       "files": 1
     },
     "contracts": {
@@ -140,8 +143,8 @@
       "location": "data/nflverse/players.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
       "format": "CSV",
-      "last_downloaded": "2026-01-16",
-      "file_size_bytes": 7128066,
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 7201977,
       "files": 1
     },
     "teams": {
@@ -153,8 +156,8 @@
       "location": "data/nflverse/teams.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
       "format": "CSV",
-      "last_downloaded": "2026-01-26",
-      "file_size_bytes": 18865,
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 18919,
       "files": 1
     },
     "ff_rankings": {
@@ -166,8 +169,8 @@
       "location": "data/nflverse/ff_rankings.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
       "format": "CSV",
-      "last_downloaded": "2026-01-17",
-      "file_size_bytes": 767831,
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 734077,
       "files": 1
     },
     "ff_opportunity": {
@@ -178,7 +181,10 @@
       "coverage": "2006-2024",
       "location": "data/nflverse/ff_opportunity.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
-      "format": "CSV"
+      "format": "CSV",
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 119884073,
+      "files": 1
     },
     "schedules": {
       "source": "nflreadpy (nflverse)",
@@ -189,8 +195,8 @@
       "location": "data/nflverse/schedules.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
       "format": "CSV",
-      "last_downloaded": "2026-01-02",
-      "file_size_bytes": 2132385,
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 2136705,
       "files": 1
     },
     "injuries": {
@@ -202,8 +208,8 @@
       "location": "data/nflverse/injuries.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
       "format": "CSV",
-      "last_downloaded": "2026-01-02",
-      "file_size_bytes": 12328919,
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 13139365,
       "files": 1
     },
     "depth_charts": {
@@ -220,8 +226,8 @@
         "data/nflverse/depth_charts_legacy.csv",
         "data/nflverse/depth_charts_modern.csv"
       ],
-      "last_downloaded": "2026-01-02",
-      "file_size_bytes": 128180037,
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 162910328,
       "files": 1
     },
     "snap_counts": {
@@ -232,7 +238,10 @@
       "coverage": "2012-2025",
       "location": "data/nflverse/snap_counts.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
-      "format": "CSV"
+      "format": "CSV",
+      "last_downloaded": "2026-05-08",
+      "file_size_bytes": 32306966,
+      "files": 1
     },
     "gm_executives": {
       "source": "Pro Football Reference",
@@ -418,7 +427,7 @@
       "output": "data/reference/gm_tenures.csv",
       "status": "complete",
       "records": 369,
-      "last_processed": "2025-12-31",
+      "last_processed": "2026-05-08",
       "file_size_bytes": 36384,
       "total_records": 370,
       "teams": 32,
@@ -434,13 +443,13 @@
       ],
       "status": "complete",
       "records": "869,185 legacy + 223,875 modern",
-      "last_processed": "2026-01-02",
+      "last_processed": "2026-05-08",
       "legacy_rows": 869185,
-      "modern_rows": 364157,
-      "total_rows": 1233342,
+      "modern_rows": 681411,
+      "total_rows": 1550596,
       "legacy_size_bytes": 78679461,
-      "modern_size_bytes": 34770178,
-      "total_size_bytes": 113449639
+      "modern_size_bytes": 65058913,
+      "total_size_bytes": 143738374
     },
     "calculate_yas": {
       "script": "scripts/calculate_yas.py",
@@ -452,10 +461,10 @@
       "status": "complete",
       "records": "8,649",
       "description": "Calculate Yampy Athletic Scores (YAS) from combine data - 8 of 10 metrics, position-normalized 0-10 scale",
-      "last_processed": "2026-04-03",
-      "file_size_bytes": 4663968,
-      "total_rows": 15554,
-      "unique_players": 5203,
+      "last_processed": "2026-05-08",
+      "file_size_bytes": 4841363,
+      "total_rows": 16158,
+      "unique_players": 5420,
       "positions_covered": 20,
       "year_range": "2000-2026"
     },
@@ -470,12 +479,12 @@
       ],
       "output": "data/reference/yamplayer_mapping.csv",
       "status": "complete",
-      "unique_players": 27189,
-      "total_rows": 27189,
+      "unique_players": 27569,
+      "total_rows": 27569,
       "duplicate_rate": "0.0%",
       "description": "Generate unified yamplayer_id across all datasets using SQL-based entity resolution with tiered matching (ID → name+birthdate → name+college)",
-      "last_processed": "2026-04-03",
-      "file_size_bytes": 2369565
+      "last_processed": "2026-05-08",
+      "file_size_bytes": 2404878
     },
     "add_yamplayer_id": {
       "script": "scripts/add_yamplayer_id.py",

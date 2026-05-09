@@ -24,6 +24,8 @@ dependencies = [
     "pytest-asyncio>=0.24.0",
     "fastapi[standard]>=0.115.0",
     "uvicorn[standard]>=0.30.0",
+    "html5lib>=1.1",
+    "beautifulsoup4>=4.14.3",
 ]
 
 [project.scripts]
@@ -33,6 +35,7 @@ list = "gridiron_yampylytics.scripts.help:main"
 
 # Data download and status
 load-data = "gridiron_yampylytics.scripts.download_data:main"
+download-fp-projections = "gridiron_yampylytics.scripts.download_fp_projections:main"
 show-status = "gridiron_yampylytics.scripts.show_status:main"
 
 # Setup workflows (download → process → create database)
@@ -54,6 +57,14 @@ create-duckdb-tables = "gridiron_yampylytics.scripts.create_duckdb_tables:main"
 
 # Database exploration
 sql = "gridiron_yampylytics.scripts.sql:main"
+
+# FFB server management
+serve-api = "gridiron_yampylytics.scripts.server:serve_api"
+stop-api = "gridiron_yampylytics.scripts.server:stop_api"
+serve-ui = "gridiron_yampylytics.scripts.server:serve_ui"
+stop-ui = "gridiron_yampylytics.scripts.server:stop_ui"
+serve = "gridiron_yampylytics.scripts.server:serve"
+stop = "gridiron_yampylytics.scripts.server:stop"
 
 [tool.uv]
 package = true

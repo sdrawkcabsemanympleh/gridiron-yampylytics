@@ -1,4 +1,4 @@
-import type { PlayerInfo, RecommendationItem } from '../types';
+import type { PlayerInfo, PickRecord, RecommendationItem } from '../types';
 
 interface Props {
   recommendations: RecommendationItem[];
@@ -7,6 +7,11 @@ interface Props {
   isLoading: boolean;
   isComplete: boolean;
   userRoster: PlayerInfo[];
+  currentPick: number;
+  totalPicks: number;
+  teamCount: number;
+  userDraftSlot: number;
+  lastPick: PickRecord | null;
 }
 
 const POSITION_COLORS: Record<string, string> = {
@@ -22,10 +27,13 @@ function positionBadge(pos: string): string {
   return POSITION_COLORS[pos] ?? 'text-slate-300 bg-slate-800';
 }
 
-function riskLabel(std: number, mean: number): { label: string; color: string } {
-  const cv = mean > 0 ? std / mean : 0;
-  if (cv < 0.08) return { label: 'Safe floor', color: 'text-emerald-400' };
-  if (cv < 0.15) return { label: 'Balanced', color: 'text-sky-400' };
+function riskLabel(std: number, allStds: number[]): { label: string; color: string } {
+  const sorted = [...allStds].sort((a, b) => a - b);
+  const n = sorted.length;
+  const lowCutoff = sorted[Math.floor(n / 3)];
+  const highCutoff = sorted[Math.floor(2 * n / 3)];
+  if (std <= lowCutoff) return { label: 'Safe floor', color: 'text-emerald-400' };
+  if (std <= highCutoff) return { label: 'Balanced', color: 'text-sky-400' };
   return { label: 'High upside', color: 'text-amber-400' };
 }
 
@@ -64,17 +72,47 @@ function CompletedRoster({ roster }: { roster: PlayerInfo[] }) {
   );
 }
 
+function picksUntilUserTurn(currentPick: number, teamCount: number, userSlot: number): number {
+  const pickInRound = ((currentPick - 1) % teamCount) + 1;
+  const round = Math.ceil(currentPick / teamCount);
+  const userPositionInRound = round % 2 === 1 ? userSlot : teamCount - userSlot + 1;
+  if (userPositionInRound >= pickInRound) return userPositionInRound - pickInRound;
+  const picksLeftThisRound = teamCount - pickInRound + 1;
+  const nextRound = round + 1;
+  const userPositionNextRound = nextRound % 2 === 1 ? userSlot : teamCount - userSlot + 1;
+  return picksLeftThisRound + userPositionNextRound - 1;
+}
+
 export function RecommendationsPanel({
   recommendations, forPick, isUserTurn, isLoading, isComplete, userRoster,
+  currentPick, totalPicks, teamCount, userDraftSlot, lastPick,
 }: Props) {
   if (isComplete) {
     return <CompletedRoster roster={userRoster} />;
   }
 
   if (!isUserTurn && recommendations.length === 0) {
+    const picksAway = picksUntilUserTurn(currentPick, teamCount, userDraftSlot);
+    const round = Math.ceil(currentPick / teamCount);
+    const pickInRound = ((currentPick - 1) % teamCount) + 1;
     return (
-      <div className="flex-1 flex items-center justify-center text-slate-600 text-sm">
-        Opponent picking...
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 text-sm px-6">
+        <div className="text-slate-500">
+          Round {round} · Pick {pickInRound}/{teamCount} · Overall {currentPick}/{totalPicks}
+        </div>
+        {lastPick && (
+          <div className="text-xs text-slate-600 text-center">
+            Last pick:{' '}
+            <span className={`font-semibold ${positionBadge(lastPick.position)} px-1.5 py-0.5 rounded font-mono`}>
+              {lastPick.position}
+            </span>{' '}
+            <span className="text-slate-400">{lastPick.player_name}</span>
+            <span className="text-slate-600"> · {lastPick.team}</span>
+          </div>
+        )}
+        <div className={`font-semibold ${picksAway <= 2 ? 'text-amber-400' : 'text-slate-500'}`}>
+          {picksAway === 0 ? 'Your pick now' : picksAway === 1 ? 'Your pick next' : `Your pick in ${picksAway}`}
+        </div>
       </div>
     );
   }
@@ -83,12 +121,13 @@ export function RecommendationsPanel({
     return (
       <div className="flex-1 flex items-center justify-center gap-2 text-slate-500 text-sm">
         <div className="w-4 h-4 border-2 border-slate-600 border-t-slate-300 rounded-full animate-spin" />
-        Running simulations...
+        Running simulations for pick {currentPick}...
       </div>
     );
   }
 
   const best = recommendations[0];
+  const allStds = recommendations.map((r) => r.std_score);
 
   return (
     <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
@@ -96,7 +135,7 @@ export function RecommendationsPanel({
         <div className="text-xs text-slate-600 mb-1">Recommendations for pick {forPick}</div>
       )}
       {recommendations.map((rec, i) => {
-        const risk = riskLabel(rec.std_score, rec.mean_score);
+        const risk = riskLabel(rec.std_score, allStds);
         const scorePct = best.mean_score > 0 ? (rec.mean_score / best.mean_score) * 100 : 0;
         return (
           <div
@@ -134,6 +173,24 @@ export function RecommendationsPanel({
               </div>
             </div>
 
+            <div className="mt-2 grid grid-cols-4 gap-1 text-xs">
+              <div className="flex flex-col items-center bg-slate-800/60 rounded px-1.5 py-1">
+                <span className="text-slate-500 uppercase tracking-wide text-[10px]">VOR</span>
+                <span className="text-slate-300 font-mono">{rec.vor >= 0 ? '+' : ''}{rec.vor.toFixed(1)}</span>
+              </div>
+              <div className="flex flex-col items-center bg-slate-800/60 rounded px-1.5 py-1">
+                <span className="text-slate-500 uppercase tracking-wide text-[10px]">VONA</span>
+                <span className="text-slate-300 font-mono">{rec.vona >= 0 ? '+' : ''}{rec.vona.toFixed(1)}</span>
+              </div>
+              <div className="flex flex-col items-center bg-slate-800/60 rounded px-1.5 py-1">
+                <span className="text-slate-500 uppercase tracking-wide text-[10px]">Scarcity</span>
+                <span className="text-slate-300 font-mono">{(rec.scarcity_score * 100).toFixed(0)}%</span>
+              </div>
+              <div className="flex flex-col items-center bg-slate-800/60 rounded px-1.5 py-1">
+                <span className="text-slate-500 uppercase tracking-wide text-[10px]">Need</span>
+                <span className="text-slate-300 font-mono">{(rec.roster_need_score * 100).toFixed(0)}%</span>
+              </div>
+            </div>
             <div className="mt-1.5 flex gap-3 text-xs text-slate-500">
               <span>ADP {rec.player.adp.toFixed(1)}</span>
               <span>Proj {rec.player.projected_points.toFixed(0)} pts</span>

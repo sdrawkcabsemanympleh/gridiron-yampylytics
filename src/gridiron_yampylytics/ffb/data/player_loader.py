@@ -12,10 +12,10 @@ Two load paths:
   synthetic ``player_id`` of the form ``"DST_{team}"`` is used instead
   (e.g. ``"DST_KC"``).
 
-Projected points for skill players are 2024 PPR season actuals from
-``nflverse.player_stats``, used as a development proxy until live projections
-are wired up. DST projected points are ``None`` pending a Sleeper projections
-integration.
+Projected points use FantasyPros pre-draft PPR season totals from
+``nflverse.ff_projections`` when available (run ``uv run download-fp-projections``
+to populate).  Falls back to prior-season PPR actuals from ``nflverse.player_stats``
+if the projections table does not exist.
 """
 from pathlib import Path
 import duckdb
@@ -32,6 +32,81 @@ _DEFAULT_ECR_TYPE: str = "ro"
 _DST_POS: str = "DST"
 
 _SKILL_PLAYER_QUERY = """
+WITH bye_weeks AS (
+    SELECT t.team, w.week AS bye_week
+    FROM (
+        SELECT DISTINCT home_team AS team FROM nflverse.schedules
+        WHERE season = {season} AND game_type = 'REG'
+        UNION
+        SELECT DISTINCT away_team FROM nflverse.schedules
+        WHERE season = {season} AND game_type = 'REG'
+    ) t
+    CROSS JOIN (
+        SELECT DISTINCT week FROM nflverse.schedules
+        WHERE season = {season} AND game_type = 'REG'
+    ) w
+    WHERE NOT EXISTS (
+        SELECT 1 FROM nflverse.schedules s
+        WHERE s.season = {season} AND s.game_type = 'REG'
+          AND (s.home_team = t.team OR s.away_team = t.team)
+          AND s.week = w.week
+    )
+),
+latest_injury AS (
+    SELECT DISTINCT ON (yamplayer_id)
+        yamplayer_id,
+        report_status AS injury_status
+    FROM nflverse.injuries
+    WHERE report_status IS NOT NULL
+    ORDER BY yamplayer_id, date_modified DESC
+),
+season_ppr AS (
+    SELECT yamplayer_id,
+        SUM(fantasy_points_ppr) AS projected_points
+    FROM nflverse.player_stats
+    WHERE season = {season} AND season_type = 'REG'
+    GROUP BY yamplayer_id
+),
+fp_projections AS (
+    SELECT fp.yamplayer_id, pr.fpts_ppr AS projected_points
+    FROM nflverse.ff_projections pr
+    JOIN nflverse.ff_playerids fp ON LOWER(TRIM(pr.player_name)) = LOWER(TRIM(fp.name))
+    WHERE pr.position != 'DEF'
+),
+rankings AS (
+    SELECT
+        fp.yamplayer_id,
+        fp.sleeper_id,
+        r.ecr AS ecr_rank,
+        r.sd AS adp_std,
+        ROW_NUMBER() OVER (PARTITION BY fp.yamplayer_id ORDER BY r.ecr) AS rn
+    FROM nflverse.ff_rankings r
+    JOIN nflverse.ff_playerids fp ON r.id = fp.fantasypros_id
+    WHERE r.ecr_type = '{ecr_type}'
+)
+SELECT
+    p.yamplayer_id          AS player_id,
+    p.display_name          AS name,
+    p.position,
+    p.latest_team           AS team,
+    COALESCE(fpp.projected_points, sp.projected_points) AS projected_points,
+    CAST(rk.ecr_rank AS DOUBLE) AS adp,
+    rk.adp_std,
+    bw.bye_week,
+    CAST(rk.ecr_rank AS BIGINT) AS ecr_rank,
+    li.injury_status,
+    rk.sleeper_id
+FROM nflverse.players p
+JOIN rankings rk ON p.yamplayer_id = rk.yamplayer_id AND rk.rn = 1
+LEFT JOIN fp_projections fpp ON p.yamplayer_id = fpp.yamplayer_id
+LEFT JOIN season_ppr sp      ON p.yamplayer_id = sp.yamplayer_id
+LEFT JOIN bye_weeks bw        ON p.latest_team = bw.team
+LEFT JOIN latest_injury li   ON p.yamplayer_id = li.yamplayer_id
+WHERE p.position IN ('QB', 'RB', 'WR', 'TE', 'K')
+ORDER BY rk.ecr_rank
+"""
+
+_SKILL_PLAYER_QUERY_FALLBACK = """
 WITH bye_weeks AS (
     SELECT t.team, w.week AS bye_week
     FROM (
@@ -132,6 +207,57 @@ dst_rankings AS (
     WHERE ecr_type = '{ecr_type}' AND pos = 'DST'
 )
 SELECT
+    'DST_' || r.team            AS player_id,
+    r.dst_name                  AS name,
+    'DEF'                       AS position,
+    r.team                      AS team,
+    proj.fpts_ppr               AS projected_points,
+    r.adp,
+    r.adp_std,
+    bw.bye_week,
+    r.ecr_rank,
+    NULL::VARCHAR               AS injury_status,
+    NULL::VARCHAR               AS sleeper_id
+FROM dst_rankings r
+LEFT JOIN bye_weeks bw ON r.team = bw.team
+LEFT JOIN nflverse.ff_projections proj ON proj.team = r.team AND proj.position = 'DEF'
+WHERE r.rn = 1
+ORDER BY r.ecr_rank
+"""
+
+_DST_QUERY_FALLBACK = """
+WITH bye_weeks AS (
+    SELECT t.team, w.week AS bye_week
+    FROM (
+        SELECT DISTINCT home_team AS team FROM nflverse.schedules
+        WHERE season = {season} AND game_type = 'REG'
+        UNION
+        SELECT DISTINCT away_team FROM nflverse.schedules
+        WHERE season = {season} AND game_type = 'REG'
+    ) t
+    CROSS JOIN (
+        SELECT DISTINCT week FROM nflverse.schedules
+        WHERE season = {season} AND game_type = 'REG'
+    ) w
+    WHERE NOT EXISTS (
+        SELECT 1 FROM nflverse.schedules s
+        WHERE s.season = {season} AND s.game_type = 'REG'
+          AND (s.home_team = t.team OR s.away_team = t.team)
+          AND s.week = w.week
+    )
+),
+dst_rankings AS (
+    SELECT
+        team,
+        player AS dst_name,
+        CAST(ecr AS DOUBLE) AS adp,
+        sd AS adp_std,
+        CAST(ecr AS BIGINT) AS ecr_rank,
+        ROW_NUMBER() OVER (PARTITION BY team ORDER BY ecr) AS rn
+    FROM nflverse.ff_rankings
+    WHERE ecr_type = '{ecr_type}' AND pos = 'DST'
+)
+SELECT
     'DST_' || r.team        AS player_id,
     r.dst_name              AS name,
     'DEF'                   AS position,
@@ -148,6 +274,21 @@ LEFT JOIN bye_weeks bw ON r.team = bw.team
 WHERE r.rn = 1
 ORDER BY r.ecr_rank
 """
+
+
+def _has_table(con: duckdb.DuckDBPyConnection, schema: str, table: str) -> bool:
+    """Return True if ``schema.table`` exists in the connected DuckDB database.
+
+    :param con: Open DuckDB connection.
+    :param schema: Schema name.
+    :param table: Table name.
+    :return: True if the table exists, False otherwise.
+    """
+    try:
+        con.execute(f"SELECT 1 FROM {schema}.{table} LIMIT 0")
+        return True
+    except Exception:
+        return False
 
 
 def _row_to_nfl_player(row: tuple) -> NFLPlayer:
@@ -181,17 +322,17 @@ def _load_skill_players(
     """Load QB/RB/WR/TE/K players from DuckDB.
 
     Uses ``yamplayer_id`` as the universal join key across all source tables.
-    Projected points are 2024 PPR season actuals, used as a development proxy
-    for true pre-draft projections.
+    Uses FantasyPros pre-draft PPR projections (``nflverse.ff_projections``) when
+    available; falls back to prior-season PPR actuals from ``nflverse.player_stats``.
 
     :param con: Open DuckDB connection.
-    :param season: Season year for player_stats and schedules lookups.
+    :param season: Season year for player_stats fallback and schedules lookups.
     :param ecr_type: ``ff_rankings.ecr_type`` filter (e.g. ``"ro"`` for
         standard/PPR redraft overall).
     :return: List of ``NFLPlayer`` instances, ordered by ECR rank ascending.
     """
-    query = _SKILL_PLAYER_QUERY.format(season=season, ecr_type=ecr_type)
-    rows = con.execute(query).fetchall()
+    template = _SKILL_PLAYER_QUERY if _has_table(con, "nflverse", "ff_projections") else _SKILL_PLAYER_QUERY_FALLBACK
+    rows = con.execute(template.format(season=season, ecr_type=ecr_type)).fetchall()
     return [_row_to_nfl_player(row) for row in rows]
 
 
@@ -204,8 +345,8 @@ def _load_dst(
 
     DST is a team concept with no ``yamplayer_id``. A synthetic
     ``player_id`` of the form ``"DST_{team}"`` is assigned (e.g. ``"DST_KC"``).
-    Projected points are ``None`` — DST projections require a separate
-    integration (Sleeper projections API is the intended future source).
+    Uses FantasyPros pre-draft PPR projections when available; otherwise
+    ``projected_points`` is ``None``.
 
     :param con: Open DuckDB connection.
     :param season: Season year for schedules bye week lookup.
@@ -213,8 +354,8 @@ def _load_dst(
     :return: List of ``NFLPlayer`` instances for all ranked DSTs,
         ordered by ECR rank ascending.
     """
-    query = _DST_QUERY.format(season=season, ecr_type=ecr_type)
-    rows = con.execute(query).fetchall()
+    template = _DST_QUERY if _has_table(con, "nflverse", "ff_projections") else _DST_QUERY_FALLBACK
+    rows = con.execute(template.format(season=season, ecr_type=ecr_type)).fetchall()
     return [_row_to_nfl_player(row) for row in rows]
 
 

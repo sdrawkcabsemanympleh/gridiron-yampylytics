@@ -13,11 +13,39 @@ loop, or a test harness all interact with it through the same two entry points:
 - :meth:`DraftSession.get_recommendations` — score and rank available players.
 """
 import threading
+from dataclasses import dataclass
 from gridiron_yampylytics.ffb.data.sleeper import SleeperPick, resolve_pick
 from gridiron_yampylytics.ffb.models.draft import DraftState
 from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
 from gridiron_yampylytics.ffb.scoring.scorer import WeightedLinearScorer
-from gridiron_yampylytics.ffb.simulation.engine import DraftSimulator, SimulationResult
+from gridiron_yampylytics.ffb.simulation.engine import DraftSimulator
+
+
+@dataclass
+class EnrichedResult:
+    """Simulation result enriched with pre-scorer component values.
+
+    Combines :class:`~gridiron_yampylytics.ffb.simulation.engine.SimulationResult`
+    output with the raw scorer signals that drove candidate selection, so the
+    full recommendation context is available to API and UI layers.
+
+    :param candidate: The player evaluated.
+    :param mean_score: Mean final roster projected points across all simulations.
+    :param std_score: Standard deviation of roster scores (outcome variance).
+    :param n_simulations: Number of simulations run.
+    :param vor: Raw VOR in fantasy points above replacement.
+    :param vona: Raw VONA in fantasy points (value over next available).
+    :param scarcity_score: Normalized positional scarcity in [0.0, 1.0].
+    :param roster_need_score: Normalized roster need in [0.0, 1.0].
+    """
+    candidate: NFLPlayer
+    mean_score: float
+    std_score: float
+    n_simulations: int
+    vor: float
+    vona: float
+    scarcity_score: float
+    roster_need_score: float
 
 
 class DraftSession:
@@ -119,7 +147,7 @@ class DraftSession:
     def get_recommendations(
         self,
         cancel_event: threading.Event | None = None,
-    ) -> list[SimulationResult] | None:
+    ) -> list[EnrichedResult] | None:
         """Compute ranked pick recommendations for the current draft state.
 
         Runs :class:`~gridiron_yampylytics.ffb.scoring.scorer.WeightedLinearScorer`
@@ -135,19 +163,26 @@ class DraftSession:
         :param cancel_event: Optional :class:`threading.Event`.  When set,
             computation stops after the current candidate finishes and ``None``
             is returned to signal cancellation.  ``None`` disables cancellation.
-        :return: :class:`~gridiron_yampylytics.ffb.simulation.engine.SimulationResult`
-            list sorted by ``mean_score`` descending, or ``None`` if cancelled.
-            Empty list if no players are available.
+        :return: :class:`EnrichedResult` list sorted by ``mean_score`` descending,
+            or ``None`` if cancelled.  Empty list if no players are available.
         """
         scored = self._scorer.score(self.state, self._replacement_levels)
-        candidates = [s.player for s in scored[:self._n_candidates]]
-        results: list[SimulationResult] = []
-        for candidate in candidates:
+        top_scored = scored[:self._n_candidates]
+        results: list[EnrichedResult] = []
+        for ps in top_scored:
             if cancel_event is not None and cancel_event.is_set():
                 return None
-            results.append(
-                self._simulator.simulate(self.state, candidate, self._replacement_levels)
-            )
+            sim = self._simulator.simulate(self.state, ps.player, self._replacement_levels)
+            results.append(EnrichedResult(
+                candidate=ps.player,
+                mean_score=sim.mean_score,
+                std_score=sim.std_score,
+                n_simulations=sim.n_simulations,
+                vor=ps.vor,
+                vona=ps.vona,
+                scarcity_score=ps.scarcity_score,
+                roster_need_score=ps.roster_need_score,
+            ))
         results.sort(key=lambda r: r.mean_score, reverse=True)
         return results
 

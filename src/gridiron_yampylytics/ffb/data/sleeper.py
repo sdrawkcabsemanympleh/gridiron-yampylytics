@@ -1,17 +1,13 @@
 """Sleeper fantasy football API client for YampGM live draft integration.
 
-Provides both REST and WebSocket access to Sleeper draft data:
+Provides REST access to Sleeper draft data and polls for live picks:
 
 - :class:`SleeperClient` handles draft metadata and existing picks via
   synchronous REST calls (using ``requests``), and streams live picks as an
-  async generator via WebSocket (using ``websockets``).
+  async generator via REST polling (every :attr:`_POLL_INTERVAL_SECONDS` seconds).
 - :func:`build_player_index` builds a ``sleeper_id`` → :class:`NFLPlayer`
   lookup that :func:`resolve_pick` uses to map incoming Sleeper picks to
   our player pool without linear scans.
-
-Expected WebSocket message format (Sleeper API, 2025)::
-
-    {"type": "picked", "payload": {"picks": [<pick_object>, ...]}}
 
 Each pick object contains at minimum::
 
@@ -28,18 +24,16 @@ DST picks carry ``metadata.position == "DEF"``. They are resolved by
 :func:`resolve_pick` via the synthetic ``"DST_{team}"`` player_id key,
 since team defenses have no entry in ``ff_playerids``.
 """
-import json
+import asyncio
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass, field
 from typing import Any
 import requests
-import websockets
 from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
 
 
 _BASE_REST_URL: str = "https://api.sleeper.app/v1"
-_WS_URL_TEMPLATE: str = "wss://draft.sleeper.app/ws/drafts/{draft_id}"
-_PICK_MESSAGE_TYPE: str = "picked"
+_POLL_INTERVAL_SECONDS: float = 2.0
 
 
 @dataclass
@@ -174,13 +168,12 @@ class SleeperClient:
         picks_raw: list[dict[str, Any]] = response.json()
         return [_parse_raw_pick(p) for p in picks_raw]
 
-    async def stream_picks(self, draft_id: str) -> AsyncGenerator[SleeperPick, None]:
-        """Stream live pick events from the Sleeper draft WebSocket.
+    async def stream_picks(self, draft_id: str, seen_count: int = 0) -> AsyncGenerator[SleeperPick, None]:
+        """Stream live pick events by polling the Sleeper REST API.
 
-        Opens a persistent WebSocket connection to the Sleeper draft channel
-        and yields :class:`SleeperPick` objects as picks are made. Non-pick
-        messages (heartbeats, status updates, etc.) are silently discarded.
-        The generator exits cleanly when the server closes the connection.
+        Polls ``/draft/{draft_id}/picks`` every :attr:`_POLL_INTERVAL_SECONDS`
+        seconds and yields new picks as they appear.  Exits when the draft
+        status transitions to ``"complete"`` and no further picks arrive.
 
         Intended usage inside an async task::
 
@@ -188,19 +181,31 @@ class SleeperClient:
                 await handle_pick(pick)
 
         :param draft_id: Sleeper draft identifier.
-        :yields: :class:`SleeperPick` for each pick event received over the
-            WebSocket. May yield multiple picks per message if the server
-            batches them (e.g. commissioner autopick).
+        :param seen_count: Number of picks already processed by the caller
+            (e.g. replayed at session creation). Only picks beyond this index
+            are yielded.
+        :yields: :class:`SleeperPick` for each new pick observed during polling.
         """
-        url = _WS_URL_TEMPLATE.format(draft_id=draft_id)
-        async with websockets.connect(url) as ws:
-            async for message in ws:
-                parsed: dict[str, Any] = json.loads(message)
-                if parsed.get("type") != _PICK_MESSAGE_TYPE:
-                    continue
-                payload: dict[str, Any] = parsed.get("payload") or {}
-                for raw_pick in payload.get("picks") or []:
-                    yield _parse_raw_pick(raw_pick)
+        url = f"{_BASE_REST_URL}/draft/{draft_id}/picks"
+        draft_url = f"{_BASE_REST_URL}/draft/{draft_id}"
+        loop = asyncio.get_event_loop()
+        while True:
+            picks_raw: list[dict[str, Any]] = await loop.run_in_executor(
+                None,
+                lambda: requests.get(url, timeout=self._timeout).json(),
+            )
+            for raw in picks_raw[seen_count:]:
+                seen_count += 1
+                yield _parse_raw_pick(raw)
+            # Exit once the draft is complete and we've consumed all picks
+            if len(picks_raw) > 0 or seen_count > 0:
+                draft_data: dict[str, Any] = await loop.run_in_executor(
+                    None,
+                    lambda: requests.get(draft_url, timeout=self._timeout).json(),
+                )
+                if str(draft_data.get("status") or "") == "complete" and len(picks_raw) == seen_count:
+                    return
+            await asyncio.sleep(_POLL_INTERVAL_SECONDS)
 
 
 def build_player_index(players: list[NFLPlayer]) -> dict[str, NFLPlayer]:

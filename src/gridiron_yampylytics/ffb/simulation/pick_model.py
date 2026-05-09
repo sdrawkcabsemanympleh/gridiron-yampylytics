@@ -68,10 +68,11 @@ class ADPPickModel:
         if not available_players:
             raise ValueError("Cannot sample from an empty player pool.")
         adps = np.array([p.adp for p in available_players])
-        stds = np.array([p.adp_std for p in available_players])
+        stds = np.clip(np.array([p.adp_std for p in available_players]), 1.0, None)
         z = (pick_number - adps) / stds
         weights = np.exp(-0.5 * z * z)
-        weights /= weights.sum()
+        total = weights.sum()
+        weights = weights / total if total > 0 else np.ones(len(available_players)) / len(available_players)
         idx = int(rng.choice(len(available_players), p=weights))
         return available_players[idx]
 

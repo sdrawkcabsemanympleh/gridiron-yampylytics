@@ -106,6 +106,57 @@ function DraftRow({ draft, onSelect }: { draft: SleeperDraftSummary; onSelect: (
   );
 }
 
+function ManualDraftEntry({
+  userId,
+  onConnect,
+  disabled,
+}: {
+  userId: string;
+  onConnect: (draftId: string, userId: string) => void;
+  disabled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [draftId, setDraftId] = useState('');
+
+  const handleSubmit = () => {
+    const id = draftId.trim();
+    if (id) onConnect(id, userId);
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="text-xs text-slate-600 hover:text-slate-400 transition-colors text-center w-full"
+      >
+        Don't see your draft? Enter ID manually →
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex gap-2">
+      <input
+        type="text"
+        placeholder="Draft ID"
+        value={draftId}
+        onChange={(e) => setDraftId(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+        autoFocus
+        disabled={disabled}
+        className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-600 disabled:opacity-50"
+      />
+      <button
+        onClick={handleSubmit}
+        disabled={!draftId.trim() || disabled}
+        className="bg-emerald-700 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors shrink-0"
+      >
+        Go
+      </button>
+    </div>
+  );
+}
+
 type Step = 'username' | 'pick_draft';
 
 export function ConnectScreen({ onCreateAndConnect, error, isConnecting }: Props) {
@@ -220,17 +271,17 @@ export function ConnectScreen({ onCreateAndConnect, error, isConnecting }: Props
   // step === 'pick_draft'
   return (
     <div className="flex-1 flex flex-col px-4 py-6 gap-4 overflow-hidden">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => { setStep('username'); setStepError(null); }}
-          className="text-slate-500 hover:text-slate-300 transition-colors text-sm"
-        >
-          ← Back
-        </button>
+      <div className="flex items-center justify-between">
         <div>
           <div className="text-slate-200 font-semibold">{displayName}</div>
           <div className="text-slate-600 text-xs font-mono">{resolvedUserId}</div>
         </div>
+        <button
+          onClick={() => { setStep('username'); setStepError(null); }}
+          className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+        >
+          Switch user
+        </button>
       </div>
 
       {drafts.length === 0 ? (
@@ -249,6 +300,12 @@ export function ConnectScreen({ onCreateAndConnect, error, isConnecting }: Props
           ))}
         </div>
       )}
+
+      <ManualDraftEntry
+        userId={resolvedUserId}
+        onConnect={onCreateAndConnect}
+        disabled={isConnecting}
+      />
 
       {isConnecting && (
         <div className="flex items-center justify-center gap-2 text-slate-400 text-sm py-2">
