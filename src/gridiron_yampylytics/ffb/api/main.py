@@ -8,13 +8,19 @@ The React frontend (``frontend/``) is served separately during development
 via Vite's dev server (``npm run dev``).  In production both can be served
 from the same host with Vite's build output served as static files.
 """
+import logging
 from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
 import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
+from fastapi.responses import JSONResponse
 from gridiron_yampylytics.ffb.api.routers.sessions import router as sessions_router
 from gridiron_yampylytics.ffb.api.session_store import all_draft_ids, get_context
+from gridiron_yampylytics.ffb.data.player_loader import load_player_pool
+
+logging.getLogger("gridiron_yampylytics").setLevel(logging.INFO)
 
 
 @asynccontextmanager
@@ -52,3 +58,20 @@ app.add_middleware(
 )
 
 app.include_router(sessions_router)
+
+
+@app.get("/api/debug/player-pool")
+async def debug_player_pool() -> JSONResponse:
+    """Temporary diagnostic: returns player pool stats as seen by the API process."""
+    players = load_player_pool(season=2026)
+    with_proj = [p for p in players if p.projected_points > 0]
+    top5 = players[:5]
+    return JSONResponse({
+        "cwd": str(Path.cwd()),
+        "total_players": len(players),
+        "with_projected_points": len(with_proj),
+        "top5": [
+            {"name": p.name, "position": str(p.position), "adp": p.adp, "projected_points": p.projected_points}
+            for p in top5
+        ],
+    })

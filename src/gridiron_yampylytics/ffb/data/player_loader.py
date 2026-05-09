@@ -17,10 +17,13 @@ Projected points use FantasyPros pre-draft PPR season totals from
 to populate).  Falls back to prior-season PPR actuals from ``nflverse.player_stats``
 if the projections table does not exist.
 """
+import logging
 from pathlib import Path
 import duckdb
 from gridiron_yampylytics.ffb.data.db import connect
 from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
+
+logger = logging.getLogger(__name__)
 
 # Positions that map to the Position enum. DST is handled separately.
 _SKILL_POSITIONS: frozenset[str] = frozenset({"QB", "RB", "WR", "TE", "K"})
@@ -331,7 +334,10 @@ def _load_skill_players(
         standard/PPR redraft overall).
     :return: List of ``NFLPlayer`` instances, ordered by ECR rank ascending.
     """
-    template = _SKILL_PLAYER_QUERY if _has_table(con, "nflverse", "ff_projections") else _SKILL_PLAYER_QUERY_FALLBACK
+    has_proj = _has_table(con, "nflverse", "ff_projections")
+    source = "ff_projections" if has_proj else f"player_stats season {season} (ff_projections not found)"
+    logger.info("Projected points source: %s", source)
+    template = _SKILL_PLAYER_QUERY if has_proj else _SKILL_PLAYER_QUERY_FALLBACK
     rows = con.execute(template.format(season=season, ecr_type=ecr_type)).fetchall()
     return [_row_to_nfl_player(row) for row in rows]
 
@@ -390,4 +396,9 @@ def load_player_pool(
         dst_players = _load_dst(con, season, ecr_type) if include_dst else []
     all_players = skill_players + dst_players
     all_players.sort(key=lambda p: p.adp)
+    with_proj = sum(1 for p in all_players if p.projected_points > 0)
+    logger.info(
+        "Player pool: %d total (%d skill + %d DST); %d/%d have projected_points > 0",
+        len(all_players), len(skill_players), len(dst_players), with_proj, len(all_players),
+    )
     return all_players

@@ -63,7 +63,7 @@ def _kill_port(port: int, label: str) -> bool:
         return False
     print(f"  Stopping {label} (PID {pid})...", end=" ", flush=True)
     if sys.platform == "win32":
-        subprocess.run(["taskkill", "/PID", str(pid), "/F"], capture_output=True)
+        subprocess.run(["taskkill", "/PID", str(pid), "/F", "/T"], capture_output=True)
     else:
         import os
         import signal
@@ -180,7 +180,6 @@ def serve() -> None:
         "gridiron_yampylytics.ffb.api.main:app",
         "--host", _API_HOST,
         "--port", str(_API_PORT),
-        "--reload",
     ])
     time.sleep(1.5)
     print(f"  API running on http://{_API_HOST}:{_API_PORT}")

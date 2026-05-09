@@ -12,6 +12,7 @@ loop, or a test harness all interact with it through the same two entry points:
 - :meth:`DraftSession.process_pick` — advance state by one pick.
 - :meth:`DraftSession.get_recommendations` — score and rank available players.
 """
+import logging
 import threading
 from dataclasses import dataclass
 from gridiron_yampylytics.ffb.data.sleeper import SleeperPick, resolve_pick
@@ -19,6 +20,8 @@ from gridiron_yampylytics.ffb.models.draft import DraftState
 from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
 from gridiron_yampylytics.ffb.scoring.scorer import WeightedLinearScorer
 from gridiron_yampylytics.ffb.simulation.engine import DraftSimulator
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -168,6 +171,10 @@ class DraftSession:
         """
         scored = self._scorer.score(self.state, self._replacement_levels)
         top_scored = scored[:self._n_candidates]
+        logger.info(
+            "Pick %d: scoring %d candidates from %d available",
+            self.state.current_pick, len(top_scored), len(self.state.available_players),
+        )
         results: list[EnrichedResult] = []
         for ps in top_scored:
             if cancel_event is not None and cancel_event.is_set():
@@ -184,6 +191,13 @@ class DraftSession:
                 roster_need_score=ps.roster_need_score,
             ))
         results.sort(key=lambda r: r.mean_score, reverse=True)
+        if results:
+            top = results[0]
+            logger.info(
+                "Top pick: %s %s (proj=%.0f, VOR=%.1f, VONA=%.1f, sim=%.1f)",
+                top.candidate.position, top.candidate.name,
+                top.candidate.projected_points, top.vor, top.vona, top.mean_score,
+            )
         return results
 
     def _make_placeholder(self, sleeper_pick: SleeperPick) -> NFLPlayer:

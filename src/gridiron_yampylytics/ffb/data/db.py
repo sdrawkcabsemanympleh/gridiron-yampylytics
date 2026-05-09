@@ -4,10 +4,13 @@ Follows the same path convention as the rest of gridiron-yampylytics:
 the database defaults to ``gridiron_yampylytics.db`` in the current
 working directory, with an optional override.
 """
+import logging
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 import duckdb
+
+logger = logging.getLogger(__name__)
 
 
 def get_db_path(db_path: Path | str | None = None) -> Path:
@@ -24,6 +27,7 @@ def get_db_path(db_path: Path | str | None = None) -> Path:
             f"Database not found at {resolved}. "
             "Run 'create-duckdb-tables' from the gridiron-yampylytics root to build it."
         )
+    logger.info("DB path resolved: %s", resolved)
     return resolved
 
 

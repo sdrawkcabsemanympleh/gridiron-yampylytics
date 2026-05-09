@@ -7,10 +7,13 @@ Endpoints:
 - ``DELETE /api/sessions/{draft_id}`` — tear down a session.
 """
 import asyncio
+import logging
 import threading
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+
+logger = logging.getLogger(__name__)
 
 from gridiron_yampylytics.ffb.api.schemas import (
     DraftCompleteEvent,
@@ -138,6 +141,19 @@ async def _compute_and_broadcast_recommendations(
     )
     if results is None:  # cancelled
         return
+    top = results[0] if results else None
+    logger.info(
+        "Broadcasting %d candidates for pick %d; top=%s proj=%.0f VOR=%.1f VONA=%.1f scarcity=%.2f need=%.2f sim=%.1f",
+        len(results),
+        for_pick,
+        f"{top.candidate.position} {top.candidate.name}" if top else "none",
+        top.candidate.projected_points if top else 0,
+        top.vor if top else 0,
+        top.vona if top else 0,
+        top.scarcity_score if top else 0,
+        top.roster_need_score if top else 0,
+        top.mean_score if top else 0,
+    )
     event = RecommendationsEvent(
         for_pick=for_pick,
         candidates=[
@@ -277,6 +293,11 @@ async def create_session(body: SessionCreateRequest) -> SessionResponse:
         raise HTTPException(status_code=500, detail=f"Player pool load error: {exc}") from exc
     player_index = build_player_index(players)
     replacement_levels = compute_replacement_levels(players, roster_config, team_count)
+    logger.info(
+        "Session %s: %d players loaded, replacement levels: %s",
+        body.draft_id, len(players),
+        {str(k): round(v, 1) for k, v in replacement_levels.items()},
+    )
     initial_state = DraftState.new(league=league, managers=managers, available_players=players)
     session = DraftSession(
         initial_state=initial_state,
