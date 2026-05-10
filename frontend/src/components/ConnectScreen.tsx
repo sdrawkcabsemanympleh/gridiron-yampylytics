@@ -11,6 +11,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 const SEASONS = Array.from({ length: 7 }, (_, i) => CURRENT_YEAR - i);
 const RECENT_USERS_KEY = 'yampgm_recent_users';
 const LAST_USER_KEY = 'yampgm_last_user';
+const RECENT_DRAFTS_KEY = 'yampgm_recent_drafts';
 const MAX_RECENT = 5;
 
 interface SavedUser { userId: string; displayName: string; username: string }
@@ -38,6 +39,19 @@ function loadLastUser(): SavedUser | null {
 
 function saveLastUser(user: SavedUser): void {
   localStorage.setItem(LAST_USER_KEY, JSON.stringify(user));
+}
+
+function loadRecentDrafts(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_DRAFTS_KEY) ?? '[]') as string[];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentDraft(draftId: string): void {
+  const recent = [draftId, ...loadRecentDrafts().filter((d) => d !== draftId)].slice(0, MAX_RECENT);
+  localStorage.setItem(RECENT_DRAFTS_KEY, JSON.stringify(recent));
 }
 
 async function resolveSleeperUser(usernameOrId: string): Promise<{ userId: string; displayName: string }> {
@@ -117,10 +131,12 @@ function ManualDraftEntry({
 }) {
   const [open, setOpen] = useState(false);
   const [draftId, setDraftId] = useState('');
+  const [recentDrafts] = useState<string[]>(loadRecentDrafts);
 
-  const handleSubmit = () => {
-    const id = draftId.trim();
-    if (id) onConnect(id, userId);
+  const handleSubmit = (id: string = draftId.trim()) => {
+    if (!id) return;
+    saveRecentDraft(id);
+    onConnect(id, userId);
   };
 
   if (!open) {
@@ -135,24 +151,43 @@ function ManualDraftEntry({
   }
 
   return (
-    <div className="flex gap-2">
-      <input
-        type="text"
-        placeholder="Draft ID"
-        value={draftId}
-        onChange={(e) => setDraftId(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-        autoFocus
-        disabled={disabled}
-        className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-600 disabled:opacity-50"
-      />
-      <button
-        onClick={handleSubmit}
-        disabled={!draftId.trim() || disabled}
-        className="bg-emerald-700 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors shrink-0"
-      >
-        Go
-      </button>
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Draft ID"
+          value={draftId}
+          onChange={(e) => setDraftId(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          autoFocus
+          disabled={disabled}
+          className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-600 disabled:opacity-50"
+        />
+        <button
+          onClick={() => handleSubmit()}
+          disabled={!draftId.trim() || disabled}
+          className="bg-emerald-700 hover:bg-emerald-600 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors shrink-0"
+        >
+          Go
+        </button>
+      </div>
+      {recentDrafts.length > 0 && (
+        <div>
+          <div className="text-xs text-slate-600 mb-1.5">Recent mock drafts</div>
+          <div className="flex flex-wrap gap-1.5">
+            {recentDrafts.map((id) => (
+              <button
+                key={id}
+                onClick={() => handleSubmit(id)}
+                disabled={disabled}
+                className="text-xs px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-400 hover:border-emerald-700 hover:text-emerald-400 transition-colors disabled:opacity-50 font-mono"
+              >
+                {id}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
