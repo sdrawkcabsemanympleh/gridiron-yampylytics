@@ -78,7 +78,7 @@ async function fetchDrafts(userId: string): Promise<SleeperDraftSummary[]> {
   const STATUS_ORDER: Record<string, number> = { drafting: 0, pre_draft: 1, complete: 2 };
   return results
     .flat()
-    .filter((d) => d.type === 'snake')
+    .filter((d) => d.type === 'snake' && (d.status !== 'pre_draft' || d.season === String(CURRENT_YEAR)))
     .sort((a, b) => {
       const statusDiff = (STATUS_ORDER[a.status] ?? 3) - (STATUS_ORDER[b.status] ?? 3);
       if (statusDiff !== 0) return statusDiff;

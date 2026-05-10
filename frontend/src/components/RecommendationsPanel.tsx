@@ -27,6 +27,12 @@ function positionBadge(pos: string): string {
   return POSITION_COLORS[pos] ?? 'text-slate-300 bg-slate-800';
 }
 
+function signedValueColor(val: number): string {
+  if (val > 0) return 'text-emerald-400';
+  if (val < 0) return 'text-rose-400';
+  return 'text-slate-400';
+}
+
 function riskLabel(std: number, allStds: number[]): { label: string; color: string } {
   const sorted = [...allStds].sort((a, b) => a - b);
   const n = sorted.length;
@@ -126,8 +132,10 @@ export function RecommendationsPanel({
     );
   }
 
-  const best = recommendations[0];
   const allStds = recommendations.map((r) => r.std_score);
+  const scaleMin = Math.min(...recommendations.map((r) => r.mean_score - r.std_score));
+  const scaleMax = Math.max(...recommendations.map((r) => r.mean_score + r.std_score));
+  const scaleRange = scaleMax - scaleMin || 1;
 
   return (
     <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
@@ -136,7 +144,9 @@ export function RecommendationsPanel({
       )}
       {recommendations.map((rec, i) => {
         const risk = riskLabel(rec.std_score, allStds);
-        const scorePct = best.mean_score > 0 ? (rec.mean_score / best.mean_score) * 100 : 0;
+        const bandLeft = ((rec.mean_score - rec.std_score - scaleMin) / scaleRange) * 100;
+        const bandWidth = Math.max(1, (rec.std_score * 2 / scaleRange) * 100);
+        const meanLeft = ((rec.mean_score - scaleMin) / scaleRange) * 100;
         return (
           <div
             key={rec.player.player_id}
@@ -163,12 +173,19 @@ export function RecommendationsPanel({
             <div className="mt-2">
               <div className="flex justify-between text-xs mb-1">
                 <span className="text-slate-500">Sim score</span>
-                <span className="text-slate-300 font-mono">{rec.mean_score.toFixed(1)}</span>
+                <span className="font-mono">
+                  <span className={i === 0 ? 'text-slate-200' : 'text-slate-400'}>{rec.mean_score.toFixed(0)}</span>
+                  <span className="text-slate-600"> ±{rec.std_score.toFixed(0)}</span>
+                </span>
               </div>
-              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="relative h-3 bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all ${i === 0 ? 'bg-emerald-500' : 'bg-slate-500'}`}
-                  style={{ width: `${scorePct}%` }}
+                  className={`absolute h-full ${i === 0 ? 'bg-emerald-500/30' : 'bg-slate-500/20'}`}
+                  style={{ left: `${bandLeft}%`, width: `${bandWidth}%` }}
+                />
+                <div
+                  className={`absolute top-0 h-full w-px ${i === 0 ? 'bg-emerald-400' : 'bg-slate-500'}`}
+                  style={{ left: `${meanLeft}%` }}
                 />
               </div>
             </div>
@@ -176,11 +193,11 @@ export function RecommendationsPanel({
             <div className="mt-2 grid grid-cols-4 gap-1 text-xs">
               <div className="flex flex-col items-center bg-slate-800/60 rounded px-1.5 py-1">
                 <span className="text-slate-500 uppercase tracking-wide text-[10px]">VOR</span>
-                <span className="text-slate-300 font-mono">{rec.vor >= 0 ? '+' : ''}{rec.vor.toFixed(1)}</span>
+                <span className={`font-mono ${signedValueColor(rec.vor)}`}>{rec.vor >= 0 ? '+' : ''}{rec.vor.toFixed(1)}</span>
               </div>
               <div className="flex flex-col items-center bg-slate-800/60 rounded px-1.5 py-1">
                 <span className="text-slate-500 uppercase tracking-wide text-[10px]">VONA</span>
-                <span className="text-slate-300 font-mono">{rec.vona >= 0 ? '+' : ''}{rec.vona.toFixed(1)}</span>
+                <span className={`font-mono ${signedValueColor(rec.vona)}`}>{rec.vona >= 0 ? '+' : ''}{rec.vona.toFixed(1)}</span>
               </div>
               <div className="flex flex-col items-center bg-slate-800/60 rounded px-1.5 py-1">
                 <span className="text-slate-500 uppercase tracking-wide text-[10px]">Scarcity</span>
