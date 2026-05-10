@@ -419,8 +419,12 @@ class TestWeightedLinearScorer:
         results = WeightedLinearScorer().score(state, {Position.QB: 200.0})
         assert results[0].roster_need_score == pytest.approx(1.0)
 
-    def test_roster_need_zero_for_full_position(self) -> None:
-        """roster_need_score is 0.0 once dedicated slots at a position are filled."""
+    def test_roster_need_partial_after_dedicated_filled(self) -> None:
+        """roster_need_score is 0.5 for QB once the dedicated slot is filled.
+
+        QB gets one depth slot beyond its dedicated count (backup QB pressure),
+        so need decreases from 1.0 → 0.5 → 0.0 rather than binary 1.0 → 0.0.
+        """
         qb_on_roster = _p("q_drafted", "QB", 350.0, 1.0)
         available = [_p("q1", "QB", 300.0, 3.0), _p("r1", "RB", 250.0, 5.0)]
         state = _state_with_roster(available, [qb_on_roster])
@@ -428,5 +432,5 @@ class TestWeightedLinearScorer:
         results = WeightedLinearScorer().score(state, levels)
         qb_score = next(r for r in results if r.player.position == Position.QB)
         rb_score = next(r for r in results if r.player.position == Position.RB)
-        assert qb_score.roster_need_score == pytest.approx(0.0)
+        assert qb_score.roster_need_score == pytest.approx(0.5)
         assert rb_score.roster_need_score == pytest.approx(1.0)

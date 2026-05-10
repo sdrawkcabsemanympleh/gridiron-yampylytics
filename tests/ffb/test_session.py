@@ -7,7 +7,7 @@ from gridiron_yampylytics.ffb.models.league import League, RosterConfig
 from gridiron_yampylytics.ffb.models.manager import Manager
 from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
 from gridiron_yampylytics.ffb.scoring.vor import compute_replacement_levels
-from gridiron_yampylytics.ffb.session import DraftSession
+from gridiron_yampylytics.ffb.session import DraftSession, EnrichedResult
 from gridiron_yampylytics.ffb.simulation.engine import DraftSimulator, SimulationResult
 
 # ---------------------------------------------------------------------------
@@ -181,12 +181,12 @@ class TestDraftSessionGetRecommendations:
         ]
         return _make_session(players, user_slot=1)
 
-    def test_returns_simulation_results(self) -> None:
-        """get_recommendations returns a non-empty list of SimulationResults."""
+    def test_returns_enriched_results(self) -> None:
+        """get_recommendations returns a non-empty list of EnrichedResults."""
         session = self._session_at_user_turn()
         results = session.get_recommendations()
         assert len(results) > 0
-        assert all(isinstance(r, SimulationResult) for r in results)
+        assert all(isinstance(r, EnrichedResult) for r in results)
 
     def test_results_sorted_by_mean_score_descending(self) -> None:
         """get_recommendations results are sorted by mean_score descending."""

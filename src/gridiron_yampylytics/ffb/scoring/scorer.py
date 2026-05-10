@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from gridiron_yampylytics.ffb.models.draft import DraftState, Roster
 from gridiron_yampylytics.ffb.models.league import RosterConfig
 from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
-from gridiron_yampylytics.ffb.scoring.scarcity import ScarcityAnalyzer, TierScarcityAnalyzer
+from gridiron_yampylytics.ffb.scoring.scarcity import GradientScarcityAnalyzer, ScarcityAnalyzer
 from gridiron_yampylytics.ffb.scoring.vona import AdpVonaApproximation, VonaCalculator
 from gridiron_yampylytics.ffb.scoring.vor import compute_vor
 
@@ -63,7 +63,7 @@ class WeightedLinearScorer:
     :param vona_calculator: VONA implementation. Defaults to
         :class:`~gridiron_yampylytics.ffb.scoring.vona.AdpVonaApproximation`.
     :param scarcity_analyzer: Scarcity implementation. Defaults to
-        :class:`~gridiron_yampylytics.ffb.scoring.scarcity.TierScarcityAnalyzer`.
+        :class:`~gridiron_yampylytics.ffb.scoring.scarcity.GradientScarcityAnalyzer`.
     """
 
     def __init__(
@@ -78,11 +78,11 @@ class WeightedLinearScorer:
         :param vona_calculator: VONA implementation. ``None`` uses
             :class:`AdpVonaApproximation`.
         :param scarcity_analyzer: Scarcity implementation. ``None`` uses
-            :class:`TierScarcityAnalyzer`.
+            :class:`GradientScarcityAnalyzer`.
         """
         self.weights = weights or ScorerWeights()
         self.vona_calculator: VonaCalculator = vona_calculator or AdpVonaApproximation()
-        self.scarcity_analyzer: ScarcityAnalyzer = scarcity_analyzer or TierScarcityAnalyzer()
+        self.scarcity_analyzer: ScarcityAnalyzer = scarcity_analyzer or GradientScarcityAnalyzer()
 
     def score(
         self,
@@ -108,7 +108,14 @@ class WeightedLinearScorer:
             for result in self.scarcity_analyzer.analyze(available, pos):
                 scarcity_by_player[result.player.player_id] = result.scarcity_score
         raw_vors = [compute_vor(p, replacement_levels) for p in available]
-        raw_vonas = [self.vona_calculator.compute_vona(p, available, picks_until_user) for p in available]
+        raw_vonas = [
+            self.vona_calculator.compute_vona(
+                p, available, picks_until_user,
+                user_roster=user_roster,
+                roster_config=roster_config,
+            )
+            for p in available
+        ]
         vor_min, vor_max = min(raw_vors), max(raw_vors)
         vona_min, vona_max = min(raw_vonas), max(raw_vonas)
         vor_denom = vor_max - vor_min if vor_max != vor_min else 1.0
@@ -144,17 +151,20 @@ class WeightedLinearScorer:
     ) -> dict[Position, float]:
         """Compute [0.0, 1.0] roster need score for each position.
 
-        Dedicated need: fraction of dedicated starter slots still empty.
-        FLEX need: fraction of FLEX slots not yet covered by surplus flex-eligible
-        players (those beyond their dedicated count). Each FLEX-eligible position
-        receives the higher of its dedicated need and the FLEX need.
+        Models ideal positional depth rather than strict slot compliance.
+        Flex-eligible positions and QB each receive one extra effective slot
+        beyond their dedicated count, so need decreases gradually as depth is
+        built. QB gets the boost to maintain pressure toward a backup in
+        standard leagues; the boost is skipped for QB in superflex leagues
+        where QB is already flex-eligible (to avoid double-counting). K and
+        DEF remain binary: 1.0 until filled, 0.0 after.
 
         :param roster: The user's current roster.
         :param roster_config: League roster configuration.
         :return: Mapping of :class:`~gridiron_yampylytics.ffb.models.player.Position`
             → need score in [0.0, 1.0].
         """
-        dedicated_slots: dict[Position, int] = {
+        effective_slots: dict[Position, int] = {
             Position.QB: roster_config.qb,
             Position.RB: roster_config.rb,
             Position.WR: roster_config.wr,
@@ -162,19 +172,15 @@ class WeightedLinearScorer:
             Position.K: roster_config.k,
             Position.DEF: roster_config.def_,
         }
+        depth_positions = set(roster_config.flex_eligible)
+        if roster_config.qb > 0 and Position.QB not in depth_positions:
+            depth_positions.add(Position.QB)
+        for pos in depth_positions:
+            effective_slots[pos] = effective_slots.get(pos, 0) + 1
         need: dict[Position, float] = {}
-        for pos, slots in dedicated_slots.items():
+        for pos, slots in effective_slots.items():
             if slots == 0:
                 need[pos] = 0.0
             else:
-                filled = roster.count_at_position(pos)
-                need[pos] = max(0.0, 1.0 - filled / slots)
-        if roster_config.flex > 0:
-            overage = sum(
-                max(0, roster.count_at_position(pos) - dedicated_slots.get(pos, 0))
-                for pos in roster_config.flex_eligible
-            )
-            flex_need = max(0.0, 1.0 - overage / roster_config.flex)
-            for pos in roster_config.flex_eligible:
-                need[pos] = max(need.get(pos, 0.0), flex_need)
+                need[pos] = max(0.0, 1.0 - roster.count_at_position(pos) / slots)
         return need
