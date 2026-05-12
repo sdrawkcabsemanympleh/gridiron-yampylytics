@@ -393,3 +393,4 @@ async def delete_session(draft_id: str) -> None:
     ctx.shutdown = True
     if ctx.listener_task is not None:
         ctx.listener_task.cancel()
+    ctx.session.shutdown()

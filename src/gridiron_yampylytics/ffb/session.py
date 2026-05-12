@@ -154,18 +154,18 @@ class DraftSession:
         """Compute ranked pick recommendations for the current draft state.
 
         Runs :class:`~gridiron_yampylytics.ffb.scoring.scorer.WeightedLinearScorer`
-        to select the top ``n_candidates`` available players, then evaluates
-        each via Monte Carlo simulation.  Iterates candidates one at a time so
-        that a ``cancel_event`` can interrupt computation between candidates
-        (used by the FastAPI layer when a new pick arrives mid-computation).
+        to select the top ``n_candidates`` available players, then evaluates all
+        candidates concurrently via :meth:`~gridiron_yampylytics.ffb.simulation.engine.DraftSimulator.recommend`.
+        The ``cancel_event`` is forwarded into the simulator so a new incoming
+        pick can interrupt the parallel computation between future completions.
 
         This method is CPU-bound.  FastAPI callers should dispatch it with
         ``asyncio.get_event_loop().run_in_executor`` rather than calling it
         directly from an async handler.
 
         :param cancel_event: Optional :class:`threading.Event`.  When set,
-            computation stops after the current candidate finishes and ``None``
-            is returned to signal cancellation.  ``None`` disables cancellation.
+            pending candidate futures are cancelled and ``None`` is returned to
+            signal cancellation.  ``None`` disables cancellation.
         :return: :class:`EnrichedResult` list sorted by ``mean_score`` descending,
             or ``None`` if cancelled.  Empty list if no players are available.
         """
@@ -175,13 +175,20 @@ class DraftSession:
             "Pick %d: scoring %d candidates from %d available",
             self.state.current_pick, len(top_scored), len(self.state.available_players),
         )
+        if not top_scored:
+            return []
+        scored_lookup = {ps.player.player_id: ps for ps in top_scored}
+        sim_results = self._simulator.recommend(
+            self.state, [ps.player for ps in top_scored], self._replacement_levels,
+            cancel_event=cancel_event,
+        )
+        if sim_results is None:
+            return None
         results: list[EnrichedResult] = []
-        for ps in top_scored:
-            if cancel_event is not None and cancel_event.is_set():
-                return None
-            sim = self._simulator.simulate(self.state, ps.player, self._replacement_levels)
+        for sim in sim_results:
+            ps = scored_lookup[sim.candidate.player_id]
             results.append(EnrichedResult(
-                candidate=ps.player,
+                candidate=sim.candidate,
                 mean_score=sim.mean_score,
                 std_score=sim.std_score,
                 n_simulations=sim.n_simulations,
@@ -190,7 +197,6 @@ class DraftSession:
                 scarcity_score=ps.scarcity_score,
                 roster_need_score=ps.roster_need_score,
             ))
-        results.sort(key=lambda r: r.mean_score, reverse=True)
         if results:
             top = results[0]
             logger.info(
@@ -199,6 +205,15 @@ class DraftSession:
                 top.candidate.projected_points, top.vor, top.vona, top.mean_score,
             )
         return results
+
+    def shutdown(self) -> None:
+        """Shut down the simulator's process pool, releasing worker processes.
+
+        Should be called when the draft session ends (completion or explicit
+        teardown) so workers are released immediately rather than waiting for
+        garbage collection.
+        """
+        self._simulator.shutdown()
 
     def _make_placeholder(self, sleeper_pick: SleeperPick) -> NFLPlayer:
         """Create a zero-value placeholder for a Sleeper player not in our pool.

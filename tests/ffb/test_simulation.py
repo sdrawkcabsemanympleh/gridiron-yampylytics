@@ -1,4 +1,5 @@
 """Tests for ffb/simulation/pick_model.py and ffb/simulation/engine.py."""
+import threading
 import numpy as np
 import pytest
 from gridiron_yampylytics.ffb.models.draft import DraftState, Roster
@@ -375,3 +376,89 @@ class TestDraftSimulator:
         )
         result = sim.simulate(state, players[0], self._replacement_levels())
         assert isinstance(result, SimulationResult)
+
+
+# ---------------------------------------------------------------------------
+# engine.py — DraftSimulator parallel / pool lifecycle
+# ---------------------------------------------------------------------------
+
+class TestDraftSimulatorParallel:
+    """Tests for parallel candidate evaluation and process pool lifecycle."""
+
+    def _make_players(self) -> list[NFLPlayer]:
+        """6 players for a 2-team, 3-round draft (6 total picks)."""
+        return [
+            _p("q1", "QB", 400.0, 1.0),
+            _p("r1", "RB", 300.0, 2.0),
+            _p("r2", "RB", 270.0, 3.0),
+            _p("q2", "QB",  50.0, 4.0),
+            _p("r3", "RB", 200.0, 5.0),
+            _p("r4", "RB", 150.0, 6.0),
+        ]
+
+    def _levels(self) -> dict[Position, float]:
+        return {Position.QB: 50.0, Position.RB: 150.0}
+
+    def test_recommend_returns_sorted_results(self) -> None:
+        """Parallel recommend returns all candidates sorted by mean_score descending."""
+        players = self._make_players()
+        state = _state(players)
+        sim = DraftSimulator(n_simulations=10, seed=0, n_workers=2)
+        results = sim.recommend(state, players[:3], self._levels())
+        assert results is not None
+        assert len(results) == 3
+        scores = [r.mean_score for r in results]
+        assert scores == sorted(scores, reverse=True)
+        sim.shutdown()
+
+    def test_recommend_ranks_dominant_candidate_first(self) -> None:
+        """q1 (400 pts, VOR=350) should rank first across all candidates.
+
+        In this pool, taking r2 forces the user onto q2 as the only remaining QB,
+        so r2 and q2 can be similarly ranked. q1 however is so dominant that
+        it reliably tops the list regardless of parallel non-determinism.
+        """
+        players = self._make_players()
+        state = _state(players)
+        sim = DraftSimulator(n_simulations=30, seed=3, n_workers=2)
+        results = sim.recommend(state, players[:4], self._levels())
+        assert results is not None
+        assert results[0].candidate.player_id == "q1"
+        sim.shutdown()
+
+    def test_cancel_event_stops_recommend(self) -> None:
+        """recommend() returns None when cancel_event is set before any future completes."""
+        players = self._make_players()
+        state = _state(players)
+        sim = DraftSimulator(n_simulations=5, seed=0, n_workers=2)
+        cancel = threading.Event()
+        cancel.set()
+        result = sim.recommend(state, players[:3], self._levels(), cancel_event=cancel)
+        assert result is None
+        sim.shutdown()
+
+    def test_pool_created_lazily(self) -> None:
+        """Process pool is None until the first recommend() call."""
+        sim = DraftSimulator(n_simulations=5, seed=0)
+        assert sim._executor is None
+        players = self._make_players()
+        state = _state(players)
+        sim.recommend(state, players[:2], self._levels())
+        assert sim._executor is not None
+        sim.shutdown()
+
+    def test_shutdown_releases_pool(self) -> None:
+        """shutdown() sets the internal executor to None."""
+        players = self._make_players()
+        state = _state(players)
+        sim = DraftSimulator(n_simulations=5, seed=0)
+        sim.recommend(state, players[:2], self._levels())
+        assert sim._executor is not None
+        sim.shutdown()
+        assert sim._executor is None
+
+    def test_shutdown_is_idempotent(self) -> None:
+        """Calling shutdown() twice does not raise."""
+        sim = DraftSimulator(n_simulations=5, seed=0)
+        sim.shutdown()
+        sim.shutdown()
