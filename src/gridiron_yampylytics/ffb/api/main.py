@@ -42,6 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                     await asyncio.wait_for(ctx.listener_task, timeout=2.0)
                 except (asyncio.CancelledError, asyncio.TimeoutError):
                     pass
+            ctx.session.shutdown()
 
 
 app = FastAPI(
