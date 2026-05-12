@@ -80,7 +80,7 @@ class DraftSession:
         :class:`~gridiron_yampylytics.ffb.scoring.scorer.WeightedLinearScorer`.
     :param n_candidates: Number of top-scored players passed to the simulator.
         Higher values improve recommendation coverage at the cost of compute time.
-        Defaults to 10.
+        Defaults to 20.
     """
 
     def __init__(
@@ -90,7 +90,7 @@ class DraftSession:
         replacement_levels: dict[Position, float],
         simulator: DraftSimulator | None = None,
         scorer: WeightedLinearScorer | None = None,
-        n_candidates: int = 10,
+        n_candidates: int = 20,
     ) -> None:
         """Initialise the session.
 
