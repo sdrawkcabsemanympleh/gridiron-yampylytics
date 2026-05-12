@@ -1,6 +1,5 @@
 """Tests for ffb/data/sleeper.py."""
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 import pytest
 from gridiron_yampylytics.ffb.data.sleeper import (
     SleeperClient,
@@ -228,51 +227,51 @@ class TestSleeperClientGetExistingPicks:
 
 
 # ---------------------------------------------------------------------------
-# SleeperClient — stream_picks (mocked WebSocket)
+# SleeperClient — stream_picks (mocked REST polling)
 # ---------------------------------------------------------------------------
 
 class TestSleeperClientStreamPicks:
-    """Tests for SleeperClient.stream_picks using mocked WebSocket."""
+    """Tests for SleeperClient.stream_picks using mocked REST polling."""
 
-    def _ws_message(self, *pick_nos: int) -> str:
-        picks = [_raw_pick(pick_no=n) for n in pick_nos]
-        return json.dumps({"type": "picked", "payload": {"picks": picks}})
+    def _picks_resp(self, pick_nos: list[int]) -> MagicMock:
+        mock = MagicMock()
+        mock.json.return_value = [_raw_pick(pick_no=n) for n in pick_nos]
+        return mock
 
-    def _mock_connect(self, messages: list[str]) -> MagicMock:
-        """Return a context manager mock whose __aenter__ yields an async iterator of messages."""
-        async def _message_gen() -> AsyncMock:
-            for m in messages:
-                yield m
-        ctx = MagicMock()
-        ctx.__aenter__ = AsyncMock(return_value=_message_gen())
-        ctx.__aexit__ = AsyncMock(return_value=False)
-        return ctx
+    def _draft_resp(self, status: str = "complete") -> MagicMock:
+        mock = MagicMock()
+        mock.json.return_value = {"status": status}
+        return mock
 
-    async def test_yields_picks_from_ws_messages(self) -> None:
-        messages = [self._ws_message(1), self._ws_message(2)]
-        with patch("websockets.connect", return_value=self._mock_connect(messages)):
+    async def test_yields_picks_on_first_poll(self) -> None:
+        """All picks returned by the first poll are yielded."""
+        with patch("requests.get", side_effect=[self._picks_resp([1, 2]), self._draft_resp()]), \
+             patch("asyncio.sleep"):
             picks = [p async for p in SleeperClient().stream_picks("d1")]
-        assert len(picks) == 2
-        assert picks[0].pick_no == 1
-        assert picks[1].pick_no == 2
+        assert [p.pick_no for p in picks] == [1, 2]
 
-    async def test_ignores_non_pick_messages(self) -> None:
-        status_msg = json.dumps({"type": "status", "payload": {}})
-        messages = [status_msg, self._ws_message(1)]
-        with patch("websockets.connect", return_value=self._mock_connect(messages)):
-            picks = [p async for p in SleeperClient().stream_picks("d1")]
+    async def test_skips_already_seen_picks(self) -> None:
+        """seen_count causes picks already replayed at session start to be skipped."""
+        with patch("requests.get", side_effect=[self._picks_resp([1, 2, 3]), self._draft_resp()]), \
+             patch("asyncio.sleep"):
+            picks = [p async for p in SleeperClient().stream_picks("d1", seen_count=2)]
         assert len(picks) == 1
-        assert picks[0].pick_no == 1
+        assert picks[0].pick_no == 3
 
-    async def test_yields_multiple_picks_from_batched_message(self) -> None:
-        batched = json.dumps({"type": "picked", "payload": {"picks": [
-            _raw_pick(pick_no=1), _raw_pick(pick_no=2), _raw_pick(pick_no=3),
-        ]}})
-        with patch("websockets.connect", return_value=self._mock_connect([batched])):
+    async def test_yields_new_picks_across_multiple_polls(self) -> None:
+        """New picks arriving on a later poll are yielded after earlier picks."""
+        with patch("requests.get", side_effect=[
+            self._picks_resp([1]),           # first picks poll
+            self._draft_resp("drafting"),    # not complete yet
+            self._picks_resp([1, 2]),        # second poll — pick 2 is new
+            self._draft_resp("complete"),
+        ]), patch("asyncio.sleep"):
             picks = [p async for p in SleeperClient().stream_picks("d1")]
-        assert len(picks) == 3
+        assert [p.pick_no for p in picks] == [1, 2]
 
-    async def test_empty_stream_yields_nothing(self) -> None:
-        with patch("websockets.connect", return_value=self._mock_connect([])):
-            picks = [p async for p in SleeperClient().stream_picks("d1")]
+    async def test_exits_when_all_picks_already_seen(self) -> None:
+        """Exits without yielding when seen_count equals total picks and draft is complete."""
+        with patch("requests.get", side_effect=[self._picks_resp([1, 2]), self._draft_resp()]), \
+             patch("asyncio.sleep"):
+            picks = [p async for p in SleeperClient().stream_picks("d1", seen_count=2)]
         assert picks == []
