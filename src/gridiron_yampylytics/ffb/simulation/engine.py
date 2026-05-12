@@ -1,10 +1,11 @@
 """Monte Carlo draft simulation engine for YampGM.
 
 Evaluates candidate draft picks by simulating N complete drafts from the current
-state. Opponent picks are sampled from a
+state. Opponent picks are sampled from a configurable
 :class:`~gridiron_yampylytics.ffb.simulation.pick_model.PickModel`; the user's
-subsequent picks within each simulation use a greedy VOR strategy to approximate
-rational self-interested behavior without requiring a recursive scorer call.
+subsequent within-simulation picks use a separate, also-configurable model that
+defaults to greedy VOR.  Both models receive per-manager roster counts so that
+roster-aware implementations can modulate their decisions based on current holdings.
 
 The recommended pick is the candidate with the highest mean final roster quality
 (total projected points of the optimal starting lineup) across all simulations.
@@ -14,11 +15,9 @@ from dataclasses import dataclass
 import numpy as np
 from gridiron_yampylytics.ffb.evaluation.roster_evaluator import score_roster
 from gridiron_yampylytics.ffb.models.draft import DraftState
-from gridiron_yampylytics.ffb.models.league import RosterConfig
 from gridiron_yampylytics.ffb.models.manager import Manager
 from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
-from gridiron_yampylytics.ffb.scoring.vor import compute_vor
-from gridiron_yampylytics.ffb.simulation.pick_model import ADPPickModel, PickModel
+from gridiron_yampylytics.ffb.simulation.pick_model import GreedyVorPickModel, NeedWeightedADPModel, PickModel
 
 
 @dataclass
@@ -55,54 +54,25 @@ def _manager_at_pick(draft_state: DraftState, pick_number: int) -> Manager:
     return next(m for m in draft_state.managers if m.draft_slot == target_slot)
 
 
-def _greedy_vor_pick(
-    available: list[NFLPlayer],
-    user_players: list[NFLPlayer],
-    roster_config: RosterConfig,
-    replacement_levels: dict[Position, float],
-) -> NFLPlayer:
-    """Select the best available player by VOR for the user's subsequent simulation picks.
-
-    Prioritizes filling open dedicated position slots; falls back to best overall
-    VOR when all dedicated slots are filled (bench picks).
-
-    :param available: Players still on the board.
-    :param user_players: Players already on the user's simulated roster.
-    :param roster_config: League roster configuration.
-    :param replacement_levels: Pre-computed VOR replacement levels.
-    :return: Highest-VOR available player matching the user's positional needs.
-    """
-    dedicated: dict[Position, int] = {
-        Position.QB: roster_config.qb,
-        Position.RB: roster_config.rb,
-        Position.WR: roster_config.wr,
-        Position.TE: roster_config.te,
-        Position.K: roster_config.k,
-        Position.DEF: roster_config.def_,
-    }
-    current_counts: dict[Position, int] = {}
-    for p in user_players:
-        current_counts[p.position] = current_counts.get(p.position, 0) + 1
-    needed = {pos for pos, slots in dedicated.items() if current_counts.get(pos, 0) < slots}
-    pool = [p for p in available if p.position in needed] if needed else available
-    if not pool:
-        pool = available
-    return max(pool, key=lambda p: compute_vor(p, replacement_levels))
-
-
 class DraftSimulator:
     """Monte Carlo draft simulation engine.
 
     For each candidate player, simulates N complete drafts from the current state
     and computes the mean final roster quality. Opponent picks are sampled from the
-    provided :class:`~gridiron_yampylytics.ffb.simulation.pick_model.PickModel`;
-    the user's subsequent picks use a greedy VOR strategy.
+    ``opponent_model``; the user's subsequent within-simulation picks use the
+    ``user_model``.  Both models receive per-manager roster counts at each pick
+    so that roster-aware implementations (e.g.
+    :class:`~gridiron_yampylytics.ffb.simulation.pick_model.NeedWeightedADPModel`)
+    can factor in current holdings.
 
     Available players are tracked in a dict keyed by player_id for O(1) removal
     at each simulated pick, keeping per-simulation cost proportional to the number
     of remaining picks rather than the pool size.
 
-    :param pick_model: Opponent pick model. Defaults to :class:`ADPPickModel`.
+    :param opponent_model: Pick model for opposing managers. Defaults to
+        :class:`~gridiron_yampylytics.ffb.simulation.pick_model.NeedWeightedADPModel`.
+    :param user_model: Pick model for the user's within-simulation picks. Defaults
+        to :class:`~gridiron_yampylytics.ffb.simulation.pick_model.GreedyVorPickModel`.
     :param n_simulations: Simulations per candidate. Higher values reduce variance
         in the estimate at the cost of compute time. Defaults to 200.
     :param seed: Random seed for reproducibility. ``None`` gives non-deterministic
@@ -111,17 +81,20 @@ class DraftSimulator:
 
     def __init__(
         self,
-        pick_model: PickModel | None = None,
+        opponent_model: PickModel | None = None,
+        user_model: PickModel | None = None,
         n_simulations: int = 200,
         seed: int | None = None,
     ) -> None:
         """Initialise the simulator.
 
-        :param pick_model: Opponent pick model. ``None`` uses :class:`ADPPickModel`.
+        :param opponent_model: Opponent pick model. ``None`` uses :class:`NeedWeightedADPModel`.
+        :param user_model: User sim pick model. ``None`` uses :class:`GreedyVorPickModel`.
         :param n_simulations: Simulations per candidate.
         :param seed: Random seed. ``None`` = non-deterministic.
         """
-        self.pick_model: PickModel = pick_model or ADPPickModel()
+        self._opponent_model: PickModel = opponent_model or NeedWeightedADPModel()
+        self._user_model: PickModel = user_model or GreedyVorPickModel()
         self.n_simulations = n_simulations
         self.rng = np.random.default_rng(seed)
 
@@ -133,8 +106,11 @@ class DraftSimulator:
     ) -> float:
         """Run one complete draft simulation with the user taking ``candidate`` next.
 
-        Uses a dict for O(1) player removal at each pick. Opponent picks are
-        sampled stochastically; the user's subsequent picks are greedy by VOR.
+        Initialises per-manager roster counts from the current draft state and
+        passes them to each model call so pick selection can be roster-aware.
+        Both models receive the full context kwargs; models that ignore context
+        (e.g. :class:`~gridiron_yampylytics.ffb.simulation.pick_model.ADPPickModel`)
+        simply discard unused kwargs.
 
         :param draft_state: Current draft state snapshot.
         :param candidate: Player the user takes at their next turn.
@@ -144,17 +120,40 @@ class DraftSimulator:
         """
         available: dict[str, NFLPlayer] = {p.player_id: p for p in draft_state.available_players}
         del available[candidate.player_id]
-        user_players = list(draft_state.user_roster.players) + [candidate]
         roster_config = draft_state.league.roster
+        total_picks = draft_state.total_picks
+        roster_counts: dict[str, dict[Position, int]] = {}
+        for manager_id, roster in draft_state.rosters.items():
+            counts: dict[Position, int] = {}
+            for p in roster.players:
+                counts[p.position] = counts.get(p.position, 0) + 1
+            roster_counts[manager_id] = counts
+        user_id = draft_state.user_manager.manager_id
+        roster_counts[user_id][candidate.position] = roster_counts[user_id].get(candidate.position, 0) + 1
+        user_players = list(draft_state.user_roster.players) + [candidate]
         current_pick = draft_state.current_pick + 1
-        while current_pick <= draft_state.total_picks:
+        while current_pick <= total_picks:
             manager = _manager_at_pick(draft_state, current_pick)
             available_list = list(available.values())
+            manager_counts = roster_counts[manager.manager_id]
             if manager.is_user:
-                pick = _greedy_vor_pick(available_list, user_players, roster_config, replacement_levels)
+                pick = self._user_model.sample_pick(
+                    available_list, current_pick, self.rng,
+                    roster_counts=manager_counts,
+                    roster_config=roster_config,
+                    total_picks=total_picks,
+                    replacement_levels=replacement_levels,
+                )
                 user_players.append(pick)
             else:
-                pick = self.pick_model.sample_pick(available_list, current_pick, self.rng)
+                pick = self._opponent_model.sample_pick(
+                    available_list, current_pick, self.rng,
+                    roster_counts=manager_counts,
+                    roster_config=roster_config,
+                    total_picks=total_picks,
+                    replacement_levels=replacement_levels,
+                )
+            manager_counts[pick.position] = manager_counts.get(pick.position, 0) + 1
             del available[pick.player_id]
             current_pick += 1
         return score_roster(user_players, roster_config)
