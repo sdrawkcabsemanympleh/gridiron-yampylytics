@@ -309,7 +309,8 @@ async def create_session(body: SessionCreateRequest) -> SessionResponse:
         initial_state=initial_state,
         player_index=player_index,
         replacement_levels=replacement_levels,
-        simulator=DraftSimulator(n_simulations=20, seed=None),
+        simulator=DraftSimulator(n_simulations=body.n_simulations, seed=None),
+        n_candidates=body.n_candidates,
     )
     try:
         existing_picks = prefetched_picks if prefetched_picks is not None else client.get_existing_picks(body.draft_id)

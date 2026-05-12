@@ -14,10 +14,17 @@ class SessionCreateRequest(BaseModel):
         Used to identify which draft slot is ``is_user=True``.
     :param db_path: Path to the gridiron-yampylytics DuckDB file. Defaults to
         ``gridiron_yampylytics.db`` in the server's working directory.
+    :param n_simulations: Monte Carlo simulations run per candidate. Higher
+        values produce more stable rankings at the cost of compute time.
+        Defaults to 100.
+    :param n_candidates: Number of top pre-scored players forwarded to the
+        simulator each turn. Defaults to 20.
     """
     draft_id: str
     sleeper_user_id: str
     db_path: str | None = None
+    n_simulations: int = 100
+    n_candidates: int = 20
 
 
 class PlayerInfo(BaseModel):
