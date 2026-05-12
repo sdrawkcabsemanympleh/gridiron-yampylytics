@@ -23,6 +23,11 @@ from typing import Protocol, runtime_checkable
 from gridiron_yampylytics.ffb.models.league import RosterConfig
 from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
 from gridiron_yampylytics.ffb.scoring.vor import compute_vor
+from gridiron_yampylytics.ffb.simulation.kernels import (
+    STRATEGY_ADP,
+    STRATEGY_GREEDY_VOR,
+    STRATEGY_NEED_WEIGHTED_ADP,
+)
 
 
 @runtime_checkable
@@ -60,6 +65,19 @@ class PickModel(Protocol):
         :param replacement_levels: VOR replacement levels. Used by
             value-based models (e.g. :class:`GreedyVorPickModel`).
         :return: The sampled :class:`~gridiron_yampylytics.ffb.models.player.NFLPlayer`.
+        """
+        ...
+
+    def to_sim_params(self) -> tuple[int, np.ndarray]:
+        """Return the strategy code and parameter array for the vectorized kernel.
+
+        Used by :class:`~gridiron_yampylytics.ffb.simulation.engine.DraftSimulator`
+        to pass this model's behaviour into the numpy hot loop without pickling
+        the full model object.  Strategy codes are defined in
+        :mod:`~gridiron_yampylytics.ffb.simulation.kernels`.
+
+        :return: ``(strategy_code, params)`` where ``params`` is a float64
+            array of model-specific scalar parameters.
         """
         ...
 
@@ -111,6 +129,13 @@ class ADPPickModel:
         weights = weights / total if total > 0 else np.ones(len(available_players)) / len(available_players)
         idx = int(rng.choice(len(available_players), p=weights))
         return available_players[idx]
+
+    def to_sim_params(self) -> tuple[int, np.ndarray]:
+        """Return ADP strategy code with empty parameter array.
+
+        :return: ``(STRATEGY_ADP, empty float64 array)``.
+        """
+        return (STRATEGY_ADP, np.empty(0, dtype=np.float64))
 
 
 class NeedWeightedADPModel:
@@ -238,6 +263,16 @@ class NeedWeightedADPModel:
         idx = int(rng.choice(len(available_players), p=weights))
         return available_players[idx]
 
+    def to_sim_params(self) -> tuple[int, np.ndarray]:
+        """Return NeedWeightedADP strategy code and scalar parameters.
+
+        :return: ``(STRATEGY_NEED_WEIGHTED_ADP, [need_weight, min_need_factor, late_round_fade])``.
+        """
+        return (
+            STRATEGY_NEED_WEIGHTED_ADP,
+            np.array([self.need_weight, self.min_need_factor, self.late_round_fade], dtype=np.float64),
+        )
+
 
 class GreedyVorPickModel:
     """Models the user's future picks within simulation using greedy VOR strategy.
@@ -295,6 +330,13 @@ class GreedyVorPickModel:
         pool = [p for p in available_players if p.position in needed] if needed else available_players
         return max(pool or available_players, key=key)
 
+    def to_sim_params(self) -> tuple[int, np.ndarray]:
+        """Return GreedyVOR strategy code with empty parameter array.
+
+        :return: ``(STRATEGY_GREEDY_VOR, empty float64 array)``.
+        """
+        return (STRATEGY_GREEDY_VOR, np.empty(0, dtype=np.float64))
+
 
 class ScoredPickModel:
     """Stub: future composite pick model with pluggable metric components.
@@ -328,3 +370,10 @@ class ScoredPickModel:
         raise NotImplementedError(
             "ScoredPickModel is not yet implemented. Use NeedWeightedADPModel."
         )
+
+    def to_sim_params(self) -> tuple[int, np.ndarray]:
+        """Raise :exc:`NotImplementedError` — not yet vectorizable.
+
+        :raises NotImplementedError: Always.
+        """
+        raise NotImplementedError("ScoredPickModel is not yet vectorizable.")
