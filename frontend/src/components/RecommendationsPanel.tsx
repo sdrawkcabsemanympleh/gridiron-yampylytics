@@ -174,17 +174,17 @@ export function RecommendationsPanel({
               <div className="flex justify-between text-xs mb-1">
                 <span className="text-slate-500">Sim score</span>
                 <span className="font-mono">
-                  <span className={i === 0 ? 'text-slate-200' : 'text-slate-400'}>{rec.mean_score.toFixed(0)}</span>
+                  <span className="text-slate-300">{rec.mean_score.toFixed(0)}</span>
                   <span className="text-slate-600"> ±{rec.std_score.toFixed(0)}</span>
                 </span>
               </div>
               <div className="relative h-3 bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className={`absolute h-full ${i === 0 ? 'bg-emerald-500/30' : 'bg-slate-500/40'}`}
+                  className={`absolute h-full ${i === 0 ? 'bg-emerald-500/35' : 'bg-emerald-500/20'}`}
                   style={{ left: `${bandLeft}%`, width: `${bandWidth}%` }}
                 />
                 <div
-                  className={`absolute top-0 h-full w-px ${i === 0 ? 'bg-emerald-400' : 'bg-slate-500'}`}
+                  className={`absolute top-0 h-full w-px ${i === 0 ? 'bg-emerald-400' : 'bg-emerald-500/60'}`}
                   style={{ left: `${meanLeft}%` }}
                 />
               </div>
