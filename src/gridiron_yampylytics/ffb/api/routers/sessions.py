@@ -134,12 +134,18 @@ async def _compute_and_broadcast_recommendations(
     ctx = get_context(draft_id)
     if ctx is None:
         return
+    logger.info("Starting recommendation computation for pick %d", for_pick)
     loop = asyncio.get_event_loop()
-    results: list[SimulationResult] | None = await loop.run_in_executor(
-        None,
-        lambda: ctx.session.get_recommendations(cancel_event),
-    )
+    try:
+        results: list[SimulationResult] | None = await loop.run_in_executor(
+            None,
+            lambda: ctx.session.get_recommendations(cancel_event),
+        )
+    except Exception:
+        logger.exception("Recommendation computation failed for pick %d", for_pick)
+        return
     if results is None:  # cancelled
+        logger.info("Recommendation computation cancelled for pick %d", for_pick)
         return
     top = results[0] if results else None
     logger.info(

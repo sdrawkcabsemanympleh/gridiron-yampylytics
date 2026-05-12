@@ -20,6 +20,7 @@ from gridiron_yampylytics.ffb.api.routers.sessions import router as sessions_rou
 from gridiron_yampylytics.ffb.api.session_store import all_draft_ids, get_context
 from gridiron_yampylytics.ffb.data.player_loader import load_player_pool
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logging.getLogger("gridiron_yampylytics").setLevel(logging.INFO)
 
 
@@ -52,7 +53,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Vite default ports
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
