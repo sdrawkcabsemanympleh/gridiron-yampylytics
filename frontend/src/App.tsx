@@ -21,7 +21,7 @@ export default function App() {
       session?.is_user_turn === true &&
       recommendations.length === 0);
 
-  if (!session || connectionStatus === 'disconnected' || connectionStatus === 'error') {
+  if (!session || ((connectionStatus === 'disconnected' || connectionStatus === 'error') && !session.is_complete)) {
     return (
       <div className="flex flex-col h-screen">
         <ConnectScreen

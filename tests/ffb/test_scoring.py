@@ -213,6 +213,80 @@ class TestAdpVonaApproximation:
         assert result == pytest.approx(300.0 - 200.0)
 
 
+class TestAdpVonaFlexAware:
+    """Tests for AdpVonaApproximation flex-aware comparison path."""
+
+    def setup_method(self) -> None:
+        """Create a shared calculator instance and a standard flex roster config."""
+        self.vona = AdpVonaApproximation()
+        self.flex_rc = RosterConfig(qb=1, rb=2, wr=3, te=1, flex=1, k=1, def_=1, bench=6)
+
+    def _roster(self, players: list[NFLPlayer]) -> Roster:
+        mgr = Manager(manager_id="u", name="u", draft_slot=1, is_user=True)
+        return Roster(manager=mgr, players=players)
+
+    def test_stays_position_specific_when_dedicated_not_filled(self) -> None:
+        """Compares same position when dedicated slots are not yet full.
+
+        User has 0 RBs; rb=2 dedicated slots unfilled → comparison stays RB-only.
+        A WR at 400 pts should not become the VONA baseline for an RB.
+        """
+        rb1 = _p("rb1", "RB", 280.0, 1.0)
+        rb2 = _p("rb2", "RB", 220.0, 5.0)
+        wr1 = _p("wr1", "WR", 400.0, 2.0)
+        result = self.vona.compute_vona(
+            rb1, [rb1, rb2, wr1], picks_until_user=0,
+            user_roster=self._roster([]), roster_config=self.flex_rc,
+        )
+        assert result == pytest.approx(60.0)  # 280 - 220; WR ignored
+
+    def test_uses_flex_pool_when_dedicated_slots_filled(self) -> None:
+        """Compares against best flex-eligible once dedicated slots are full.
+
+        User has 2 RBs (filling rb=2). Third RB now competes for a flex slot
+        against WR. Best flex survivor is WR at 300 → VONA = 250 - 300 = -50.
+        """
+        drafted_rb1 = _p("rb_d1", "RB", 350.0, 0.5)
+        drafted_rb2 = _p("rb_d2", "RB", 320.0, 0.8)
+        rb3 = _p("rb3", "RB", 250.0, 4.0)
+        wr1 = _p("wr1", "WR", 300.0, 3.0)
+        result = self.vona.compute_vona(
+            rb3, [rb3, wr1], picks_until_user=0,
+            user_roster=self._roster([drafted_rb1, drafted_rb2]),
+            roster_config=self.flex_rc,
+        )
+        assert result == pytest.approx(-50.0)  # WR is better flex option
+
+    def test_no_flex_league_stays_position_specific_even_when_dedicated_filled(self) -> None:
+        """flex=0 means comparison is always position-specific, roster context ignored."""
+        no_flex_rc = RosterConfig(qb=1, rb=1, wr=1, te=0, flex=0, k=0, def_=0, bench=1)
+        drafted_rb = _p("rb_d", "RB", 350.0, 0.5)
+        rb1 = _p("rb1", "RB", 250.0, 4.0)
+        wr1 = _p("wr1", "WR", 400.0, 2.0)
+        result = self.vona.compute_vona(
+            rb1, [rb1, wr1], picks_until_user=0,
+            user_roster=self._roster([drafted_rb]),
+            roster_config=no_flex_rc,
+        )
+        assert result == pytest.approx(250.0)  # no RB competitor → projected_points
+
+    def test_non_flex_eligible_position_always_position_specific(self) -> None:
+        """QB is not flex-eligible → VONA always compares QB vs QB only.
+
+        Even if the dedicated QB slot is filled, a second QB compares only against
+        other QBs, never against RB/WR/TE.
+        """
+        drafted_qb = _p("qb_d", "QB", 400.0, 0.5)
+        qb1 = _p("qb1", "QB", 280.0, 5.0)
+        rb1 = _p("rb1", "RB", 350.0, 2.0)
+        result = self.vona.compute_vona(
+            qb1, [qb1, rb1], picks_until_user=0,
+            user_roster=self._roster([drafted_qb]),
+            roster_config=self.flex_rc,
+        )
+        assert result == pytest.approx(280.0)  # no QB competitor → projected_points
+
+
 class TestMonteCarloVona:
     """Tests for the Monte Carlo VONA stub."""
 
