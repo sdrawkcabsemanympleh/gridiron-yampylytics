@@ -180,7 +180,7 @@ export function RecommendationsPanel({
               </div>
               <div className="relative h-3 bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className={`absolute h-full ${i === 0 ? 'bg-emerald-500/30' : 'bg-slate-500/20'}`}
+                  className={`absolute h-full ${i === 0 ? 'bg-emerald-500/30' : 'bg-slate-500/40'}`}
                   style={{ left: `${bandLeft}%`, width: `${bandWidth}%` }}
                 />
                 <div
