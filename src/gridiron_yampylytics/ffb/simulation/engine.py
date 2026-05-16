@@ -19,7 +19,7 @@ import numpy as np
 from gridiron_yampylytics.ffb.models.draft import DraftState
 from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
 from gridiron_yampylytics.ffb.simulation.kernels import simulate_batch
-from gridiron_yampylytics.ffb.simulation.pick_model import GreedyVorPickModel, NeedWeightedADPModel, PickModel
+from gridiron_yampylytics.ffb.simulation.pick_model import GreedyVorPickModel, NeedWeightedADPModel, PickModel, WeightedScorerPickModel
 from gridiron_yampylytics.ffb.simulation.snapshot import SimSnapshot
 
 
@@ -134,7 +134,7 @@ class DraftSimulator:
         :param n_workers: Worker process count. ``None`` = :func:`os.cpu_count`.
         """
         resolved_opponent = opponent_model or NeedWeightedADPModel()
-        resolved_user = user_model or GreedyVorPickModel()
+        resolved_user = user_model or WeightedScorerPickModel()
         self._opponent_strategy, self._opponent_params = resolved_opponent.to_sim_params()
         self._user_strategy, self._user_params = resolved_user.to_sim_params()
         self.n_simulations = n_simulations

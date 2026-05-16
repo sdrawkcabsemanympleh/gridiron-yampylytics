@@ -102,6 +102,10 @@ class SimSnapshot:
     :param flex_slots: Number of FLEX roster spots.
     :param replacement_levels: VOR replacement projected-points threshold per
         position.  Ordered by :data:`POSITION_INDEX`.  shape (P,) float64.
+    :param picks_until_next_user: For each remaining pick, the number of picks
+        between that pick and the next user pick.  Used by
+        :data:`~gridiron_yampylytics.ffb.simulation.kernels.STRATEGY_WEIGHTED_SCORER`
+        to estimate VONA at user pick turns.  shape (remaining_picks,) int32.
     :param total_picks: Total picks in the full draft.
     :param current_pick: The pick number at which the candidate is taken.
     """
@@ -113,6 +117,7 @@ class SimSnapshot:
     user_initial_mask: np.ndarray
     pick_manager_idxs: np.ndarray
     pick_is_user: np.ndarray
+    picks_until_next_user: np.ndarray
     roster_counts_init: np.ndarray
     user_manager_idx: int
     candidate_idx: int
@@ -177,6 +182,13 @@ class SimSnapshot:
             mgr_idx = _snake_manager_idx(pick_num, team_count, slot_to_idx)
             pick_manager_idxs[i] = mgr_idx
             pick_is_user[i] = managers[mgr_idx].is_user
+        picks_until_next_user = np.zeros(n_remaining, dtype=np.int32)
+        for i in range(n_remaining):
+            future = pick_is_user[i + 1:]
+            if future.size > 0 and future.any():
+                picks_until_next_user[i] = int(np.argmax(future))
+            else:
+                picks_until_next_user[i] = n_remaining - i - 1
         roster_config = draft_state.league.roster
         n_managers = len(managers)
         roster_counts_init = np.zeros((n_managers, N_POSITIONS), dtype=np.int32)
@@ -205,6 +217,7 @@ class SimSnapshot:
             user_initial_mask=user_initial_mask,
             pick_manager_idxs=pick_manager_idxs,
             pick_is_user=pick_is_user,
+            picks_until_next_user=picks_until_next_user,
             roster_counts_init=roster_counts_init,
             user_manager_idx=user_manager_idx,
             candidate_idx=candidate_idx,

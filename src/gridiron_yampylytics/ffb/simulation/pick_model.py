@@ -27,6 +27,7 @@ from gridiron_yampylytics.ffb.simulation.kernels import (
     STRATEGY_ADP,
     STRATEGY_GREEDY_VOR,
     STRATEGY_NEED_WEIGHTED_ADP,
+    STRATEGY_WEIGHTED_SCORER,
 )
 
 
@@ -336,6 +337,119 @@ class GreedyVorPickModel:
         :return: ``(STRATEGY_GREEDY_VOR, empty float64 array)``.
         """
         return (STRATEGY_GREEDY_VOR, np.empty(0, dtype=np.float64))
+
+
+class WeightedScorerPickModel:
+    """Stochastic composite pick model: VOR + VONA + gradient scarcity + roster need.
+
+    The vectorized hot-path implementation lives in
+    :func:`~gridiron_yampylytics.ffb.simulation.kernels._compute_weighted_scores`
+    via :data:`~gridiron_yampylytics.ffb.simulation.kernels.STRATEGY_WEIGHTED_SCORER`.
+    This class wires up configurable weights and temperature for use as the user's
+    within-simulation pick strategy.
+
+    A ``temperature`` parameter controls sampling variance via softmax:
+    lower values concentrate probability on the top-scored player (approaching
+    deterministic argmax as ``temperature → 0``); higher values spread
+    probability more uniformly across the pool.
+
+    :param vor_weight: Weight for VOR component. Default ``0.40``.
+    :param vona_weight: Weight for VONA component. Default ``0.30``.
+    :param scarcity_weight: Weight for gradient scarcity component. Default ``0.20``.
+    :param need_weight: Weight for roster need component. Default ``0.10``.
+    :param temperature: Softmax temperature controlling sampling variance.
+        Default ``1.0``.
+    """
+
+    def __init__(
+        self,
+        vor_weight: float = 0.40,
+        vona_weight: float = 0.30,
+        scarcity_weight: float = 0.20,
+        need_weight: float = 0.10,
+        temperature: float = 1.0,
+    ) -> None:
+        """Initialise the model.
+
+        :param vor_weight: Weight for VOR component.
+        :param vona_weight: Weight for VONA component.
+        :param scarcity_weight: Weight for gradient scarcity component.
+        :param need_weight: Weight for roster need component.
+        :param temperature: Softmax temperature.  Lower → more deterministic.
+        """
+        self.vor_weight = vor_weight
+        self.vona_weight = vona_weight
+        self.scarcity_weight = scarcity_weight
+        self.need_weight = need_weight
+        self.temperature = temperature
+
+    def sample_pick(
+        self,
+        available_players: list[NFLPlayer],
+        pick_number: int,
+        rng: np.random.Generator,
+        *,
+        roster_counts: dict[Position, int] | None = None,
+        roster_config: RosterConfig | None = None,
+        total_picks: int | None = None,
+        replacement_levels: dict[Position, float] | None = None,
+    ) -> NFLPlayer:
+        """Sample using VOR + need composite with softmax temperature.
+
+        This Python-level implementation approximates the kernel behaviour
+        (VOR + need only; full VONA and scarcity run in the vectorized kernel).
+        Suitable for testing and non-kernel usage.
+
+        :param available_players: Players still on the board.
+        :param pick_number: Ignored (composite score is position-independent).
+        :param rng: NumPy random Generator.
+        :param roster_counts: Current position counts for this manager.
+        :param roster_config: League roster configuration.
+        :param total_picks: Ignored.
+        :param replacement_levels: VOR replacement levels.
+        :return: Sampled player.
+        :raises ValueError: If ``available_players`` is empty.
+        """
+        if not available_players:
+            raise ValueError("Cannot sample from an empty player pool.")
+        repl = replacement_levels or {}
+        vor_scores = np.array([compute_vor(p, repl) for p in available_players], dtype=np.float64)
+        vor_min, vor_max = vor_scores.min(), vor_scores.max()
+        vor_norm = (vor_scores - vor_min) / (vor_max - vor_min) if vor_max != vor_min else np.ones(len(available_players))
+        need_norm = np.ones(len(available_players), dtype=np.float64)
+        if roster_counts is not None and roster_config is not None:
+            dedicated: dict[Position, int] = {
+                Position.QB: roster_config.qb,
+                Position.RB: roster_config.rb,
+                Position.WR: roster_config.wr,
+                Position.TE: roster_config.te,
+                Position.K: roster_config.k,
+                Position.DEF: roster_config.def_,
+            }
+            need_norm = np.array([
+                max(0.0, 1.0 - roster_counts.get(p.position, 0) / max(dedicated.get(p.position, 1), 1))
+                for p in available_players
+            ], dtype=np.float64)
+        composite = (self.vor_weight + self.vona_weight + self.scarcity_weight) * vor_norm + self.need_weight * need_norm
+        shifted = (composite - composite.max()) / self.temperature
+        weights = np.exp(shifted)
+        weights /= weights.sum()
+        return available_players[int(rng.choice(len(available_players), p=weights))]
+
+    def to_sim_params(self) -> tuple[int, np.ndarray]:
+        """Return WeightedScorer strategy code and parameter array.
+
+        :return: ``(STRATEGY_WEIGHTED_SCORER, [vor_weight, vona_weight,
+            scarcity_weight, need_weight, temperature])``.
+        """
+        return (
+            STRATEGY_WEIGHTED_SCORER,
+            np.array(
+                [self.vor_weight, self.vona_weight, self.scarcity_weight,
+                 self.need_weight, self.temperature],
+                dtype=np.float64,
+            ),
+        )
 
 
 class ScoredPickModel:

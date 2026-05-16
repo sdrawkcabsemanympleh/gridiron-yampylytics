@@ -143,6 +143,19 @@ class TestSimSnapshotPickSequence:
         assert not snap.pick_is_user[1]   # pick 3: opp (round 2, slot 2 picks first)
         assert snap.pick_is_user[2]        # pick 4: user (round 2, slot 1 picks second)
 
+    def test_picks_until_next_user_correct_in_snake(self) -> None:
+        """2-team, 4-round snake from pick 1.  Remaining pick_is_user: [F,F,T,T,F,F,T].
+        picks_until_next_user[i] = argmax(pick_is_user[i+1:]) = gap to next user pick."""
+        available = [_p(f"p{i}", "RB", 100.0, float(i + 1)) for i in range(8)]
+        state = _state_with_picks(available)
+        snap = SimSnapshot.from_draft_state(state, available[0], _repl())
+        # index 0 (opp): future=[F,T,T,F,F,T] → argmax=1 → 1 pick before next user
+        assert snap.picks_until_next_user[0] == 1
+        # index 2 (user): future=[T,F,F,T] → argmax=0 → next pick is also user
+        assert snap.picks_until_next_user[2] == 0
+        # index 3 (user): future=[F,F,T] → argmax=2 → 2 opp picks before next user
+        assert snap.picks_until_next_user[3] == 2
+
     def test_roster_counts_init_reflects_existing_picks(self) -> None:
         q1 = _p("q1", "QB", 300, 1.0)
         r1 = _p("r1", "RB", 200, 2.0)

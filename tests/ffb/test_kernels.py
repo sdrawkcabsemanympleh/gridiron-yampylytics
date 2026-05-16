@@ -9,6 +9,8 @@ from gridiron_yampylytics.ffb.simulation.kernels import (
     STRATEGY_ADP,
     STRATEGY_GREEDY_VOR,
     STRATEGY_NEED_WEIGHTED_ADP,
+    STRATEGY_WEIGHTED_SCORER,
+    _compute_weighted_scores,
     _sample_pick,
     _score_lineup,
     simulate_batch,
@@ -71,7 +73,8 @@ class TestSamplePickADP:
         rng = np.random.default_rng(0)
         idx = _sample_pick(STRATEGY_ADP, np.empty(0), adps, stds, pts, pos,
                            np.zeros(len(Position), dtype=np.int32), _mock_slots(),
-                           _mock_repl(), avail, 1, 8, rng)
+                           _mock_repl(), avail, 1, 8,
+                           np.array([], dtype=np.int32), 0, rng)
         assert 0 <= idx < 4
 
     def test_skips_unavailable_players(self) -> None:
@@ -81,7 +84,8 @@ class TestSamplePickADP:
         for _ in range(50):
             idx = _sample_pick(STRATEGY_ADP, np.empty(0), adps, stds, pts, pos,
                                np.zeros(len(Position), dtype=np.int32), _mock_slots(),
-                               _mock_repl(), avail, 1, 8, rng)
+                               _mock_repl(), avail, 1, 8,
+                               np.array([], dtype=np.int32), 0, rng)
             assert idx != 0
 
     def test_dominant_adp_player_selected_most_often(self) -> None:
@@ -94,7 +98,8 @@ class TestSamplePickADP:
         slots = _mock_slots()
         rng = np.random.default_rng(0)
         picks = [_sample_pick(STRATEGY_ADP, np.empty(0), adps, stds, pts, pos,
-                              np.zeros(len(Position), dtype=np.int32), slots, repl, avail, 1, 8, rng)
+                              np.zeros(len(Position), dtype=np.int32), slots, repl, avail, 1, 8,
+                              np.array([], dtype=np.int32), 0, rng)
                  for _ in range(100)]
         assert picks.count(0) > 80
 
@@ -119,7 +124,8 @@ class TestSamplePickNeedWeighted:
         params = np.array([1.0, 0.0, 0.0])  # need_weight=1.0, min=0, no fade
         rng = np.random.default_rng(0)
         picks = [_sample_pick(STRATEGY_NEED_WEIGHTED_ADP, params, adps, stds, pts, pos,
-                              mgr_counts, slots, repl, avail, 1, 8, rng)
+                              mgr_counts, slots, repl, avail, 1, 8,
+                           np.array([], dtype=np.int32), 0, rng)
                  for _ in range(50)]
         assert all(p == 1 for p in picks)  # always picks RB
 
@@ -135,9 +141,11 @@ class TestSamplePickNeedWeighted:
         rng_b = np.random.default_rng(7)
         for _ in range(30):
             idx_need = _sample_pick(STRATEGY_NEED_WEIGHTED_ADP, params_zero_need, adps, stds, pts, pos,
-                                    mgr_counts, slots, repl, avail, 1, 8, rng_a)
+                                    mgr_counts, slots, repl, avail, 1, 8,
+                                    np.array([], dtype=np.int32), 0, rng_a)
             idx_adp = _sample_pick(STRATEGY_ADP, params_adp, adps, stds, pts, pos,
-                                   mgr_counts, slots, repl, avail, 1, 8, rng_b)
+                                   mgr_counts, slots, repl, avail, 1, 8,
+                                   np.array([], dtype=np.int32), 0, rng_b)
             assert idx_need == idx_adp
 
 
@@ -158,7 +166,8 @@ class TestSamplePickGreedyVor:
         repl = _mock_repl()
         rng = np.random.default_rng(0)
         idx = _sample_pick(STRATEGY_GREEDY_VOR, np.empty(0), adps, stds, pts, pos,
-                           mgr_counts, slots, repl, avail, 1, 8, rng)
+                           mgr_counts, slots, repl, avail, 1, 8,
+                           np.array([], dtype=np.int32), 0, rng)
         assert idx == 0  # QB has highest VOR
 
     def test_prioritises_unfilled_position_over_higher_vor(self) -> None:
@@ -174,7 +183,8 @@ class TestSamplePickGreedyVor:
         repl = _mock_repl()
         rng = np.random.default_rng(0)
         idx = _sample_pick(STRATEGY_GREEDY_VOR, np.empty(0), adps, stds, pts, pos,
-                           mgr_counts, slots, repl, avail, 1, 8, rng)
+                           mgr_counts, slots, repl, avail, 1, 8,
+                           np.array([], dtype=np.int32), 0, rng)
         assert idx == 1  # RB because QB slot is full
 
 
@@ -317,3 +327,131 @@ class TestSimulateBatch:
                                  np.random.default_rng(42))
         assert m1 == pytest.approx(m2)
         assert s1 == pytest.approx(s2)
+
+    def test_weighted_scorer_strategy_produces_positive_mean(self) -> None:
+        snap, _ = self._make_snapshot()
+        user_params = np.array([0.40, 0.30, 0.20, 0.10, 1.0])
+        opp_params = np.array([0.3, 0.15, 0.7])
+        mean, std = simulate_batch(snap, STRATEGY_NEED_WEIGHTED_ADP, opp_params,
+                                   STRATEGY_WEIGHTED_SCORER, user_params, 20,
+                                   np.random.default_rng(0))
+        assert mean > 0.0
+        assert std >= 0.0
+
+    def test_weighted_scorer_is_reproducible(self) -> None:
+        snap, _ = self._make_snapshot()
+        user_params = np.array([0.40, 0.30, 0.20, 0.10, 1.0])
+        opp_params = np.array([0.3, 0.15, 0.7])
+        m1, s1 = simulate_batch(snap, STRATEGY_NEED_WEIGHTED_ADP, opp_params,
+                                 STRATEGY_WEIGHTED_SCORER, user_params, 20,
+                                 np.random.default_rng(99))
+        m2, s2 = simulate_batch(snap, STRATEGY_NEED_WEIGHTED_ADP, opp_params,
+                                 STRATEGY_WEIGHTED_SCORER, user_params, 20,
+                                 np.random.default_rng(99))
+        assert m1 == pytest.approx(m2)
+        assert s1 == pytest.approx(s2)
+
+
+# ---------------------------------------------------------------------------
+# _compute_weighted_scores
+# ---------------------------------------------------------------------------
+
+class TestComputeWeightedScores:
+    def _make_inputs(self) -> tuple:
+        """4 players: QB(300), RB(200), RB(150), QB(50). QB slot full, RB slot open."""
+        pts = np.array([300.0, 200.0, 150.0, 50.0], dtype=np.float64)
+        adps = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
+        pos = np.array([0, 1, 1, 0], dtype=np.int32)  # QB=0, RB=1
+        avail = np.ones(4, dtype=bool)
+        repl = _mock_repl()
+        slots = _mock_slots()
+        mgr_counts = np.zeros(len(Position), dtype=np.int32)
+        mgr_counts[POSITION_INDEX[Position.QB]] = 1  # QB slot full
+        flex_pos = np.array([], dtype=np.int32)
+        return pts, adps, pos, avail, repl, slots, mgr_counts, flex_pos
+
+    def test_returns_array_of_correct_shape(self) -> None:
+        pts, adps, pos, avail, repl, slots, mgr_counts, flex_pos = self._make_inputs()
+        scores = _compute_weighted_scores(
+            adps, pts, pos, mgr_counts, slots, repl, flex_pos, avail, 0,
+            0.40, 0.30, 0.20, 0.10,
+        )
+        assert scores.shape == (4,)
+
+    def test_unavailable_players_score_zero(self) -> None:
+        pts, adps, pos, avail, repl, slots, mgr_counts, flex_pos = self._make_inputs()
+        avail[2] = False
+        scores = _compute_weighted_scores(
+            adps, pts, pos, mgr_counts, slots, repl, flex_pos, avail, 0,
+            0.40, 0.30, 0.20, 0.10,
+        )
+        assert scores[2] == pytest.approx(0.0)
+
+    def test_high_vor_player_scores_above_low_vor(self) -> None:
+        """RB(200) has higher VOR than QB(50) when QB slot is full (need=0 for QB)."""
+        pts, adps, pos, avail, repl, slots, mgr_counts, flex_pos = self._make_inputs()
+        scores = _compute_weighted_scores(
+            adps, pts, pos, mgr_counts, slots, repl, flex_pos, avail, 0,
+            0.40, 0.30, 0.20, 0.10,
+        )
+        rb_idx = 1  # RB(200), slot needed
+        qb_low_idx = 3  # QB(50), slot full
+        assert scores[rb_idx] > scores[qb_low_idx]
+
+    def test_vona_reduces_score_of_redundant_players(self) -> None:
+        """When two similar RBs exist, the lower one has lower VONA (less urgency)."""
+        pts, adps, pos, avail, repl, slots, mgr_counts, flex_pos = self._make_inputs()
+        scores = _compute_weighted_scores(
+            adps, pts, pos, mgr_counts, slots, repl, flex_pos, avail, 0,
+            0.00, 1.00, 0.00, 0.00,  # VONA-only
+        )
+        rb_high_idx = 1  # RB(200) — the "scarce" one at top of its position
+        rb_low_idx = 2   # RB(150) — less urgent because RB(200) is better
+        assert scores[rb_high_idx] >= scores[rb_low_idx]
+
+
+# ---------------------------------------------------------------------------
+# _sample_pick — WeightedScorer strategy
+# ---------------------------------------------------------------------------
+
+class TestSamplePickWeightedScorer:
+    def _weighted_params(self, temperature: float = 1.0) -> np.ndarray:
+        return np.array([0.40, 0.30, 0.20, 0.10, temperature], dtype=np.float64)
+
+    def test_returns_index_in_range(self) -> None:
+        adps, stds, pts, pos, avail = _mock_arrays()
+        rng = np.random.default_rng(0)
+        idx = _sample_pick(STRATEGY_WEIGHTED_SCORER, self._weighted_params(), adps, stds, pts, pos,
+                           np.zeros(len(Position), dtype=np.int32), _mock_slots(),
+                           _mock_repl(), avail, 1, 8,
+                           np.array([], dtype=np.int32), 0, rng)
+        assert 0 <= idx < 4
+
+    def test_skips_unavailable_players(self) -> None:
+        adps, stds, pts, pos, avail = _mock_arrays()
+        avail[0] = False
+        rng = np.random.default_rng(7)
+        for _ in range(30):
+            idx = _sample_pick(STRATEGY_WEIGHTED_SCORER, self._weighted_params(), adps, stds, pts, pos,
+                               np.zeros(len(Position), dtype=np.int32), _mock_slots(),
+                               _mock_repl(), avail, 1, 8,
+                               np.array([], dtype=np.int32), 0, rng)
+            assert idx != 0
+
+    def test_low_temperature_favours_top_scorer(self) -> None:
+        """Very low temperature → near-deterministic; best VOR player picked most often."""
+        adps = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
+        stds = np.full(4, 2.0, dtype=np.float64)
+        pts = np.array([400.0, 10.0, 10.0, 10.0], dtype=np.float64)  # player 0 dominant
+        pos = np.array([0, 1, 1, 0], dtype=np.int32)
+        avail = np.ones(4, dtype=bool)
+        rng = np.random.default_rng(0)
+        picks = [
+            _sample_pick(STRATEGY_WEIGHTED_SCORER, self._weighted_params(temperature=0.01),
+                         adps, stds, pts, pos,
+                         np.zeros(len(Position), dtype=np.int32), _mock_slots(),
+                         _mock_repl(), avail, 1, 8,
+                         np.array([], dtype=np.int32), 0, rng)
+            for _ in range(50)
+        ]
+        assert picks.count(0) > 40  # near-deterministic at very low temperature
