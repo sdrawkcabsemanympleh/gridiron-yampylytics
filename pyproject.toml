@@ -26,6 +26,7 @@ dependencies = [
     "uvicorn[standard]>=0.30.0",
     "html5lib>=1.1",
     "beautifulsoup4>=4.14.3",
+    "numba>=0.61",
 ]
 
 [project.scripts]

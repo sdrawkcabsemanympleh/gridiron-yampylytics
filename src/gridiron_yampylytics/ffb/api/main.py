@@ -19,6 +19,7 @@ from fastapi.responses import JSONResponse
 from gridiron_yampylytics.ffb.api.routers.sessions import router as sessions_router
 from gridiron_yampylytics.ffb.api.session_store import all_draft_ids, get_context
 from gridiron_yampylytics.ffb.data.player_loader import load_player_pool
+from gridiron_yampylytics.ffb.simulation.kernels import warmup_jit
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logging.getLogger("gridiron_yampylytics").setLevel(logging.INFO)
@@ -26,11 +27,12 @@ logging.getLogger("gridiron_yampylytics").setLevel(logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Cancel all active listener tasks on server shutdown.
+    """Warm up Numba JIT on startup; cancel active listener tasks on shutdown.
 
     :param app: The FastAPI application instance.
     :yields: Nothing — just handles startup/shutdown lifecycle.
     """
+    await asyncio.to_thread(warmup_jit)
     yield
     for draft_id in all_draft_ids():
         ctx = get_context(draft_id)

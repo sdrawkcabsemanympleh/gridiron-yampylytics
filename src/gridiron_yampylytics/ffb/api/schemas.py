@@ -16,14 +16,14 @@ class SessionCreateRequest(BaseModel):
         ``gridiron_yampylytics.db`` in the server's working directory.
     :param n_simulations: Monte Carlo simulations run per candidate. Higher
         values produce more stable rankings at the cost of compute time.
-        Defaults to 100.
+        Defaults to 500.
     :param n_candidates: Number of top pre-scored players forwarded to the
         simulator each turn. Defaults to 20.
     """
     draft_id: str
     sleeper_user_id: str
     db_path: str | None = None
-    n_simulations: int = 200
+    n_simulations: int = 500
     n_candidates: int = 20
 
 

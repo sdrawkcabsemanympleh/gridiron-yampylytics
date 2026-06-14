@@ -1,36 +1,46 @@
 """Vectorized numpy simulation kernels for YampGM Monte Carlo draft evaluation.
 
-This module contains the hot path functions that operate exclusively on
-:class:`~gridiron_yampylytics.ffb.simulation.snapshot.SimSnapshot` arrays —
-no Python domain objects, dict lookups, or list rebuilds inside the loops.
+This module is the public interface for the simulation hot path.  The actual
+computation is performed by Numba JIT-compiled functions in
+:mod:`~gridiron_yampylytics.ffb.simulation.kernels_jit`; the Python-level
+functions here serve as reference implementations and are **not** called in the
+hot path.
 
-:func:`simulate_batch` runs all simulations for one candidate and returns
-``(mean_score, std_score)``.  It is called from
-:func:`~gridiron_yampylytics.ffb.simulation.engine._simulate_candidate` in
-each ``ProcessPoolExecutor`` worker.
+:func:`simulate_batch` unpacks a :class:`~gridiron_yampylytics.ffb.simulation.snapshot.SimSnapshot`
+and delegates to :func:`~gridiron_yampylytics.ffb.simulation.kernels_jit._simulate_batch_jit`.
+Call :func:`warmup_jit` once at server startup to trigger Numba compilation and
+persist the result to ``__pycache__`` so worker processes load the cached binary.
 
-Pick model strategies are identified by integer codes defined here and
-referenced by pick model classes via ``to_sim_params()``:
+Pick model strategies are identified by integer codes re-exported from
+:mod:`~gridiron_yampylytics.ffb.simulation.kernels_jit`:
 
 - :data:`STRATEGY_NEED_WEIGHTED_ADP` (``0``) — roster-aware ADP sampling.
 - :data:`STRATEGY_GREEDY_VOR` (``1``) — deterministic VOR-based selection.
 - :data:`STRATEGY_ADP` (``2``) — pure ADP sampling without roster context.
 - :data:`STRATEGY_WEIGHTED_SCORER` (``3``) — stochastic composite scorer
-  (VOR + VONA + gradient scarcity + need), mirrors
-  :class:`~gridiron_yampylytics.ffb.scoring.scorer.WeightedLinearScorer`
-  in fully vectorized numpy.
+  (VOR + VONA + gradient scarcity + need).
 """
+import logging
 import numpy as np
+from gridiron_yampylytics.ffb.simulation.kernels_jit import (
+    STRATEGY_ADP,
+    STRATEGY_GREEDY_VOR,
+    STRATEGY_NEED_WEIGHTED_ADP,
+    STRATEGY_WEIGHTED_SCORER,
+    _simulate_batch_jit,
+)
 from gridiron_yampylytics.ffb.simulation.snapshot import N_POSITIONS, SimSnapshot
 
-#: Strategy code for :class:`~gridiron_yampylytics.ffb.simulation.pick_model.NeedWeightedADPModel`.
-STRATEGY_NEED_WEIGHTED_ADP: int = 0
-#: Strategy code for :class:`~gridiron_yampylytics.ffb.simulation.pick_model.GreedyVorPickModel`.
-STRATEGY_GREEDY_VOR: int = 1
-#: Strategy code for :class:`~gridiron_yampylytics.ffb.simulation.pick_model.ADPPickModel`.
-STRATEGY_ADP: int = 2
-#: Strategy code for :class:`~gridiron_yampylytics.ffb.simulation.pick_model.WeightedScorerPickModel`.
-STRATEGY_WEIGHTED_SCORER: int = 3
+__all__ = [
+    "STRATEGY_NEED_WEIGHTED_ADP",
+    "STRATEGY_GREEDY_VOR",
+    "STRATEGY_ADP",
+    "STRATEGY_WEIGHTED_SCORER",
+    "simulate_batch",
+    "warmup_jit",
+]
+
+logger = logging.getLogger(__name__)
 
 
 def _compute_weighted_scores(
@@ -341,14 +351,13 @@ def simulate_batch(
     user_strategy: int,
     user_params: np.ndarray,
     n_simulations: int,
-    rng: np.random.Generator,
 ) -> tuple[float, float]:
     """Run all simulations for one candidate and return mean and std roster scores.
 
-    Operates entirely on the pre-flattened arrays in ``snapshot``.  The outer
-    loop runs ``n_simulations`` times; the inner pick loop runs
-    ``len(snapshot.pick_manager_idxs)`` times.  No Python domain objects or
-    dict lookups occur inside either loop.
+    Unpacks ``snapshot`` into raw numpy arrays and delegates to the Numba
+    JIT-compiled :func:`~gridiron_yampylytics.ffb.simulation.kernels_jit._simulate_batch_jit`.
+    Random state must be seeded externally via ``np.random.seed`` before this
+    call (done by :func:`~gridiron_yampylytics.ffb.simulation.engine._simulate_candidate`).
 
     :param snapshot: Pre-built :class:`~gridiron_yampylytics.ffb.simulation.snapshot.SimSnapshot`
         for the candidate being evaluated.
@@ -357,42 +366,66 @@ def simulate_batch(
     :param user_strategy: Strategy code for the user's within-simulation picks.
     :param user_params: Parameter array for the user strategy.
     :param n_simulations: Number of complete draft simulations to run.
-    :param rng: NumPy random generator (seeded per candidate for reproducibility).
     :return: ``(mean_score, std_score)`` of final roster projected points across
         all simulations.
     """
-    scores = np.empty(n_simulations, dtype=np.float64)
-    candidate_pos = snapshot.player_positions[snapshot.candidate_idx]
-    for sim_i in range(n_simulations):
-        available = snapshot.available_mask.copy()
-        available[snapshot.candidate_idx] = False
-        roster_counts = snapshot.roster_counts_init.copy()
-        roster_counts[snapshot.user_manager_idx, candidate_pos] += 1
-        user_mask = snapshot.user_initial_mask.copy()
-        user_mask[snapshot.candidate_idx] = True
-        for pick_i in range(len(snapshot.pick_manager_idxs)):
-            mgr_idx = snapshot.pick_manager_idxs[pick_i]
-            is_user = snapshot.pick_is_user[pick_i]
-            strategy = user_strategy if is_user else opponent_strategy
-            params = user_params if is_user else opponent_params
-            pick_num = snapshot.current_pick + pick_i + 1
-            pick_idx = _sample_pick(
-                strategy, params,
-                snapshot.player_adps, snapshot.player_adp_stds,
-                snapshot.player_points, snapshot.player_positions,
-                roster_counts[mgr_idx], snapshot.roster_slots,
-                snapshot.replacement_levels, available,
-                pick_num, snapshot.total_picks,
-                snapshot.flex_positions,
-                int(snapshot.picks_until_next_user[pick_i]),
-                rng,
-            )
-            roster_counts[mgr_idx, snapshot.player_positions[pick_idx]] += 1
-            available[pick_idx] = False
-            if is_user:
-                user_mask[pick_idx] = True
-        scores[sim_i] = _score_lineup(
-            user_mask, snapshot.player_points, snapshot.player_positions,
-            snapshot.roster_slots, snapshot.flex_positions, snapshot.flex_slots,
-        )
-    return float(np.mean(scores)), float(np.std(scores))
+    mean_score, std_score = _simulate_batch_jit(
+        snapshot.player_adps, snapshot.player_adp_stds,
+        snapshot.player_points, snapshot.player_positions,
+        snapshot.available_mask, snapshot.user_initial_mask,
+        snapshot.pick_manager_idxs, snapshot.pick_is_user,
+        snapshot.picks_until_next_user,
+        snapshot.roster_counts_init,
+        snapshot.user_manager_idx, snapshot.candidate_idx,
+        snapshot.roster_slots, snapshot.flex_positions, snapshot.flex_slots,
+        snapshot.replacement_levels,
+        opponent_strategy, opponent_params,
+        user_strategy, user_params,
+        n_simulations,
+        snapshot.current_pick, snapshot.total_picks,
+    )
+    return float(mean_score), float(std_score)
+
+
+def warmup_jit() -> None:
+    """Trigger Numba JIT compilation for the simulation hot path.
+
+    Call once at server startup.  With ``cache=True`` on all JIT functions the
+    compiled machine code is persisted to ``__pycache__``; worker processes
+    spawned by :class:`~concurrent.futures.ProcessPoolExecutor` then load the
+    cached binary without recompiling.
+
+    Uses ``STRATEGY_WEIGHTED_SCORER`` for the user model so that
+    :func:`~gridiron_yampylytics.ffb.simulation.kernels_jit._compute_weighted_scores_jit`
+    is compiled along with all other hot-path functions in a single warmup call.
+    """
+    logger.info("Numba JIT warmup starting...")
+    n, p, m, r = 10, 6, 2, 5
+    positions = np.zeros(n, dtype=np.int32)
+    positions[2] = 1  # a couple of RBs
+    positions[4] = 2  # a couple of WRs
+    _simulate_batch_jit(
+        np.ones(n, dtype=np.float64),
+        np.ones(n, dtype=np.float64),
+        np.full(n, 100.0, dtype=np.float64),
+        positions,
+        np.ones(n, dtype=bool),
+        np.zeros(n, dtype=bool),
+        np.zeros(r, dtype=np.int32),
+        np.zeros(r, dtype=bool),
+        np.zeros(r, dtype=np.int32),
+        np.zeros((m, p), dtype=np.int32),
+        0, 0,
+        np.ones(p, dtype=np.int32),
+        np.array([1, 2], dtype=np.int32),
+        1,
+        np.zeros(p, dtype=np.float64),
+        STRATEGY_NEED_WEIGHTED_ADP,
+        np.array([0.3, 0.15, 0.7], dtype=np.float64),
+        STRATEGY_WEIGHTED_SCORER,
+        np.array([0.40, 0.30, 0.20, 0.10, 1.0], dtype=np.float64),
+        1,
+        1,
+        r + 2,
+    )
+    logger.info("Numba JIT warmup complete.")

@@ -70,13 +70,14 @@ def _simulate_candidate(
     :param user_params: Parameter array for the user strategy.
     :return: :class:`SimulationResult` with mean/std roster scores.
     """
-    rng = np.random.default_rng(seed)
+    if seed is not None:
+        np.random.seed(seed % (2**32))  # legacy API cap; Generator produces up to 2^63
     snapshot = SimSnapshot.from_draft_state(draft_state, candidate, replacement_levels)
     mean_score, std_score = simulate_batch(
         snapshot,
         opponent_strategy, opponent_params,
         user_strategy, user_params,
-        n_simulations, rng,
+        n_simulations,
     )
     return SimulationResult(
         candidate=candidate,
@@ -110,7 +111,7 @@ class DraftSimulator:
         :class:`~gridiron_yampylytics.ffb.simulation.pick_model.NeedWeightedADPModel`.
     :param user_model: Pick model for the user's within-simulation picks. Defaults
         to :class:`~gridiron_yampylytics.ffb.simulation.pick_model.GreedyVorPickModel`.
-    :param n_simulations: Simulations per candidate. Defaults to 200.
+    :param n_simulations: Simulations per candidate. Defaults to 500.
     :param seed: Random seed for reproducibility. ``None`` = non-deterministic.
     :param n_workers: Worker processes for candidate parallelism. ``None`` uses
         :func:`os.cpu_count` (default :class:`ProcessPoolExecutor` behaviour).
@@ -121,7 +122,7 @@ class DraftSimulator:
         self,
         opponent_model: PickModel | None = None,
         user_model: PickModel | None = None,
-        n_simulations: int = 200,
+        n_simulations: int = 500,
         seed: int | None = None,
         n_workers: int | None = None,
     ) -> None:
