@@ -8,7 +8,6 @@ Endpoints:
 """
 import asyncio
 import logging
-import threading
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
@@ -116,51 +115,14 @@ def _session_response(draft_id: str, ctx: SessionContext, picks_replayed: int = 
     )
 
 
-async def _compute_and_broadcast_recommendations(
-    draft_id: str, for_pick: int, cancel_event: threading.Event
-) -> None:
-    """Run MC simulation in a thread pool and push results to all frontend clients.
+def _make_reco_event(for_pick: int, results: list[EnrichedResult]) -> RecommendationsEvent:
+    """Build a :class:`RecommendationsEvent` from a list of :class:`EnrichedResult`.
 
-    ``cancel_event`` must be captured by the caller at task-creation time.  When a
-    new pick arrives the listener sets that event and replaces ``ctx.cancel_event``
-    with a fresh one, orphaning this computation before it finishes.
-
-    :param draft_id: Session to compute for.
-    :param for_pick: The ``current_pick`` snapshot these recommendations target;
-        used to let the frontend discard stale events on rapid pick sequences.
-    :param cancel_event: Threading event captured at task-creation time; set by
-        the listener when a superseding pick arrives.
+    :param for_pick: The ``current_pick`` value these results apply to.
+    :param results: Simulation (or pre-scored) results to serialize.
+    :return: Ready-to-broadcast :class:`RecommendationsEvent`.
     """
-    ctx = get_context(draft_id)
-    if ctx is None:
-        return
-    logger.info("Starting recommendation computation for pick %d", for_pick)
-    loop = asyncio.get_event_loop()
-    try:
-        results: list[SimulationResult] | None = await loop.run_in_executor(
-            None,
-            lambda: ctx.session.get_recommendations(cancel_event),
-        )
-    except Exception:
-        logger.exception("Recommendation computation failed for pick %d", for_pick)
-        return
-    if results is None:  # cancelled
-        logger.info("Recommendation computation cancelled for pick %d", for_pick)
-        return
-    top = results[0] if results else None
-    logger.info(
-        "Broadcasting %d candidates for pick %d; top=%s proj=%.0f VOR=%.1f VONA=%.1f scarcity=%.2f need=%.2f sim=%.1f",
-        len(results),
-        for_pick,
-        f"{top.candidate.position} {top.candidate.name}" if top else "none",
-        top.candidate.projected_points if top else 0,
-        top.vor if top else 0,
-        top.vona if top else 0,
-        top.scarcity_score if top else 0,
-        top.roster_need_score if top else 0,
-        top.mean_score if top else 0,
-    )
-    event = RecommendationsEvent(
+    return RecommendationsEvent(
         for_pick=for_pick,
         candidates=[
             RecommendationItem(
@@ -176,14 +138,109 @@ async def _compute_and_broadcast_recommendations(
             for r in results
         ],
     )
-    await broadcast(draft_id, event.model_dump())
+
+
+def _build_pick_event(
+    ctx: SessionContext,
+    prescored: list[EnrichedResult],
+) -> PickMadeEvent:
+    """Construct a :class:`PickMadeEvent` from the most recent pick in session state.
+
+    :param ctx: Active session context (state already advanced by the pick).
+    :param prescored: Pre-scored candidates for the new current pick.
+    :return: Populated :class:`PickMadeEvent`.
+    """
+    state = ctx.session.state
+    last_pick = state.picks[-1]
+    return PickMadeEvent(
+        overall_pick=last_pick.overall_pick,
+        round=last_pick.round_number,
+        pick_in_round=last_pick.pick_in_round,
+        manager_id=last_pick.manager.manager_id,
+        player_id=last_pick.player.player_id,
+        player_name=last_pick.player.name,
+        position=str(last_pick.player.position),
+        team=last_pick.player.team,
+        is_user_pick=last_pick.manager.is_user,
+        current_pick=state.current_pick,
+        is_user_turn=ctx.session.is_user_turn,
+        candidates=[
+            RecommendationItem(
+                player=_player_info(r.candidate),
+                mean_score=r.mean_score,
+                std_score=r.std_score,
+                n_simulations=r.n_simulations,
+                vor=r.vor,
+                vona=r.vona,
+                scarcity_score=r.scarcity_score,
+                roster_need_score=r.roster_need_score,
+            )
+            for r in prescored
+        ],
+    )
+
+
+async def _compute_and_broadcast_recommendations(draft_id: str, for_pick: int) -> None:
+    """Run MC simulation in a thread pool and push results to all frontend clients.
+
+    Results are cached in :attr:`~gridiron_yampylytics.ffb.api.session_store.SessionContext.last_recommendations`
+    so late-joining clients receive them via the WebSocket push-on-connect path.
+
+    :param draft_id: Session to compute for.
+    :param for_pick: The ``current_pick`` snapshot these recommendations target;
+        used to let the frontend discard stale events on rapid pick sequences.
+    """
+    ctx = get_context(draft_id)
+    if ctx is None:
+        return
+    if ctx.session.state.current_pick != for_pick or ctx.session.is_complete:
+        logger.info(
+            "Skipping stale reco computation: requested for pick %d, state now at pick %d (complete=%s)",
+            for_pick, ctx.session.state.current_pick, ctx.session.is_complete,
+        )
+        return
+    logger.info("Starting recommendation computation for pick %d", for_pick)
+    loop = asyncio.get_event_loop()
+    try:
+        results: list[EnrichedResult] | None = await loop.run_in_executor(
+            None,
+            ctx.session.get_recommendations,
+        )
+    except Exception:
+        logger.exception("Recommendation computation failed for pick %d", for_pick)
+        return
+    if results is None:
+        return
+    ctx.last_recommendations = results
+    ctx.last_recommendations_for_pick = for_pick
+    top = results[0] if results else None
+    logger.info(
+        "Broadcasting %d candidates for pick %d; top=%s proj=%.0f VOR=%.1f VONA=%.1f scarcity=%.2f need=%.2f sim=%.1f",
+        len(results),
+        for_pick,
+        f"{top.candidate.position} {top.candidate.name}" if top else "none",
+        top.candidate.projected_points if top else 0,
+        top.vor if top else 0,
+        top.vona if top else 0,
+        top.scarcity_score if top else 0,
+        top.roster_need_score if top else 0,
+        top.mean_score if top else 0,
+    )
+    await broadcast(draft_id, _make_reco_event(for_pick, results).model_dump())
 
 
 async def _run_sleeper_listener(draft_id: str, picks_already_seen: int) -> None:
     """Background task: poll Sleeper for new picks, update session state, push events.
 
-    Polls the Sleeper REST API every few seconds for new picks.  Exits cleanly
-    when ``ctx.shutdown`` is set or the draft completes.
+    Polls the Sleeper REST API every few seconds for new picks.  After each
+    pick, pre-scores candidates via
+    :meth:`~gridiron_yampylytics.ffb.session.DraftSession.get_prescored_candidates`
+    (fast, milliseconds) and includes them in the :class:`PickMadeEvent` so
+    the frontend can render candidates immediately.  When it is the user's
+    turn, schedules a full Monte Carlo computation whose results are cached
+    and pushed to any connected or later-joining clients.
+
+    Exits cleanly when ``ctx.shutdown`` is set or the draft completes.
 
     :param draft_id: The draft to listen to.
     :param picks_already_seen: Number of picks replayed at session creation;
@@ -196,34 +253,16 @@ async def _run_sleeper_listener(draft_id: str, picks_already_seen: int) -> None:
         async for sleeper_pick in ctx.sleeper_client.stream_picks(draft_id, seen_count=picks_already_seen):
             if ctx.shutdown:
                 return
-            # Cancel any in-progress recommendation computation
-            ctx.cancel_event.set()
-            ctx.cancel_event = threading.Event()
-            new_cancel = ctx.cancel_event  # capture NOW before next pick replaces it
-            # Apply pick to session state
-            player = ctx.session.process_pick(sleeper_pick)
-            state = ctx.session.state
-            last_pick = state.picks[-1]
-            pick_event = PickMadeEvent(
-                overall_pick=last_pick.overall_pick,
-                round=last_pick.round_number,
-                pick_in_round=last_pick.pick_in_round,
-                manager_id=last_pick.manager.manager_id,
-                player_id=player.player_id,
-                player_name=player.name,
-                position=str(player.position),
-                team=player.team,
-                is_user_pick=last_pick.manager.is_user,
-                current_pick=state.current_pick,
-                is_user_turn=ctx.session.is_user_turn,
-            )
+            ctx.session.process_pick(sleeper_pick)
+            prescored = ctx.session.get_prescored_candidates()
+            pick_event = _build_pick_event(ctx, prescored)
             await broadcast(draft_id, pick_event.model_dump())
             if ctx.session.is_complete:
                 await broadcast(draft_id, DraftCompleteEvent().model_dump())
                 return
             if ctx.session.is_user_turn:
-                asyncio.create_task(
-                    _compute_and_broadcast_recommendations(draft_id, state.current_pick, new_cancel)
+                ctx.reco_task = asyncio.create_task(
+                    _compute_and_broadcast_recommendations(draft_id, ctx.session.state.current_pick)
                 )
     except Exception:
         pass  # draft complete or session torn down
@@ -272,6 +311,13 @@ async def create_session(body: SessionCreateRequest) -> SessionResponse:
             status_code=400,
             detail=f"User {body.sleeper_user_id!r} not found in draft order.",
         )
+    scoring_type = "ppr"
+    if draft.league_id:
+        try:
+            scoring_type = client.get_league_scoring_type(draft.league_id)
+        except Exception as exc:
+            logger.warning("Could not fetch league scoring type for %r: %s — defaulting to PPR", draft.league_id, exc)
+    logger.info("Session %s: scoring_type=%r", body.draft_id, scoring_type)
     roster_config = _roster_config_from_sleeper(draft.settings)
     team_count = int(draft.settings.get("teams", len(draft.draft_order)))
     league = League(team_count=team_count, roster=roster_config)
@@ -294,6 +340,7 @@ async def create_session(body: SessionCreateRequest) -> SessionResponse:
         players = load_player_pool(
             db_path=Path(body.db_path) if body.db_path else None,
             season=draft.season or 2025,
+            scoring_type=scoring_type,
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Player pool load error: {exc}") from exc
@@ -326,10 +373,9 @@ async def create_session(body: SessionCreateRequest) -> SessionResponse:
     )
     register_context(ctx)
     ctx.listener_task = asyncio.create_task(_run_sleeper_listener(body.draft_id, picks_replayed))
-    # Push initial recommendations if it's already the user's turn
     if session.is_user_turn:
-        asyncio.create_task(
-            _compute_and_broadcast_recommendations(body.draft_id, session.state.current_pick, ctx.cancel_event)
+        ctx.reco_task = asyncio.create_task(
+            _compute_and_broadcast_recommendations(body.draft_id, session.state.current_pick)
         )
     return _session_response(body.draft_id, ctx, picks_replayed=picks_replayed)
 
@@ -355,7 +401,9 @@ async def session_websocket(websocket: WebSocket, draft_id: str) -> None:
     The server pushes :class:`~gridiron_yampylytics.ffb.api.schemas.PickMadeEvent`,
     :class:`~gridiron_yampylytics.ffb.api.schemas.RecommendationsEvent`, and
     :class:`~gridiron_yampylytics.ffb.api.schemas.DraftCompleteEvent` messages.
-    The client only needs to keep the connection open; no messages need to be sent.
+    On connect, any cached :class:`RecommendationsEvent` for the current pick
+    is pushed immediately so late-joining clients receive fresh recommendations
+    without waiting for the next computation.
 
     :param websocket: The incoming WebSocket connection.
     :param draft_id: Sleeper draft identifier to subscribe to.
@@ -366,14 +414,17 @@ async def session_websocket(websocket: WebSocket, draft_id: str) -> None:
         return
     await websocket.accept()
     ctx.clients.append(websocket)
-    # If it's already the user's turn when they connect, kick off fresh recommendations
-    # so they don't miss events that were broadcast before the WS was established.
-    if ctx.session.is_user_turn and not ctx.session.is_complete:
-        asyncio.create_task(
-            _compute_and_broadcast_recommendations(
-                draft_id, ctx.session.state.current_pick, ctx.cancel_event
+    # Push cached recommendations if they are still current
+    if (
+        ctx.last_recommendations is not None
+        and ctx.last_recommendations_for_pick == ctx.session.state.current_pick
+    ):
+        try:
+            await websocket.send_json(
+                _make_reco_event(ctx.last_recommendations_for_pick, ctx.last_recommendations).model_dump()
             )
-        )
+        except Exception:
+            pass
     try:
         while True:
             await websocket.receive_text()  # blocks; raises WebSocketDisconnect on close

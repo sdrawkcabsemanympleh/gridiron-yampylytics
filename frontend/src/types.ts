@@ -56,6 +56,8 @@ export interface PickMadeEvent {
   is_user_pick: boolean;
   current_pick: number;
   is_user_turn: boolean;
+  /** Pre-scored candidates for the new current pick (n_simulations === 0 until RecommendationsEvent arrives). */
+  candidates: RecommendationItem[];
 }
 
 export interface RecommendationsEvent {

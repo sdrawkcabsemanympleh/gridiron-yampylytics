@@ -80,8 +80,10 @@ function openWebSocket(
       return;
     }
     if (event.type === 'pick_made') {
-      setSession((prev) => (prev ? applyPickEvent(prev, event as PickMadeEvent) : prev));
-      setRecommendations([]);
+      const pickEvt = event as PickMadeEvent;
+      setSession((prev) => (prev ? applyPickEvent(prev, pickEvt) : prev));
+      setRecommendations(pickEvt.candidates);
+      setRecommendationsForPick(null);
     } else if (event.type === 'recommendations') {
       setRecommendations(event.candidates);
       setRecommendationsForPick(event.for_pick);

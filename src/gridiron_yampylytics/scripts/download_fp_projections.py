@@ -1,7 +1,8 @@
-"""CLI wrapper for FantasyPros pre-draft PPR season projections download.
+"""CLI wrapper for FantasyPros pre-draft season projections download.
 
 Downloads projected season point totals from FantasyPros for all standard
-fantasy positions and saves to ``data/nflverse/ff_projections.csv``.
+fantasy positions in PPR, half-PPR, and standard scoring formats.
+Saves to ``data/nflverse/ff_projections.csv``.
 
 Usage::
 
@@ -20,7 +21,7 @@ def main() -> None:
     if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8")
     print("=" * 60)
-    print("FANTASYPROS PRE-DRAFT PPR PROJECTIONS")
+    print("FANTASYPROS PRE-DRAFT PROJECTIONS (PPR / HALF / STD)")
     print("=" * 60)
     print()
     try:

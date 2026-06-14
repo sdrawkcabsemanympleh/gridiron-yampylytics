@@ -6,11 +6,10 @@ a single-user local tool, but would need a persistent backing store for a
 shared deployment.
 """
 import asyncio
-import threading
 from dataclasses import dataclass, field
 from fastapi import WebSocket
 from gridiron_yampylytics.ffb.data.sleeper import SleeperClient
-from gridiron_yampylytics.ffb.session import DraftSession
+from gridiron_yampylytics.ffb.session import DraftSession, EnrichedResult
 
 
 @dataclass
@@ -22,9 +21,13 @@ class SessionContext:
     :param sleeper_client: Sleeper API client for this session.
     :param clients: Currently connected frontend WebSocket connections.
         Stale connections are pruned on the next broadcast.
-    :param cancel_event: Signalled when a new pick arrives to abort any
-        in-progress recommendation computation in the thread pool.
-        Replaced with a fresh event at the start of each computation.
+    :param reco_task: In-flight asyncio task running recommendation computation,
+        or ``None`` when idle.  Stored so callers can check whether a computation
+        is already running for the current pick.
+    :param last_recommendations: Most recently completed recommendation result list,
+        cached for push-on-connect to late-joining clients.
+    :param last_recommendations_for_pick: The ``current_pick`` value that
+        ``last_recommendations`` was computed for; used to detect stale cache.
     :param listener_task: Background asyncio task running the Sleeper WS
         listener.  Cancelled when the session is deleted.
     :param shutdown: Set to ``True`` before cancelling ``listener_task`` so
@@ -35,7 +38,9 @@ class SessionContext:
     session: DraftSession
     sleeper_client: SleeperClient
     clients: list[WebSocket] = field(default_factory=list)
-    cancel_event: threading.Event = field(default_factory=threading.Event)
+    reco_task: asyncio.Task | None = None
+    last_recommendations: list[EnrichedResult] | None = None
+    last_recommendations_for_pick: int | None = None
     listener_task: asyncio.Task | None = None
     shutdown: bool = False
 

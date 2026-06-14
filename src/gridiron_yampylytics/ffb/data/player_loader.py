@@ -28,11 +28,23 @@ logger = logging.getLogger(__name__)
 # Positions that map to the Position enum. DST is handled separately.
 _SKILL_POSITIONS: frozenset[str] = frozenset({"QB", "RB", "WR", "TE", "K"})
 
-# ff_rankings ecr_type value for standard/PPR redraft leagues.
-_DEFAULT_ECR_TYPE: str = "ro"
-
 # ff_rankings pos value for team defenses.
 _DST_POS: str = "DST"
+
+# Sleeper scoring_type → ff_rankings ecr_type.
+# Only 'ro' (redraft overall, PPR) is currently available; update when half-PPR/standard data is downloaded.
+_SCORING_TYPE_TO_ECR: dict[str, str] = {
+    "ppr": "ro",
+    "half_ppr": "ro",
+    "standard": "ro",
+}
+
+# Sleeper scoring_type → ff_projections projected-points column.
+_SCORING_TYPE_TO_PROJ_COL: dict[str, str] = {
+    "ppr": "fpts_ppr",
+    "half_ppr": "fpts_half_ppr",
+    "standard": "fpts_std",
+}
 
 _SKILL_PLAYER_QUERY = """
 WITH bye_weeks AS (
@@ -71,21 +83,29 @@ season_ppr AS (
     GROUP BY yamplayer_id
 ),
 fp_projections AS (
-    SELECT fp.yamplayer_id, pr.fpts_ppr AS projected_points
+    SELECT fp.yamplayer_id, pr.{proj_col} AS projected_points
     FROM nflverse.ff_projections pr
     JOIN nflverse.ff_playerids fp ON LOWER(TRIM(pr.player_name)) = LOWER(TRIM(fp.name))
     WHERE pr.position != 'DEF'
 ),
 rankings AS (
     SELECT
-        fp.yamplayer_id,
-        fp.sleeper_id,
+        COALESCE(fp_id.yamplayer_id, fp_name.yamplayer_id) AS yamplayer_id,
+        COALESCE(fp_id.sleeper_id, fp_name.sleeper_id) AS sleeper_id,
         r.ecr AS ecr_rank,
         r.sd AS adp_std,
-        ROW_NUMBER() OVER (PARTITION BY fp.yamplayer_id ORDER BY r.ecr) AS rn
+        ROW_NUMBER() OVER (
+            PARTITION BY COALESCE(fp_id.yamplayer_id, fp_name.yamplayer_id)
+            ORDER BY r.ecr
+        ) AS rn
     FROM nflverse.ff_rankings r
-    JOIN nflverse.ff_playerids fp ON r.id = fp.fantasypros_id
+    LEFT JOIN nflverse.ff_playerids fp_id ON r.id = fp_id.fantasypros_id
+    LEFT JOIN nflverse.ff_playerids fp_name
+        ON fp_id.fantasypros_id IS NULL
+        AND LOWER(TRIM(r.player)) = LOWER(TRIM(fp_name.name))
+        AND r.pos = fp_name.position
     WHERE r.ecr_type = '{ecr_type}'
+      AND COALESCE(fp_id.yamplayer_id, fp_name.yamplayer_id) IS NOT NULL
 )
 SELECT
     p.yamplayer_id          AS player_id,
@@ -147,14 +167,22 @@ season_ppr AS (
 ),
 rankings AS (
     SELECT
-        fp.yamplayer_id,
-        fp.sleeper_id,
+        COALESCE(fp_id.yamplayer_id, fp_name.yamplayer_id) AS yamplayer_id,
+        COALESCE(fp_id.sleeper_id, fp_name.sleeper_id) AS sleeper_id,
         r.ecr AS ecr_rank,
         r.sd AS adp_std,
-        ROW_NUMBER() OVER (PARTITION BY fp.yamplayer_id ORDER BY r.ecr) AS rn
+        ROW_NUMBER() OVER (
+            PARTITION BY COALESCE(fp_id.yamplayer_id, fp_name.yamplayer_id)
+            ORDER BY r.ecr
+        ) AS rn
     FROM nflverse.ff_rankings r
-    JOIN nflverse.ff_playerids fp ON r.id = fp.fantasypros_id
+    LEFT JOIN nflverse.ff_playerids fp_id ON r.id = fp_id.fantasypros_id
+    LEFT JOIN nflverse.ff_playerids fp_name
+        ON fp_id.fantasypros_id IS NULL
+        AND LOWER(TRIM(r.player)) = LOWER(TRIM(fp_name.name))
+        AND r.pos = fp_name.position
     WHERE r.ecr_type = '{ecr_type}'
+      AND COALESCE(fp_id.yamplayer_id, fp_name.yamplayer_id) IS NOT NULL
 )
 SELECT
     p.yamplayer_id          AS player_id,
@@ -321,24 +349,26 @@ def _load_skill_players(
     con: duckdb.DuckDBPyConnection,
     season: int,
     ecr_type: str,
+    proj_col: str,
 ) -> list[NFLPlayer]:
     """Load QB/RB/WR/TE/K players from DuckDB.
 
     Uses ``yamplayer_id`` as the universal join key across all source tables.
-    Uses FantasyPros pre-draft PPR projections (``nflverse.ff_projections``) when
+    Uses FantasyPros pre-draft projections (``nflverse.ff_projections``) when
     available; falls back to prior-season PPR actuals from ``nflverse.player_stats``.
 
     :param con: Open DuckDB connection.
     :param season: Season year for player_stats fallback and schedules lookups.
-    :param ecr_type: ``ff_rankings.ecr_type`` filter (e.g. ``"ro"`` for
-        standard/PPR redraft overall).
+    :param ecr_type: ``ff_rankings.ecr_type`` filter (e.g. ``"ro"`` for PPR redraft overall).
+    :param proj_col: Column name in ``ff_projections`` to use for projected points
+        (e.g. ``"fpts_ppr"``).
     :return: List of ``NFLPlayer`` instances, ordered by ECR rank ascending.
     """
     has_proj = _has_table(con, "nflverse", "ff_projections")
     source = "ff_projections" if has_proj else f"player_stats season {season} (ff_projections not found)"
     logger.info("Projected points source: %s", source)
     template = _SKILL_PLAYER_QUERY if has_proj else _SKILL_PLAYER_QUERY_FALLBACK
-    rows = con.execute(template.format(season=season, ecr_type=ecr_type)).fetchall()
+    rows = con.execute(template.format(season=season, ecr_type=ecr_type, proj_col=proj_col)).fetchall()
     return [_row_to_nfl_player(row) for row in rows]
 
 
@@ -368,7 +398,7 @@ def _load_dst(
 def load_player_pool(
     db_path: Path | str | None = None,
     season: int = 2024,
-    ecr_type: str = _DEFAULT_ECR_TYPE,
+    scoring_type: str = "ppr",
     include_dst: bool = True,
 ) -> list[NFLPlayer]:
     """Load the full draftable player pool from gridiron-yampylytics DuckDB.
@@ -381,9 +411,11 @@ def load_player_pool(
     :param season: Season year used for ``player_stats`` projected points and
         ``schedules`` bye week derivation. Defaults to 2024 (last complete
         season). Switch to 2025 once 2025 final stats are in the DB.
-    :param ecr_type: ``ff_rankings.ecr_type`` filter. ``"ro"`` = redraft
-        overall (standard/PPR), ``"rsf"`` = superflex, ``"bo"`` = best ball.
-        Defaults to ``"ro"``.
+    :param scoring_type: Scoring format from the Sleeper league — ``"ppr"``,
+        ``"half_ppr"``, or ``"standard"``.  Determines which ``ff_rankings``
+        ecr_type and ``ff_projections`` column to use.  Defaults to ``"ppr"``.
+        Note: only PPR data is currently downloaded; non-PPR types fall back
+        to PPR rankings and projections until the matching data is fetched.
     :param include_dst: Whether to include team DST entries. Defaults to
         ``True``. Pass ``False`` for leagues with no DEF slot.
     :return: Combined list of ``NFLPlayer`` instances, sorted by ECR rank.
@@ -391,8 +423,13 @@ def load_player_pool(
         higher numbers in the overall pool).
     :raises FileNotFoundError: If the database file does not exist.
     """
+    ecr_type = _SCORING_TYPE_TO_ECR.get(scoring_type, "ro")
+    proj_col = _SCORING_TYPE_TO_PROJ_COL.get(scoring_type, "fpts_ppr")
+    if scoring_type not in _SCORING_TYPE_TO_ECR:
+        logger.warning("Unknown scoring_type %r; defaulting to PPR rankings", scoring_type)
+    logger.info("Loading player pool: scoring_type=%r, ecr_type=%r, proj_col=%r", scoring_type, ecr_type, proj_col)
     with connect(db_path) as con:
-        skill_players = _load_skill_players(con, season, ecr_type)
+        skill_players = _load_skill_players(con, season, ecr_type, proj_col)
         dst_players = _load_dst(con, season, ecr_type) if include_dst else []
     all_players = skill_players + dst_players
     all_players.sort(key=lambda p: p.adp)

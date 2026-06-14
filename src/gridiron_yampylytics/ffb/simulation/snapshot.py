@@ -173,7 +173,7 @@ class SimSnapshot:
         for m in managers:
             slot_to_idx[m.draft_slot] = manager_id_to_idx[m.manager_id]
         user_manager_idx = manager_id_to_idx[draft_state.user_manager.manager_id]
-        n_remaining = draft_state.total_picks - draft_state.current_pick
+        n_remaining = max(0, draft_state.total_picks - draft_state.current_pick)
         pick_manager_idxs = np.empty(n_remaining, dtype=np.int32)
         pick_is_user = np.empty(n_remaining, dtype=bool)
         for i, pick_num in enumerate(

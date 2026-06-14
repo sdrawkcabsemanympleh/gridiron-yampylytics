@@ -15,11 +15,12 @@ export default function App() {
     disconnect,
   } = useDraftSession();
 
-  const isLoading =
-    connectionStatus === 'connecting' ||
-    (connectionStatus === 'connected' &&
-      session?.is_user_turn === true &&
-      recommendations.length === 0);
+  // True while simulation is running: user's turn but no sim scores yet (n_simulations === 0 = pre-scored only)
+  const isSimulating =
+    connectionStatus === 'connected' &&
+    session?.is_user_turn === true &&
+    (recommendations.length === 0 || recommendations.every((r) => r.n_simulations === 0));
+  const isLoading = connectionStatus === 'connecting' || isSimulating;
 
   if (!session || ((connectionStatus === 'disconnected' || connectionStatus === 'error') && !session.is_complete)) {
     return (

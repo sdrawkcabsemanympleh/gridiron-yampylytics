@@ -23,7 +23,7 @@ class SessionCreateRequest(BaseModel):
     draft_id: str
     sleeper_user_id: str
     db_path: str | None = None
-    n_simulations: int = 100
+    n_simulations: int = 200
     n_candidates: int = 20
 
 
@@ -135,6 +135,11 @@ class PickMadeEvent(BaseModel):
     :param is_user_pick: ``True`` if the user made this pick.
     :param current_pick: The NEW current pick (i.e. next pick number).
     :param is_user_turn: Whether the new current pick is the user's turn.
+    :param candidates: Pre-scored top candidates for the new current pick,
+        ordered by :class:`~gridiron_yampylytics.ffb.scoring.scorer.WeightedLinearScorer`
+        rank.  Simulation scores are zero (``n_simulations=0``) — the frontend
+        should show these immediately and replace them when a
+        :class:`RecommendationsEvent` arrives.
     """
     type: str = "pick_made"
     overall_pick: int
@@ -148,6 +153,7 @@ class PickMadeEvent(BaseModel):
     is_user_pick: bool
     current_pick: int
     is_user_turn: bool
+    candidates: list[RecommendationItem] = []
 
 
 class RecommendationsEvent(BaseModel):

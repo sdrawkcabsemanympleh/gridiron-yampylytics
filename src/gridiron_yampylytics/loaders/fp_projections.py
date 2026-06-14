@@ -1,16 +1,17 @@
-"""FantasyPros pre-draft PPR season projections scraper.
+"""FantasyPros pre-draft season projections scraper.
 
 Scrapes projected season point totals from FantasyPros for all standard
-fantasy positions (QB, RB, WR, TE, K, DST).  Uses the ``?week=draft``
-parameter which returns season-long pre-draft projections rather than
-weekly numbers.
+fantasy positions (QB, RB, WR, TE, K, DST) across three scoring formats:
+PPR, half-PPR, and standard.  Uses the ``?week=draft`` parameter which
+returns season-long pre-draft projections rather than weekly numbers.
 
 For programmatic use::
 
     from gridiron_yampylytics.loaders.fp_projections import download_fp_projections
     df = download_fp_projections()
 
-Output CSV columns: ``player_name``, ``team``, ``position``, ``fpts_ppr``.
+Output CSV columns: ``player_name``, ``team``, ``position``,
+``fpts_ppr``, ``fpts_half_ppr``, ``fpts_std``.
 """
 import time
 import random
@@ -21,7 +22,7 @@ import requests
 from io import StringIO
 
 
-_BASE_URL: str = "https://www.fantasypros.com/nfl/projections/{pos}.php?week=draft&scoring=PPR"
+_BASE_URL: str = "https://www.fantasypros.com/nfl/projections/{pos}.php?week=draft&scoring={scoring}"
 _HEADERS: dict[str, str] = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -36,6 +37,12 @@ _POSITIONS: list[tuple[str, str]] = [
     ("te", "TE"),
     ("k", "K"),
     ("dst", "DEF"),
+]
+# (FP scoring param, output column name)
+_SCORING_CONFIGS: list[tuple[str, str]] = [
+    ("PPR", "fpts_ppr"),
+    ("HALF", "fpts_half_ppr"),
+    ("STD", "fpts_std"),
 ]
 _REQUEST_DELAY: tuple[float, float] = (1.5, 3.0)
 
@@ -105,22 +112,23 @@ def _parse_skill_row(player_raw: str) -> tuple[str, str]:
     return player_raw.strip(), "FA"
 
 
-def _scrape_position(fp_pos: str, position: str, dst_map: dict[str, str]) -> pd.DataFrame:
-    """Scrape one FantasyPros projections page and return a tidy DataFrame.
+def _scrape_position(fp_pos: str, position: str, scoring: str, dst_map: dict[str, str]) -> pd.DataFrame:
+    """Scrape one FantasyPros projections page for a specific scoring format.
 
     :param fp_pos: FantasyPros URL position slug (e.g. ``"qb"``, ``"dst"``).
     :param position: Canonical position label to store (e.g. ``"QB"``, ``"DEF"``).
+    :param scoring: FantasyPros scoring parameter (``"PPR"``, ``"HALF"``, ``"STD"``).
     :param dst_map: Full team name → abbreviation mapping (used for DST only).
-    :return: DataFrame with columns ``player_name``, ``team``, ``position``, ``fpts_ppr``.
+    :return: DataFrame with columns ``player_name``, ``team``, ``position``, ``fpts``.
     :raises requests.HTTPError: On non-2xx HTTP response.
     :raises ValueError: If the projections table cannot be parsed from the page.
     """
-    url = _BASE_URL.format(pos=fp_pos)
+    url = _BASE_URL.format(pos=fp_pos, scoring=scoring)
     response = requests.get(url, headers=_HEADERS, timeout=15)
     response.raise_for_status()
     tables = pd.read_html(StringIO(response.text))
     if not tables:
-        raise ValueError(f"No tables found on FantasyPros projections page for {fp_pos!r}")
+        raise ValueError(f"No tables found on FantasyPros projections page for {fp_pos!r} scoring={scoring!r}")
     df = tables[0]
     player_col = _find_col(df, "Player")
     fpts_col = _find_col(df, "FPTS")
@@ -135,7 +143,6 @@ def _scrape_position(fp_pos: str, position: str, dst_map: dict[str, str]) -> pd.
         if position == "DEF":
             team = dst_map.get(player_raw, "")
             if not team:
-                # Fallback: check if it looks like "Eagles" or similar nickname
                 for full_name, abbr in dst_map.items():
                     if player_raw in full_name:
                         team = abbr
@@ -143,7 +150,7 @@ def _scrape_position(fp_pos: str, position: str, dst_map: dict[str, str]) -> pd.
             player_name = player_raw
         else:
             player_name, team = _parse_skill_row(player_raw)
-        rows.append({"player_name": player_name, "team": team, "position": position, "fpts_ppr": fpts})
+        rows.append({"player_name": player_name, "team": team, "position": position, "fpts": fpts})
     return pd.DataFrame(rows)
 
 
@@ -151,17 +158,18 @@ def download_fp_projections(
     data_dir: Path | None = None,
     output_filename: str = "ff_projections.csv",
 ) -> pd.DataFrame:
-    """Scrape FantasyPros pre-draft PPR season projections for all positions.
+    """Scrape FantasyPros pre-draft season projections for all positions and scoring formats.
 
     Fetches the ``?week=draft`` projection page for QB, RB, WR, TE, K, and
-    DST, combines them into a single DataFrame, and saves to
+    DST in PPR, half-PPR, and standard scoring.  Merges all three into a
+    single DataFrame keyed by ``(player_name, position)`` and saves to
     ``data/nflverse/ff_projections.csv``.
 
     :param data_dir: Project data directory.  Defaults to ``./data`` relative
         to the current working directory.
     :param output_filename: Output CSV filename within ``data/nflverse/``.
     :return: Combined DataFrame with columns ``player_name``, ``team``,
-        ``position``, ``fpts_ppr``.
+        ``position``, ``fpts_ppr``, ``fpts_half_ppr``, ``fpts_std``.
     :raises requests.HTTPError: If any individual position page request fails.
     """
     if data_dir is None:
@@ -170,22 +178,43 @@ def download_fp_projections(
         data_dir = Path(data_dir)
     output_path = data_dir / "nflverse" / output_filename
     dst_map = _build_dst_team_map(data_dir)
-    all_frames: list[pd.DataFrame] = []
-    total = len(_POSITIONS)
-    for i, (fp_pos, position) in enumerate(_POSITIONS, 1):
-        print(f"  [{i}/{total}] Scraping {position} projections...", end=" ", flush=True)
-        try:
-            df = _scrape_position(fp_pos, position, dst_map)
-            all_frames.append(df)
-            print(f"✓ ({len(df)} players)")
-        except Exception as exc:
-            print(f"✗ ERROR: {exc}")
-        if i < total:
-            delay = random.uniform(*_REQUEST_DELAY)
-            time.sleep(delay)
-    if not all_frames:
+    # Collect one DataFrame per scoring config, then merge
+    scoring_frames: dict[str, pd.DataFrame] = {}
+    total_requests = len(_POSITIONS) * len(_SCORING_CONFIGS)
+    req_num = 0
+    for scoring_param, col_name in _SCORING_CONFIGS:
+        print(f"\n  Scoring format: {scoring_param}")
+        pos_frames: list[pd.DataFrame] = []
+        for fp_pos, position in _POSITIONS:
+            req_num += 1
+            print(f"    [{req_num}/{total_requests}] {position}...", end=" ", flush=True)
+            try:
+                df = _scrape_position(fp_pos, position, scoring_param, dst_map)
+                df = df.rename(columns={"fpts": col_name})
+                pos_frames.append(df)
+                print(f"✓ ({len(df)} players)")
+            except Exception as exc:
+                print(f"✗ ERROR: {exc}")
+            if req_num < total_requests:
+                time.sleep(random.uniform(*_REQUEST_DELAY))
+        if pos_frames:
+            scoring_frames[col_name] = pd.concat(pos_frames, ignore_index=True)
+    if not scoring_frames:
         raise RuntimeError("All FantasyPros projection pages failed to scrape.")
-    combined = pd.concat(all_frames, ignore_index=True)
+    # Start with PPR as the base; outer-merge the other scoring columns in
+    base_col = "fpts_ppr"
+    if base_col not in scoring_frames:
+        base_col = next(iter(scoring_frames))
+    combined = scoring_frames[base_col].copy()
+    for col_name, frame in scoring_frames.items():
+        if col_name == base_col:
+            continue
+        merged = combined.merge(
+            frame[["player_name", "position", col_name]],
+            on=["player_name", "position"],
+            how="outer",
+        )
+        combined = merged
     output_path.parent.mkdir(parents=True, exist_ok=True)
     combined.to_csv(output_path, index=False)
     print(f"\n  ✓ Saved {len(combined)} projections → {output_path}")

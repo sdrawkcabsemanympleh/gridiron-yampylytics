@@ -147,6 +147,34 @@ class DraftSession:
         self.state = self.state.apply_pick(player)
         return player
 
+    def get_prescored_candidates(self) -> list[EnrichedResult]:
+        """Score available players without simulation — fast pre-scorer pass only.
+
+        Runs :class:`~gridiron_yampylytics.ffb.scoring.scorer.WeightedLinearScorer`
+        to rank the top ``n_candidates`` available players and returns them as
+        :class:`EnrichedResult` instances with ``n_simulations=0`` and zero sim
+        scores.  Intended to be included immediately in every
+        :class:`~gridiron_yampylytics.ffb.api.schemas.PickMadeEvent` so the
+        frontend can display ranked candidates before simulation completes.
+
+        :return: :class:`EnrichedResult` list ordered by pre-scorer rank, with
+            ``mean_score=0``, ``std_score=0``, and ``n_simulations=0``.
+        """
+        scored = self._scorer.score(self.state, self._replacement_levels)
+        return [
+            EnrichedResult(
+                candidate=ps.player,
+                mean_score=0.0,
+                std_score=0.0,
+                n_simulations=0,
+                vor=ps.vor,
+                vona=ps.vona,
+                scarcity_score=ps.scarcity_score,
+                roster_need_score=ps.roster_need_score,
+            )
+            for ps in scored[:self._n_candidates]
+        ]
+
     def get_recommendations(
         self,
         cancel_event: threading.Event | None = None,

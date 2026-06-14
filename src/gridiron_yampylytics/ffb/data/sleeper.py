@@ -33,7 +33,7 @@ from gridiron_yampylytics.ffb.models.player import NFLPlayer, Position
 
 
 _BASE_REST_URL: str = "https://api.sleeper.app/v1"
-_POLL_INTERVAL_SECONDS: float = 2.0
+_POLL_INTERVAL_SECONDS: float = 0.5
 
 
 @dataclass
@@ -149,6 +149,31 @@ class SleeperClient:
             draft_order={str(k): int(v) for k, v in (data.get("draft_order") or {}).items()},
             settings=dict(data.get("settings") or {}),
         )
+
+    def get_league_scoring_type(self, league_id: str) -> str:
+        """Return the scoring type for a Sleeper league.
+
+        Reads ``scoring_settings.rec`` from the league to classify it as one of
+        the three common formats.  Falls back to ``"ppr"`` if the field is
+        absent or the request fails at the call site.
+
+        :param league_id: Sleeper league identifier.
+        :return: One of ``"ppr"`` (rec=1.0), ``"half_ppr"`` (rec=0.5), or
+            ``"standard"`` (rec=0.0).
+        :raises requests.HTTPError: On non-2xx HTTP responses.
+        :raises requests.Timeout: If the request exceeds :attr:`_timeout` seconds.
+        """
+        url = f"{_BASE_REST_URL}/league/{league_id}"
+        response = requests.get(url, timeout=self._timeout)
+        response.raise_for_status()
+        data: dict[str, Any] = response.json()
+        scoring: dict[str, Any] = dict(data.get("scoring_settings") or {})
+        rec = float(scoring.get("rec", 1.0))
+        if rec >= 1.0:
+            return "ppr"
+        if rec >= 0.5:
+            return "half_ppr"
+        return "standard"
 
     def get_existing_picks(self, draft_id: str) -> list[SleeperPick]:
         """Fetch all picks already made in a draft.

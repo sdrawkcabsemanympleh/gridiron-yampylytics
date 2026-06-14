@@ -1,7 +1,7 @@
 {
   "metadata": {
     "created": "2025-10-31",
-    "last_updated": "2026-05-08",
+    "last_updated": "2026-05-19",
     "version": "3.0.0",
     "description": "Data inventory for gridiron-yampylytics NFL analytics project"
   },
@@ -143,8 +143,8 @@
       "location": "data/nflverse/players.csv",
       "caching_script": "scripts/cache_nflreadpy_data.py",
       "format": "CSV",
-      "last_downloaded": "2026-05-08",
-      "file_size_bytes": 7201977,
+      "last_downloaded": "2026-05-19",
+      "file_size_bytes": 7243011,
       "files": 1
     },
     "teams": {
@@ -479,12 +479,12 @@
       ],
       "output": "data/reference/yamplayer_mapping.csv",
       "status": "complete",
-      "unique_players": 27569,
-      "total_rows": 27569,
+      "unique_players": 27761,
+      "total_rows": 27761,
       "duplicate_rate": "0.0%",
       "description": "Generate unified yamplayer_id across all datasets using SQL-based entity resolution with tiered matching (ID → name+birthdate → name+college)",
-      "last_processed": "2026-05-08",
-      "file_size_bytes": 2404878
+      "last_processed": "2026-05-19",
+      "file_size_bytes": 2422099
     },
     "add_yamplayer_id": {
       "script": "scripts/add_yamplayer_id.py",
