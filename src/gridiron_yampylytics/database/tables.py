@@ -449,6 +449,7 @@ def create_duckdb_tables(
                 ("idx_ffpids_yamplayer", "yamplayer_id"),
                 ("idx_ffpids_pfr", "pfr_id"),
                 ("idx_ffpids_espn", "espn_id"),
+                ("idx_ffpids_fantasypros", "fantasypros_id"),  # join key for ff_rankings
             ],
         )
         tables_created += 1
@@ -479,6 +480,22 @@ def create_duckdb_tables(
             indexes=[
                 ("idx_ffrank_ecr_type", "ecr_type"),
                 ("idx_ffrank_player", "player"),
+            ],
+        )
+        tables_created += 1
+
+    # nflverse.ff_projections — FantasyPros pre-draft PPR season projections
+    if (data_dir / "nflverse" / "ff_projections.csv").exists():
+        create_table_with_indexes(
+            con,
+            "nflverse",
+            "ff_projections",
+            data_dir / "nflverse" / "ff_projections.csv",
+            primary_key=None,
+            indexes=[
+                ("idx_ffproj_player", "player_name"),
+                ("idx_ffproj_position", "position"),
+                ("idx_ffproj_team", "team"),
             ],
         )
         tables_created += 1

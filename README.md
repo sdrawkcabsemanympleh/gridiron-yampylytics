@@ -100,6 +100,23 @@ That's it! You now have as many as ~3M+ rows of NFL data (1999-2025) ready to qu
 - Individual processing steps
 - Status checks and more
 
+### Refreshing Data
+
+To update your local data to the latest available, re-run the same setup command you used originally (e.g. `uv run setup-yampy`). The setup commands always use `--all-seasons`, which re-downloads each multi-season dataset as a single combined CSV and overwrites the previous file — so you always get a clean, deduplicated result.
+
+**Important: `--seasons <year>` vs `--all-seasons`**
+
+When running `uv run load-data` directly, the `--seasons` flag behaves differently than you might expect:
+
+| Flag | File written | Effect on existing data |
+|------|-------------|------------------------|
+| `--all-seasons` | `player_stats.csv` | Overwrites the main combined file — this is what the database reads |
+| `--seasons 2025` | `player_stats_2025.csv` | Creates a new year-specific file; the main `player_stats.csv` is **not updated** |
+
+If you use `--seasons 2025` expecting to refresh your data, the database will still read stale data from the unchanged main CSV. **Always use `--all-seasons` when refreshing season-based datasets** (`player_stats`, `rosters`, `schedules`, `injuries`, etc.).
+
+Non-season datasets (`ff_rankings`, `players`, `ff_playerids`, etc.) always overwrite their single file regardless of the seasons flag.
+
 
 ## References
 

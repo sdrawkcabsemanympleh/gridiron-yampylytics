@@ -38,6 +38,7 @@ from gridiron_yampylytics.loaders.nflverse import (
     cache_nflverse_data
 )
 from gridiron_yampylytics.loaders.gm_data import download_gm_data
+from gridiron_yampylytics.loaders.fp_projections import download_fp_projections
 from gridiron_yampylytics.config import (
     ESSENTIAL_DATASETS,
     ANALYSIS_DATASETS,
@@ -118,6 +119,11 @@ def main() -> None:
         type=int,
         default=None,
         help="Maximum number of parallel workers (default: unlimited)"
+    )
+    parser.add_argument(
+        "--projections",
+        action="store_true",
+        help="Download FantasyPros pre-draft PPR season projections (ff_projections.csv)"
     )
     parser.add_argument(
         "--verbose", "-v",
@@ -217,6 +223,11 @@ def main() -> None:
     # Exit with error if everything failed
     if result['failed'] and not result['successful']:
         sys.exit(1)
+
+    # Download FantasyPros projections if requested
+    if args.projections:
+        print()
+        download_fp_projections()
 
 
 if __name__ == "__main__":
